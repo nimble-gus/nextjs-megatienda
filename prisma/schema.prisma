@@ -1,0 +1,104 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Rol {
+  cliente
+  admin
+}
+
+model usuarios {
+  id          Int       @id @default(autoincrement())
+  nombre      String
+  correo      String    @unique
+  password    String    @map("contraseña")
+  rol         Rol?      // Nullable ENUM
+  creado_en   DateTime? @default(now())  @db.Timestamp(0)
+  ordenes     ordenes[]
+  carrito     carrito[]
+}
+
+
+model categorias {
+  id        Int         @id @default(autoincrement())
+  nombre    String
+  productos productos[]
+}
+
+model colores {
+  id          Int             @id @default(autoincrement())
+  nombre      String
+  codigo_hex  String
+  carrito     carrito[]
+  stock       stock_detalle[]
+  ordenDetalle orden_detalle[]
+}
+
+model productos {
+  id             Int               @id @default(autoincrement())
+  sku            String
+  nombre         String
+  descripcion    String
+  url_imagen     String?
+  categoria_id   Int
+  categoria      categorias        @relation(fields: [categoria_id], references: [id])
+  imagenes       imagenes_producto[]
+  stock          stock_detalle[]
+  carrito        carrito[]
+  ordenDetalle   orden_detalle[]
+}
+
+model imagenes_producto {
+  id          Int        @id @default(autoincrement())
+  producto_id Int
+  url_imagen  String
+  producto    productos  @relation(fields: [producto_id], references: [id])
+}
+
+model stock_detalle {
+  id          Int        @id @default(autoincrement())
+  producto_id Int
+  color_id    Int
+  cantidad    Int
+  precio      Float
+  producto    productos  @relation(fields: [producto_id], references: [id])
+  color       colores    @relation(fields: [color_id], references: [id])
+}
+
+model carrito {
+  id          Int        @id @default(autoincrement())
+  usuario_id  Int
+  producto_id Int
+  color_id    Int
+  cantidad    Int
+  usuario     usuarios   @relation(fields: [usuario_id], references: [id])
+  producto    productos  @relation(fields: [producto_id], references: [id])
+  color       colores    @relation(fields: [color_id], references: [id])
+}
+
+model ordenes {
+  id         Int             @id @default(autoincrement())
+  usuario_id Int
+  fecha      DateTime        @default(now())
+  total      Float
+  estado     String
+  usuario    usuarios        @relation(fields: [usuario_id], references: [id])
+  detalle    orden_detalle[]
+}
+
+model orden_detalle {
+  id             Int        @id @default(autoincrement())
+  orden_id       Int
+  producto_id    Int
+  color_id       Int
+  cantidad       Int
+  precio_unitario Float
+  orden          ordenes    @relation(fields: [orden_id], references: [id])
+  producto       productos  @relation(fields: [producto_id], references: [id])
+  color          colores    @relation(fields: [color_id], references: [id])
+}
