@@ -1,0 +1,22 @@
+/* src/styles/HomePage.css */
+
+.home-main {
+  min-height: 70vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #fefefe;
+  padding: 2rem;
+  text-align: center;
+}
+
+.home-placeholder h2 {
+  font-size: 2rem;
+  color: #111;
+  margin-bottom: 1rem;
+}
+
+.home-placeholder p {
+  font-size: 1.2rem;
+  color: #555;
+}

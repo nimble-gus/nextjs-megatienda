@@ -1,0 +1,27 @@
+.kpi-card {
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  text-align: center;
+  flex: 1;
+  min-width: 180px;
+  transition: transform 0.2s ease;
+}
+
+.kpi-card:hover {
+  transform: scale(1.02);
+}
+
+.kpi-card h3 {
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.kpi-card p {
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: #0070f3;
+}

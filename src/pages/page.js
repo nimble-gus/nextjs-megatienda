@@ -1,11 +1,12 @@
-// src/app/page.js
-'use client';
+// src/pages/index.jsx
 
+import React from 'react';
 import Topbar from '@/components/layout/Topbar';
 import Header from '@/components/layout/Header';
+import Footer from '@/components/layout/Footer';
 import '@/styles/HomePage.css';
 
-export default function Home() {
+const HomePage = () => {
   return (
     <>
       <Topbar />
@@ -16,6 +17,9 @@ export default function Home() {
           <p>Explora nuestras ofertas y productos destacados</p>
         </section>
       </main>
+      <Footer />
     </>
   );
-}
+};
+
+export default HomePage;

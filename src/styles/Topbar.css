@@ -1,0 +1,409 @@
+/* Variables para el topbar */
+:root {
+    --topbar-gradient: linear-gradient(135deg, #0a1f33 0%, #1a365d 50%, #2d5f8f 100%);
+    --topbar-accent: #4fd1c7;
+    --topbar-text: #ffffff;
+    --topbar-text-muted: rgba(255, 255, 255, 0.8);
+    --topbar-hover: rgba(79, 209, 199, 0.2);
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* Topbar principal */
+.topbar {
+    position: relative;
+    background: var(--topbar-gradient);
+    color: var(--topbar-text);
+    padding: 8px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    overflow: hidden;
+    transform: translateY(-100%);
+    opacity: 0;
+    transition: var(--transition-smooth);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.topbar.topbar-visible {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+/* Contenido principal del topbar */
+.topbar-content {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2;
+}
+
+/* Lado izquierdo - Promociones */
+.topbar-left {
+    display: flex;
+    align-items: center;
+}
+
+.promo-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+}
+
+.promo-text {
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    animation: fadeInSlide 0.6s ease-out;
+}
+
+@keyframes fadeInSlide {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Indicadores de promoción */
+.promo-indicator {
+    display: flex;
+    gap: 4px;
+    margin-left: 12px;
+}
+
+.indicator-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transition: var(--transition-smooth);
+}
+
+.indicator-dot.active {
+    background: var(--topbar-accent);
+    transform: scale(1.3);
+    box-shadow: 0 0 8px rgba(79, 209, 199, 0.6);
+}
+
+/* Lado derecho - Contacto */
+.topbar-right {
+    position: absolute;
+    right: 20px;
+    display: flex;
+    align-items: center;
+}
+
+.contact-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+    padding: 6px 12px;
+    border-radius: 20px;
+    transition: var(--transition-smooth);
+    cursor: pointer;
+}
+
+.contact-container:hover {
+    background: var(--topbar-hover);
+    transform: translateY(-1px);
+}
+
+/* Enlace de teléfono */
+.phone-link {
+    color: var(--topbar-text);
+    text-decoration: none;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    transition: var(--transition-smooth);
+    position: relative;
+}
+
+.phone-link:hover {
+    color: var(--topbar-accent);
+    text-shadow: 0 0 8px rgba(79, 209, 199, 0.5);
+}
+
+.phone-link:active {
+    transform: scale(0.98);
+}
+
+/* Tooltip para llamar */
+.call-tooltip {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: var(--transition-smooth);
+    z-index: 10;
+    margin-top: 5px;
+}
+
+.call-tooltip::before {
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-bottom: 4px solid rgba(0, 0, 0, 0.9);
+}
+
+.contact-container:hover .call-tooltip {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(2px);
+}
+
+/* Iconos SVG modernos */
+.topbar-svg-icon {
+    width: 18px;
+    height: 18px;
+    stroke: currentColor;
+    transition: var(--transition-smooth);
+}
+
+.shipping-icon {
+    color: var(--topbar-accent);
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-2px);
+    }
+}
+
+.phone-icon {
+    color: var(--topbar-text);
+    transition: var(--transition-bounce);
+}
+
+.contact-container:hover .phone-icon {
+    color: var(--topbar-accent);
+    transform: rotate(15deg) scale(1.1);
+}
+
+/* Partículas de fondo animadas */
+.topbar-particles {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    z-index: 1;
+}
+
+.particle {
+    position: absolute;
+    background: rgba(79, 209, 199, 0.3);
+    border-radius: 50%;
+    animation: float-particles 8s linear infinite;
+}
+
+.particle:nth-child(1) {
+    width: 4px;
+    height: 4px;
+    left: 10%;
+    animation-delay: 0s;
+    animation-duration: 8s;
+}
+
+.particle:nth-child(2) {
+    width: 6px;
+    height: 6px;
+    left: 30%;
+    animation-delay: 2s;
+    animation-duration: 10s;
+}
+
+.particle:nth-child(3) {
+    width: 3px;
+    height: 3px;
+    left: 50%;
+    animation-delay: 4s;
+    animation-duration: 12s;
+}
+
+.particle:nth-child(4) {
+    width: 5px;
+    height: 5px;
+    left: 70%;
+    animation-delay: 6s;
+    animation-duration: 9s;
+}
+
+.particle:nth-child(5) {
+    width: 4px;
+    height: 4px;
+    left: 90%;
+    animation-delay: 1s;
+    animation-duration: 11s;
+}
+
+@keyframes float-particles {
+    0% {
+        transform: translateY(100px) rotate(0deg);
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-100px) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+/* Barra de progreso para rotación de promociones */
+.progress-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.1);
+    z-index: 3;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--topbar-accent), #81e6d9);
+    width: 0%;
+    animation: progressFill 5s linear infinite;
+    border-radius: 0 2px 2px 0;
+}
+
+@keyframes progressFill {
+    0% {
+        width: 0%;
+    }
+    100% {
+        width: 100%;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .topbar {
+        padding: 8px 15px;
+    }
+    
+    .topbar-right {
+        right: 15px;
+    }
+    
+    .promo-indicator {
+        display: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .topbar {
+        font-size: 13px;
+        padding: 6px 10px;
+    }
+    
+    .topbar-content {
+        flex-direction: column;
+        gap: 4px;
+        text-align: center;
+    }
+    
+    .topbar-right {
+        position: static;
+        right: auto;
+    }
+    
+    .promo-text {
+        font-size: 12px;
+    }
+    
+    .contact-container {
+        padding: 4px 8px;
+    }
+    
+    .phone-link {
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 480px) {
+    .topbar {
+        font-size: 12px;
+        padding: 5px 8px;
+    }
+    
+    .promo-text {
+        font-size: 11px;
+        text-align: center;
+    }
+    
+    .topbar-svg-icon {
+        width: 16px;
+        height: 16px;
+    }
+    
+    .contact-container {
+        gap: 6px;
+    }
+    
+    .call-tooltip {
+        font-size: 10px;
+        padding: 4px 8px;
+    }
+}
+
+/* Efectos adicionales de interactividad */
+.topbar:hover .particle {
+    animation-duration: 4s;
+}
+
+.contact-container:active {
+    transform: translateY(-1px) scale(0.98);
+}
+
+/* Mejora de accesibilidad */
+@media (prefers-reduced-motion: reduce) {
+    .topbar,
+    .promo-text,
+    .indicator-dot,
+    .topbar-svg-icon,
+    .particle,
+    .progress-fill {
+        animation: none;
+        transition: none;
+    }
+}
+
+/* Focus states para accesibilidad */
+.phone-link:focus {
+    outline: 2px solid var(--topbar-accent);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+.contact-container:focus-within {
+    background: var(--topbar-hover);
+    transform: translateY(-1px);
+}
