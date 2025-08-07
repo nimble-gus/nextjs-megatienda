@@ -5,10 +5,11 @@ import { prisma } from '@/lib/prisma';
 
 export async function POST(req) {
   try {
-    const { correo, password } = await req.json();
+    // 🔥 CAMBIO PRINCIPAL: 'password' → 'contraseña'
+    const { correo, contraseña } = await req.json();
 
     // Validar datos obligatorios
-    if (!correo || !password) {
+    if (!correo || !contraseña) {
       return NextResponse.json(
         { error: 'Correo y contraseña son obligatorios' },
         { status: 400 }
@@ -27,8 +28,8 @@ export async function POST(req) {
       );
     }
 
-    // Verificar contraseña
-    const validPassword = await bcrypt.compare(password, user.password);
+    // Verificar contraseña (cambié 'password' por 'contraseña')
+    const validPassword = await bcrypt.compare(contraseña, user.password);
     if (!validPassword) {
       return NextResponse.json(
         { error: 'Contraseña incorrecta' },
@@ -62,6 +63,7 @@ export async function POST(req) {
     }
 
     // Devolver respuesta sin el password
+    // 🔥 AGREGUÉ 'usuario_id' para compatibilidad con Header.jsx
     return NextResponse.json({
       message: 'Login exitoso',
       token,
@@ -70,6 +72,7 @@ export async function POST(req) {
         nombre: user.nombre,
         correo: user.correo,
         rol: user.rol,
+        usuario_id: user.id, // Para compatibilidad con Header.jsx
       },
     });
 

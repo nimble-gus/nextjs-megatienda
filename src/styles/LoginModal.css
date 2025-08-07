@@ -1,0 +1,614 @@
+/* Variables CSS para el modal moderno */
+:root {
+    --primary-orange: #ff6a00;
+    --primary-orange-dark: #e65c00;
+    --primary-orange-light: #ff8533;
+    --text-dark: #2d3748;
+    --text-light: #718096;
+    --text-muted: #a0aec0;
+    --bg-white: #ffffff;
+    --bg-light: #f7fafc;
+    --bg-glass: rgba(255, 255, 255, 0.95);
+    --border-light: #e2e8f0;
+    --error-color: #e53e3e;
+    --success-color: #38a169;
+    --shadow-light: 0 4px 20px rgba(0, 0, 0, 0.08);
+    --shadow-medium: 0 8px 30px rgba(0, 0, 0, 0.12);
+    --shadow-heavy: 0 20px 60px rgba(0, 0, 0, 0.3);
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    --gradient-primary: linear-gradient(135deg, var(--primary-orange) 0%, var(--primary-orange-dark) 100%);
+}
+
+/* Overlay del modal con blur mejorado */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.modal-overlay.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Contenedor principal del modal */
+.modal-container {
+    background: var(--bg-glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 24px;
+    width: 100%;
+    max-width: 460px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: var(--shadow-heavy);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    position: relative;
+    transform: translateY(50px) scale(0.9);
+    opacity: 0;
+    transition: var(--transition-bounce);
+}
+
+.modal-container.visible {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+}
+
+/* Header del modal */
+.modal-header {
+    padding: 30px 30px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 1px solid var(--border-light);
+    background: linear-gradient(135deg, rgba(255, 106, 0, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%);
+    border-radius: 24px 24px 0 0;
+}
+
+.modal-title {
+    font-size: 28px;
+    font-weight: 800;
+    margin: 0;
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.2;
+}
+
+.close-btn {
+    background: rgba(255, 255, 255, 0.8);
+    border: none;
+    cursor: pointer;
+    padding: 12px;
+    border-radius: 50%;
+    transition: var(--transition-smooth);
+    color: var(--text-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-light);
+}
+
+.close-btn:hover {
+    background: rgba(255, 106, 0, 0.1);
+    color: var(--primary-orange);
+    transform: scale(1.1) rotate(90deg);
+}
+
+.close-icon {
+    width: 20px;
+    height: 20px;
+}
+
+/* Subtítulo */
+.modal-subtitle {
+    padding: 0 30px 20px;
+    margin: 0;
+    color: var(--text-light);
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.5;
+    text-align: center;
+}
+
+/* Toggle entre Login/Registro */
+.mode-toggle {
+    margin: 0 30px 30px;
+    position: relative;
+    display: flex;
+    background: var(--bg-light);
+    border-radius: 16px;
+    padding: 4px;
+    overflow: hidden;
+}
+
+.toggle-btn {
+    flex: 1;
+    background: none;
+    border: none;
+    padding: 14px 20px;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    color: var(--text-light);
+    border-radius: 12px;
+    position: relative;
+    z-index: 2;
+}
+
+.toggle-btn.active {
+    color: white;
+}
+
+.toggle-slider {
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    width: calc(50% - 4px);
+    background: var(--gradient-primary);
+    border-radius: 12px;
+    transition: var(--transition-bounce);
+    box-shadow: var(--shadow-light);
+}
+
+.toggle-slider.left {
+    left: 4px;
+}
+
+.toggle-slider.right {
+    left: calc(50%);
+}
+
+/* Formulario */
+.auth-form {
+    padding: 0 30px 30px;
+}
+
+.form-group {
+    margin-bottom: 24px;
+}
+
+/* Banner de error general */
+.error-banner {
+    background: linear-gradient(135deg, rgba(229, 62, 62, 0.1) 0%, rgba(229, 62, 62, 0.05) 100%);
+    border: 1px solid rgba(229, 62, 62, 0.2);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 24px;
+    animation: errorShake 0.5s ease-in-out;
+}
+
+.error-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--error-color);
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.error-icon {
+    font-size: 18px;
+}
+
+@keyframes errorShake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+/* Wrapper de inputs modernos */
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: var(--bg-light);
+    border: 2px solid transparent;
+    border-radius: 16px;
+    padding: 0 18px;
+    transition: var(--transition-smooth);
+    overflow: hidden;
+}
+
+.input-wrapper:focus-within {
+    background: white;
+    border-color: var(--primary-orange);
+    box-shadow: 0 0 0 4px rgba(255, 106, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.input-wrapper.error {
+    border-color: var(--error-color);
+    background: rgba(229, 62, 62, 0.05);
+}
+
+.input-wrapper.error:focus-within {
+    box-shadow: 0 0 0 4px rgba(229, 62, 62, 0.1);
+}
+
+/* Iconos de campos */
+.field-icon {
+    width: 20px;
+    height: 20px;
+    color: var(--text-muted);
+    margin-right: 14px;
+    transition: var(--transition-smooth);
+    flex-shrink: 0;
+}
+
+.input-wrapper:focus-within .field-icon {
+    color: var(--primary-orange);
+    transform: scale(1.1);
+}
+
+.input-wrapper.error .field-icon {
+    color: var(--error-color);
+}
+
+/* Inputs modernos */
+.modern-input {
+    flex: 1;
+    background: none;
+    border: none;
+    outline: none;
+    padding: 18px 0;
+    font-size: 16px;
+    color: var(--text-dark);
+    font-weight: 500;
+    font-family: inherit;
+}
+
+.modern-input::placeholder {
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+/* Toggle de contraseña */
+.password-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 10px;
+    border-radius: 50%;
+    transition: var(--transition-smooth);
+    color: var(--text-muted);
+    margin-left: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.password-toggle:hover {
+    color: var(--primary-orange);
+    background: rgba(255, 106, 0, 0.1);
+    transform: scale(1.1);
+}
+
+.eye-icon {
+    width: 18px;
+    height: 18px;
+}
+
+/* Texto de error */
+.error-text {
+    color: var(--error-color);
+    font-size: 14px;
+    font-weight: 600;
+    margin-top: 8px;
+    display: block;
+    animation: errorSlideIn 0.3s ease-out;
+}
+
+@keyframes errorSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Botón de envío moderno */
+.btn-submit {
+    width: 100%;
+    background: var(--gradient-primary);
+    color: white;
+    border: none;
+    border-radius: 16px;
+    padding: 18px 24px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    margin-top: 10px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow-light);
+    font-family: inherit;
+}
+
+.btn-submit:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-medium);
+}
+
+.btn-submit:active {
+    transform: translateY(-1px);
+}
+
+.btn-submit:disabled {
+    cursor: not-allowed;
+    opacity: 0.8;
+    transform: none;
+}
+
+.btn-submit.loading {
+    pointer-events: none;
+}
+
+/* Efecto shine del botón */
+.btn-shine {
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.6s;
+}
+
+.btn-submit:hover .btn-shine {
+    left: 100%;
+}
+
+/* Contenido de loading */
+.loading-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
+.spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top: 2px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Footer del modal */
+.modal-footer {
+    padding: 20px 30px 30px;
+    text-align: center;
+    border-top: 1px solid var(--border-light);
+}
+
+.forgot-link {
+    color: var(--primary-orange);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    transition: var(--transition-smooth);
+    display: inline-block;
+    margin-bottom: 16px;
+}
+
+.forgot-link:hover {
+    color: var(--primary-orange-dark);
+    transform: translateY(-1px);
+}
+
+.terms-text {
+    margin-top: 16px;
+}
+
+.terms-text p {
+    color: var(--text-light);
+    font-size: 13px;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.link {
+    color: var(--primary-orange);
+    text-decoration: none;
+    font-weight: 600;
+    transition: var(--transition-smooth);
+}
+
+.link:hover {
+    color: var(--primary-orange-dark);
+    text-decoration: underline;
+}
+
+/* Efectos adicionales */
+.modal-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--gradient-primary);
+    border-radius: 24px 24px 0 0;
+    opacity: 0.8;
+}
+
+/* Scroll personalizado */
+.modal-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modal-container::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 3px;
+}
+
+.modal-container::-webkit-scrollbar-thumb {
+    background: var(--text-muted);
+    border-radius: 3px;
+}
+
+.modal-container::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-orange);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .modal-overlay {
+        padding: 15px;
+    }
+    
+    .modal-container {
+        max-width: 100%;
+        border-radius: 20px;
+    }
+    
+    .modal-header {
+        padding: 25px 25px 20px;
+    }
+    
+    .modal-title {
+        font-size: 24px;
+    }
+    
+    .modal-subtitle {
+        padding: 0 25px 20px;
+        font-size: 15px;
+    }
+    
+    .mode-toggle {
+        margin: 0 25px 25px;
+    }
+    
+    .auth-form {
+        padding: 0 25px 25px;
+    }
+    
+    .modal-footer {
+        padding: 20px 25px 25px;
+    }
+}
+
+@media (max-width: 480px) {
+    .modal-overlay {
+        padding: 10px;
+    }
+    
+    .modal-header {
+        padding: 20px 20px 15px;
+    }
+    
+    .modal-title {
+        font-size: 22px;
+    }
+    
+    .modal-subtitle {
+        padding: 0 20px 15px;
+        font-size: 14px;
+    }
+    
+    .mode-toggle {
+        margin: 0 20px 20px;
+    }
+    
+    .toggle-btn {
+        padding: 12px 16px;
+        font-size: 14px;
+    }
+    
+    .auth-form {
+        padding: 0 20px 20px;
+    }
+    
+    .modern-input {
+        font-size: 16px; /* Evita zoom en iOS */
+        padding: 16px 0;
+    }
+    
+    .btn-submit {
+        padding: 16px 20px;
+    }
+    
+    .modal-footer {
+        padding: 15px 20px 20px;
+    }
+}
+
+/* Mejoras de accesibilidad */
+@media (prefers-reduced-motion: reduce) {
+    .modal-overlay,
+    .modal-container,
+    .input-wrapper,
+    .btn-submit,
+    .toggle-slider,
+    .spinner,
+    .btn-shine {
+        animation: none;
+        transition: none;
+    }
+}
+
+/* Estados de focus para accesibilidad */
+.close-btn:focus,
+.toggle-btn:focus,
+.modern-input:focus,
+.password-toggle:focus,
+.btn-submit:focus,
+.forgot-link:focus,
+.link:focus {
+    outline: 2px solid var(--primary-orange);
+    outline-offset: 2px;
+}
+
+/* Efectos hover adicionales para interactividad */
+.input-wrapper:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-light);
+}
+
+.form-group:hover .field-icon {
+    transform: scale(1.05);
+}
+
+/* Animación de éxito (opcional) */
+@keyframes successPulse {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(56, 161, 105, 0.4);
+    }
+    70% {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 10px rgba(56, 161, 105, 0);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(56, 161, 105, 0);
+    }
+}

@@ -1,16 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image'; // Componente optimizado de Next.js
 import '@/styles/Header.css';
-import logo from '@/assets/logo.png';
-import cartIcon from '@/assets/bag.svg';
-import userIcon from '@/assets/user.svg';
-import searchIcon from '@/assets/sch.svg';
-import LoginModal from '../Auth/LoginModal'; // Ajusta la ruta según tu estructura
+import LoginModal from '../Auth/LoginModal';
 
 const Header = () => {
-    const [user, setUser] = useState(null); // Cambié isLoggedIn por user para guardar info completa
+    const [user, setUser] = useState(null);
     const [searchFocused, setSearchFocused] = useState(false);
     const [headerVisible, setHeaderVisible] = useState(false);
-    const [cartCount, setCartCount] = useState(0); // Inicia en 0
+    const [cartCount, setCartCount] = useState(0);
     const [showLoginModal, setShowLoginModal] = useState(false);
 
     // Animación de entrada al cargar y verificar usuario guardado
@@ -26,7 +23,7 @@ const Header = () => {
                 loadUserCart(userData.id || userData.usuario_id);
             } catch (error) {
                 console.error('Error parsing saved user:', error);
-                localStorage.removeItem('user'); // Limpiar datos corruptos
+                localStorage.removeItem('user');
             }
         }
     }, []);
@@ -34,9 +31,8 @@ const Header = () => {
     // Función para cargar el carrito del usuario
     const loadUserCart = async (userId) => {
         try {
-            // Aquí harías tu llamada real a la API
             const token = localStorage.getItem('token');
-            const response = await fetch(`${process.env.REACT_APP_API_URL}/api/carrito/${userId}`, {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/carrito/${userId}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -52,7 +48,7 @@ const Header = () => {
             }
         } catch (error) {
             console.error('Error cargando carrito:', error);
-            // Simulación para desarrollo - remover en producción
+            // Simulación para desarrollo
             setTimeout(() => setCartCount(3), 500);
         }
     };
@@ -61,23 +57,17 @@ const Header = () => {
     const handleLoginSuccess = (data) => {
         console.log('Login exitoso:', data);
         
-        // Guardar usuario completo
         const userData = data.user || data;
         setUser(userData);
         
-        // Guardar en localStorage para persistencia
         localStorage.setItem('user', JSON.stringify(userData));
         if (data.token) {
             localStorage.setItem('token', data.token);
         }
         
-        // Cargar carrito del usuario
         loadUserCart(userData.id || userData.usuario_id);
-        
-        // Cerrar modal
         setShowLoginModal(false);
         
-        // Opcional: mostrar notificación de éxito
         console.log(`¡Bienvenido ${userData.nombre}!`);
     };
 
@@ -86,21 +76,26 @@ const Header = () => {
         setUser(null);
         setCartCount(0);
         
-        // Limpiar localStorage
         localStorage.removeItem('user');
         localStorage.removeItem('token');
         
         console.log('Sesión cerrada correctamente');
     };
 
-    // Verificar si está logueado
     const isLoggedIn = !!user;
 
     return (
         <header className={`main-header ${headerVisible ? 'header-visible' : ''}`}>
-            {/* Logo con animación */}
+            {/* Logo con animación - usando Next.js Image */}
             <div className="logo">
-                <img src={logo} alt="Logo LaMegaTiendaGT" className="logo-img" />
+                <Image 
+                    src="/assets/logo.png" 
+                    alt="Logo LaMegaTiendaGT" 
+                    width={120} 
+                    height={40}
+                    className="logo-img"
+                    priority // Para cargar la imagen inmediatamente
+                />
             </div>
 
             {/* Menú con efectos hover */}
@@ -136,7 +131,13 @@ const Header = () => {
                             onBlur={() => setSearchFocused(false)}
                         />
                         <button className="search-btn">
-                            <img src={searchIcon} alt="Buscar" className="search-icon" />
+                            <Image 
+                                src="/assets/sch.svg" 
+                                alt="Buscar" 
+                                width={20} 
+                                height={20}
+                                className="search-icon" 
+                            />
                         </button>
                     </div>
                     <div className="search-suggestions">
@@ -161,21 +162,31 @@ const Header = () => {
                 {isLoggedIn && (
                     <div className="user-actions">
                         <div className="cart-container">
-                            <img src={cartIcon} alt="Carrito" className="icon-btn cart-icon" />
+                            <Image 
+                                src="/assets/bag.svg" 
+                                alt="Carrito" 
+                                width={24} 
+                                height={24}
+                                className="icon-btn cart-icon" 
+                            />
                             {cartCount > 0 && (
                                 <span className="cart-badge">{cartCount}</span>
                             )}
                         </div>
                         <div className="user-container">
-                            <img src={userIcon} alt="Usuario" className="icon-btn user-icon" />
+                            <Image 
+                                src="/assets/user.svg" 
+                                alt="Usuario" 
+                                width={24} 
+                                height={24}
+                                className="icon-btn user-icon" 
+                            />
                             <div className="user-dropdown">
-                                {/* Información del usuario */}
                                 <div className="user-info">
                                     <strong>{user.nombre}</strong>
                                 </div>
                                 <div className="dropdown-divider"></div>
                                 
-                                {/* Opciones del menú */}
                                 <div className="dropdown-item">
                                     📦 Mis Pedidos
                                 </div>

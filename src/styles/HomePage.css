@@ -1,22 +1,132 @@
-/* src/styles/HomePage.css */
+/* HomePage.css - Layout que respeta la estructura */
 
-.home-main {
-  min-height: 70vh;
+/* Reset general */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Layout principal de la página */
+.page-layout {
+  width: 100%;
+  min-height: 100vh;
+  background-color: #ffffff; /* Cambiado a blanco */
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+}
+
+/* Sección del Topbar */
+.topbar-section {
+  width: 100%;
+  position: relative;
+  z-index: 100;
+  /* El topbar mantiene su propio fondo */
+}
+
+/* Sección del Header */
+.header-section {
+  width: 100%;
+  position: relative;
+  z-index: 99;
+  background-color: #ffffff; /* Fondo blanco para el header */
+}
+
+/* Contenedor del Hero Section - Fondo blanco */
+.hero-section-wrapper {
+  width: 100%;
+  padding: 10px 0;
+  background-color: #ffffff; /* Fondo blanco en lugar de transparente */
+  position: relative;
+  z-index: 1;
+  display: flex;
   align-items: center;
-  background-color: #fefefe;
-  padding: 2rem;
+  justify-content: center;
+}
+
+/* Contenido principal */
+.main-content {
+  flex: 1;
+  width: 100%;
+  position: relative;
+  z-index: 1;
+  background-color: #f8f9fa; /* Fondo gris claro para el contenido principal */
+}
+
+/* Sección de contenido adicional */
+.content-section {
+  padding: 60px 20px;
+  background: #ffffff; /* Fondo blanco para la sección de contenido */
+  position: relative;
+  z-index: 1;
+}
+
+.content-section .container {
+  max-width: 1200px;
+  margin: 0 auto;
   text-align: center;
 }
 
-.home-placeholder h2 {
-  font-size: 2rem;
-  color: #111;
+.content-section h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #2d3748;
   margin-bottom: 1rem;
+  line-height: 1.2;
 }
 
-.home-placeholder p {
+.content-section p {
   font-size: 1.2rem;
-  color: #555;
+  color: #718096;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* Opcional: Si quieres un efecto de separación entre secciones */
+.hero-section-wrapper::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(to right, transparent, #e2e8f0 50%, transparent);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .hero-section-wrapper {
+    padding: 30px 0;
+  }
+  
+  .content-section {
+    padding: 40px 15px;
+  }
+  
+  .content-section h1 {
+    font-size: 2rem;
+  }
+  
+  .content-section p {
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-section-wrapper {
+    padding: 25px 0;
+  }
+  
+  .content-section {
+    padding: 30px 10px;
+  }
+  
+  .content-section h1 {
+    font-size: 1.75rem;
+  }
+  
+  .content-section p {
+    font-size: 1rem;
+  }
 }

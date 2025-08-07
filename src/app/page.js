@@ -3,19 +3,34 @@
 
 import Topbar from '@/components/layout/Topbar';
 import Header from '@/components/layout/Header';
+import HeroSection from '@/components/Home/HeroSection';
 import '@/styles/HomePage.css';
 
 export default function Home() {
   return (
-    <>
-      <Topbar />
-      <Header />
-      <main className="home-main">
-        <section className="home-placeholder">
-          <h2>Bienvenido a LaMegaTiendaGT</h2>
-          <p>Explora nuestras ofertas y productos destacados</p>
+    <div className="page-layout">
+      {/* Topbar - Franja superior */}
+      <section className="topbar-section">
+        <Topbar />
+      </section>
+      
+      {/* Header - Franja de navegación */}
+      <section className="header-section">
+        <Header />
+      </section>
+      
+      {/* Hero Section - Sección principal pero limitada */}
+      <section className="hero-section-wrapper">
+        <HeroSection />
+      </section>
+      
+      {/* Contenido adicional */}
+      <main className="main-content">
+        <section className="content-section">
+          <div className="container">
+          </div>
         </section>
       </main>
-    </>
+    </div>
   );
 }
