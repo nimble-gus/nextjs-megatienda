@@ -127,7 +127,7 @@ const CartSummary = ({ items, onCheckout }) => {
             onClick={handleCheckout}
             disabled={items.length === 0}
           >
-            Proceder al Checkout
+            Checkout
           </button>
           
           <button className="update-cart-btn">
