@@ -1,23 +1,25 @@
 /* Variables CSS para el modal moderno */
 :root {
-    --primary-orange: #ff6a00;
-    --primary-orange-dark: #e65c00;
-    --primary-orange-light: #ff8533;
-    --text-dark: #2d3748;
-    --text-light: #718096;
-    --text-muted: #a0aec0;
+    --primary-blue: #1e3a8a;
+    --primary-blue-dark: #1e40af;
+    --primary-blue-light: #3b82f6;
+    --accent-orange: #f97316;
+    --text-dark: #1f2937;
+    --text-light: #6b7280;
+    --text-muted: #9ca3af;
     --bg-white: #ffffff;
-    --bg-light: #f7fafc;
-    --bg-glass: rgba(255, 255, 255, 0.95);
-    --border-light: #e2e8f0;
-    --error-color: #e53e3e;
-    --success-color: #38a169;
+    --bg-light: #f8fafc;
+    --bg-glass: rgba(255, 255, 255, 0.98);
+    --border-light: #e5e7eb;
+    --error-color: #dc2626;
+    --success-color: #059669;
     --shadow-light: 0 4px 20px rgba(0, 0, 0, 0.08);
     --shadow-medium: 0 8px 30px rgba(0, 0, 0, 0.12);
-    --shadow-heavy: 0 20px 60px rgba(0, 0, 0, 0.3);
+    --shadow-heavy: 0 20px 60px rgba(0, 0, 0, 0.25);
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-    --gradient-primary: linear-gradient(135deg, var(--primary-orange) 0%, var(--primary-orange-dark) 100%);
+    --gradient-primary: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-dark) 100%);
+    --gradient-accent: linear-gradient(135deg, var(--accent-orange) 0%, #ea580c 100%);
 }
 
 /* Overlay del modal con blur mejorado */
@@ -76,7 +78,7 @@
     justify-content: space-between;
     align-items: flex-start;
     border-bottom: 1px solid var(--border-light);
-    background: linear-gradient(135deg, rgba(255, 106, 0, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%);
+    background: linear-gradient(135deg, rgba(30, 58, 138, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%);
     border-radius: 24px 24px 0 0;
 }
 
@@ -106,8 +108,8 @@
 }
 
 .close-btn:hover {
-    background: rgba(255, 106, 0, 0.1);
-    color: var(--primary-orange);
+    background: rgba(30, 58, 138, 0.1);
+    color: var(--primary-blue);
     transform: scale(1.1) rotate(90deg);
 }
 
@@ -229,8 +231,8 @@
 
 .input-wrapper:focus-within {
     background: white;
-    border-color: var(--primary-orange);
-    box-shadow: 0 0 0 4px rgba(255, 106, 0, 0.1);
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 4px rgba(30, 58, 138, 0.1);
     transform: translateY(-2px);
 }
 
@@ -254,7 +256,7 @@
 }
 
 .input-wrapper:focus-within .field-icon {
-    color: var(--primary-orange);
+    color: var(--primary-blue);
     transform: scale(1.1);
 }
 
@@ -296,8 +298,8 @@
 }
 
 .password-toggle:hover {
-    color: var(--primary-orange);
-    background: rgba(255, 106, 0, 0.1);
+    color: var(--primary-blue);
+    background: rgba(30, 58, 138, 0.1);
     transform: scale(1.1);
 }
 
@@ -410,7 +412,7 @@
 }
 
 .forgot-link {
-    color: var(--primary-orange);
+    color: var(--accent-orange);
     text-decoration: none;
     font-weight: 600;
     font-size: 14px;
@@ -420,7 +422,7 @@
 }
 
 .forgot-link:hover {
-    color: var(--primary-orange-dark);
+    color: #ea580c;
     transform: translateY(-1px);
 }
 
@@ -436,14 +438,14 @@
 }
 
 .link {
-    color: var(--primary-orange);
+    color: var(--accent-orange);
     text-decoration: none;
     font-weight: 600;
     transition: var(--transition-smooth);
 }
 
 .link:hover {
-    color: var(--primary-orange-dark);
+    color: #ea580c;
     text-decoration: underline;
 }
 
@@ -476,7 +478,7 @@
 }
 
 .modal-container::-webkit-scrollbar-thumb:hover {
-    background: var(--primary-orange);
+    background: var(--primary-blue);
 }
 
 /* Responsive Design */
@@ -583,7 +585,7 @@
 .btn-submit:focus,
 .forgot-link:focus,
 .link:focus {
-    outline: 2px solid var(--primary-orange);
+    outline: 2px solid var(--primary-blue);
     outline-offset: 2px;
 }
 

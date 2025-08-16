@@ -40,3 +40,129 @@ a {
     color-scheme: dark;
   }
 }
+
+/* ===== PromoBanners Component Styles - MEJORADOS ===== */
+
+.promo-banners {
+  background: #ffffff; /* Mismo fondo blanco que HeroSection */
+  padding: 40px 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.promo-row-top {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  align-items: stretch; /* Hace que ambos contenedores tengan la misma altura */
+}
+
+.promo-small,
+.promo-medium {
+  flex: 1;
+  min-width: 280px; /* Aumentado para mejor proporción */
+  height: 200px; /* Altura fija para uniformidad */
+  overflow: hidden;
+  border-radius: 16px; /* Bordes más redondeados */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.promo-small:hover,
+.promo-medium:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+
+.promo-small img,
+.promo-medium img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Mantiene proporción y cubre todo el contenedor */
+  border-radius: 16px;
+  transition: transform 0.3s ease;
+}
+
+.promo-small:hover img,
+.promo-medium:hover img {
+  transform: scale(1.05); /* Efecto zoom suave al hover */
+}
+
+.promo-large {
+  width: 100%;
+  height: 160px; /* Altura fija para el banner grande */
+  overflow: hidden;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.promo-large:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+
+.promo-large img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 16px;
+  transition: transform 0.3s ease;
+}
+
+.promo-large:hover img {
+  transform: scale(1.02);
+}
+
+/* Responsive mejorado */
+@media (max-width: 768px) {
+  .promo-banners {
+    padding: 30px 15px;
+  }
+  
+  .promo-row-top {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .promo-small,
+  .promo-medium {
+    min-width: 100%;
+    height: 180px; /* Altura menor en móvil */
+  }
+  
+  .promo-large {
+    height: 140px; /* Altura menor en móvil */
+  }
+}
+
+@media (max-width: 480px) {
+  .promo-banners {
+    padding: 20px 10px;
+  }
+  
+  .promo-row-top {
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  
+  .promo-small,
+  .promo-medium {
+    height: 160px;
+    border-radius: 12px;
+  }
+  
+  .promo-large {
+    height: 120px;
+    border-radius: 12px;
+  }
+  
+  .promo-small img,
+  .promo-medium img,
+  .promo-large img {
+    border-radius: 12px;
+  }
+}

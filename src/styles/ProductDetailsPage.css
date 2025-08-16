@@ -1,0 +1,109 @@
+/* ProductDetailsPage.css - Estilos para la página de detalles del producto */
+
+/* Variables CSS */
+:root {
+  --primary-blue: #1e3a8a;
+  --primary-blue-dark: #1e40af;
+  --accent-orange: #f97316;
+  --text-dark: #1f2937;
+  --text-light: #6b7280;
+  --text-muted: #9ca3af;
+  --bg-white: #ffffff;
+  --bg-light: #f8fafc;
+  --border-light: #e5e7eb;
+  --shadow-light: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.1);
+  --transition: all 0.3s ease;
+}
+
+/* Layout principal */
+.product-details-page {
+  min-height: 100vh;
+  background-color: var(--bg-light);
+}
+
+.product-details-main {
+  padding: 20px 0;
+  min-height: calc(100vh - 200px);
+}
+
+/* Loading y Error */
+.loading-container,
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border-light);
+  border-top: 3px solid var(--primary-blue);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-container p,
+.error-container p {
+  color: var(--text-light);
+  font-size: 16px;
+  margin: 0 0 20px 0;
+}
+
+.error-container h2 {
+  color: var(--text-dark);
+  margin-bottom: 10px;
+}
+
+.error-container button {
+  background: var(--primary-blue);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.error-container button:hover {
+  background: var(--primary-blue-dark);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .product-details-main {
+    padding: 15px 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .product-details-main {
+    padding: 10px 0;
+  }
+  
+  .loading-container,
+  .error-container {
+    padding: 40px 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .product-details-main {
+    padding: 8px 0;
+  }
+  
+  .loading-container,
+  .error-container {
+    padding: 30px 10px;
+  }
+}

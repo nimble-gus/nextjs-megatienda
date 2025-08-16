@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image'; // Componente optimizado de Next.js
+import { useRouter } from 'next/navigation';
 import '@/styles/Header.css';
 import LoginModal from '../Auth/LoginModal';
 
 const Header = () => {
+    const router = useRouter();
     const [user, setUser] = useState(null);
     const [searchFocused, setSearchFocused] = useState(false);
     const [headerVisible, setHeaderVisible] = useState(false);
     const [cartCount, setCartCount] = useState(0);
     const [showLoginModal, setShowLoginModal] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
 
     // Animación de entrada al cargar y verificar usuario guardado
     useEffect(() => {
@@ -32,7 +35,7 @@ const Header = () => {
     const loadUserCart = async (userId) => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/carrito/${userId}`, {
+            const response = await fetch(`/api/cart/${userId}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -40,18 +43,44 @@ const Header = () => {
             });
             
             if (response.ok) {
-                const cartItems = await response.json();
-                const totalItems = cartItems.reduce((total, item) => total + item.cantidad, 0);
-                setCartCount(totalItems);
+                const cartData = await response.json();
+                if (cartData.success && cartData.items) {
+                    const totalItems = cartData.items.reduce((total, item) => total + (item.cantidad || 0), 0);
+                    setCartCount(totalItems);
+                } else {
+                    console.warn('Respuesta del carrito sin formato esperado:', cartData);
+                    setCartCount(0);
+                }
             } else {
-                console.error('Error cargando carrito:', response.statusText);
+                const errorData = await response.json().catch(() => ({}));
+                console.error('Error cargando carrito:', response.status, errorData.error || response.statusText);
+                setCartCount(0);
             }
         } catch (error) {
-            console.error('Error cargando carrito:', error);
-            // Simulación para desarrollo
-            setTimeout(() => setCartCount(3), 500);
+            console.error('Error cargando carrito:', error.message);
+            setCartCount(0);
         }
     };
+
+    // Función para actualizar el contador del carrito
+    const updateCartCount = () => {
+        if (user) {
+            loadUserCart(user.id || user.usuario_id);
+        }
+    };
+
+    // Escuchar cambios en el carrito (evento personalizado)
+    useEffect(() => {
+        const handleCartUpdate = () => {
+            updateCartCount();
+        };
+
+        window.addEventListener('cartUpdated', handleCartUpdate);
+        
+        return () => {
+            window.removeEventListener('cartUpdated', handleCartUpdate);
+        };
+    }, [user]);
 
     // Manejar éxito del login
     const handleLoginSuccess = (data) => {
@@ -82,6 +111,36 @@ const Header = () => {
         console.log('Sesión cerrada correctamente');
     };
 
+    // Función para manejar la búsqueda
+    const handleSearch = (e) => {
+        e.preventDefault();
+        
+        if (searchQuery.trim()) {
+            // Redirigir al catálogo con el término de búsqueda
+            const encodedQuery = encodeURIComponent(searchQuery.trim());
+            router.push(`/catalog?search=${encodedQuery}`);
+            
+            // Limpiar el campo de búsqueda
+            setSearchQuery('');
+        }
+    };
+
+    // Función para manejar la búsqueda al hacer click en la lupa
+    const handleSearchClick = () => {
+        if (searchQuery.trim()) {
+            const encodedQuery = encodeURIComponent(searchQuery.trim());
+            router.push(`/catalog?search=${encodedQuery}`);
+            setSearchQuery('');
+        }
+    };
+
+    // Función para manejar la búsqueda al presionar Enter
+    const handleKeyPress = (e) => {
+        if (e.key === 'Enter') {
+            handleSearch(e);
+        }
+    };
+
     const isLoggedIn = !!user;
 
     return (
@@ -102,20 +161,22 @@ const Header = () => {
             <nav className="main-nav">
                 <ul>
                     <li className="nav-item">
-                        <span>Inicio</span>
-                        <div className="nav-underline"></div>
+                        <a href="/" className="nav-link">
+                            <span>Inicio</span>
+                            <div className="nav-underline"></div>
+                        </a>
                     </li>
                     <li className="nav-item">
-                        <span>Catálogo</span>
-                        <div className="nav-underline"></div>
+                        <a href="/catalog" className="nav-link">
+                            <span>Catálogo</span>
+                            <div className="nav-underline"></div>
+                        </a>
                     </li>
                     <li className="nav-item">
-                        <span>Categorías</span>
-                        <div className="nav-underline"></div>
-                    </li>
-                    <li className="nav-item">
-                        <span>Contacto</span>
-                        <div className="nav-underline"></div>
+                        <a href="/contact" className="nav-link">
+                            <span>Contacto</span>
+                            <div className="nav-underline"></div>
+                        </a>
                     </li>
                 </ul>
             </nav>
@@ -123,14 +184,21 @@ const Header = () => {
             {/* Acciones con animaciones */}
             <div className="header-actions">
                 <div className={`search-container ${searchFocused ? 'search-focused' : ''}`}>
-                    <div className="search-box">
+                    <form onSubmit={handleSearch} className="search-box">
                         <input 
                             type="text" 
                             placeholder="Busca tu producto" 
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
                             onFocus={() => setSearchFocused(true)}
                             onBlur={() => setSearchFocused(false)}
+                            onKeyPress={handleKeyPress}
                         />
-                        <button className="search-btn">
+                        <button 
+                            type="button" 
+                            className="search-btn"
+                            onClick={handleSearchClick}
+                        >
                             <Image 
                                 src="/assets/sch.svg" 
                                 alt="Buscar" 
@@ -139,7 +207,7 @@ const Header = () => {
                                 className="search-icon" 
                             />
                         </button>
-                    </div>
+                    </form>
                     <div className="search-suggestions">
                         <div className="suggestion">Caminadora iWalk Pro</div>
                         <div className="suggestion">Yoga Mat 6MM</div>
@@ -162,16 +230,20 @@ const Header = () => {
                 {isLoggedIn && (
                     <div className="user-actions">
                         <div className="cart-container">
-                            <Image 
-                                src="/assets/bag.svg" 
-                                alt="Carrito" 
-                                width={24} 
-                                height={24}
-                                className="icon-btn cart-icon" 
-                            />
-                            {cartCount > 0 && (
-                                <span className="cart-badge">{cartCount}</span>
-                            )}
+                            <a href="/cart" className="cart-link">
+                                <Image 
+                                    src="/assets/bag.svg" 
+                                    alt="Carrito" 
+                                    width={24} 
+                                    height={24}
+                                    className="icon-btn cart-icon" 
+                                />
+                                {cartCount > 0 && (
+                                    <span className="cart-badge">
+                                        {cartCount > 99 ? '99+' : cartCount}
+                                    </span>
+                                )}
+                            </a>
                         </div>
                         <div className="user-container">
                             <Image 

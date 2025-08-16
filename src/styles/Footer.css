@@ -1,0 +1,523 @@
+/* Variables CSS para consistencia */
+:root {
+    --primary-color: #ffffff;
+    --secondary-color: #f8f9fa;
+    --accent-color: #3182ce;
+    --text-primary: #1a202c;
+    --text-secondary: #4a5568;
+    --text-muted: #718096;
+    --border-color: rgba(0, 0, 0, 0.1);
+    --hover-color: #3182ce;
+    --gradient-primary: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    --gradient-secondary: linear-gradient(135deg, #f8f9fa 0%, #e2e8f0 100%);
+    --shadow-light: 0 2px 4px rgba(0, 0, 0, 0.1);
+    --shadow-medium: 0 4px 8px rgba(0, 0, 0, 0.15);
+    --shadow-heavy: 0 8px 24px rgba(0, 0, 0, 0.2);
+    --border-radius: 8px;
+    --transition: all 0.3s ease;
+  }
+  
+  /* Reset y estilos base */
+  * {
+    box-sizing: border-box;
+  }
+  
+  .footer {
+    background: var(--gradient-primary);
+    color: var(--text-primary);
+    padding: 3rem 0 0;
+    position: relative;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  }
+  
+  .footer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.1), transparent);
+  }
+  
+  .footer-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+  
+  @media (min-width: 768px) {
+    .footer-content {
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem;
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    .footer-content {
+      grid-template-columns: 1.5fr 1fr 1.2fr;
+      gap: 4rem;
+    }
+  }
+  
+  /* Sección de marca */
+.footer-section.brand-section {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.brand-container {
+  text-align: center;
+}
+
+@media (min-width: 1024px) {
+  .brand-container {
+    text-align: left;
+  }
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+@media (min-width: 1024px) {
+  .logo-container {
+    justify-content: flex-start;
+  }
+}
+
+.logo-image {
+  border-radius: var(--border-radius);
+  transition: var(--transition);
+  max-width: 100%;
+  height: auto;
+}
+
+.logo-image:hover {
+  transform: scale(1.05);
+  box-shadow: var(--shadow-medium);
+}
+
+/* Responsive para el logo */
+@media (max-width: 480px) {
+  .logo-container {
+    justify-content: center;
+  }
+  
+  .logo-image {
+    width: 300px;
+    height: auto;
+  }
+}
+  
+  
+  
+  .tagline {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    font-weight: 500;
+    margin: 0;
+    line-height: 1.4;
+  }
+  
+  /* Redes sociales */
+  .social-media {
+    text-align: center;
+  }
+  
+  @media (min-width: 1024px) {
+    .social-media {
+      text-align: left;
+    }
+  }
+  
+  .social-title {
+    color: var(--text-primary);
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 0 0 1rem 0;
+  }
+  
+  .social-links {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+  }
+  
+  @media (min-width: 1024px) {
+    .social-links {
+      justify-content: flex-start;
+    }
+  }
+  
+  .social-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: var(--border-radius);
+    transition: var(--transition);
+    text-decoration: none;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .social-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: var(--border-radius);
+    transition: var(--transition);
+    z-index: 1;
+  }
+  
+  .social-btn:hover::before {
+    background: rgba(0, 0, 0, 0.1);
+  }
+  
+  .social-btn svg {
+    width: 20px;
+    height: 20px;
+    position: relative;
+    z-index: 2;
+    transition: var(--transition);
+  }
+  
+  .social-btn.facebook {
+    color: #1877f2;
+  }
+  
+  .social-btn.instagram {
+    color: #e4405f;
+  }
+  
+  .social-btn.whatsapp {
+    color: #25d366;
+  }
+  
+  .social-btn.tiktok {
+    color: #000000;
+  }
+  
+  .social-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-medium);
+  }
+  
+  .social-btn:hover svg {
+    transform: scale(1.1);
+  }
+  
+  /* Secciones generales */
+  .footer-section h3 {
+    color: var(--text-primary);
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0 0 1.5rem 0;
+    position: relative;
+    padding-bottom: 0.5rem;
+  }
+  
+  .footer-section h3::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 30px;
+    height: 2px;
+    background: var(--hover-color);
+    border-radius: 1px;
+  }
+  
+  .section-title {
+    display: block;
+  }
+  
+  /* Links de información */
+  .info-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .info-links li {
+    margin-bottom: 0.75rem;
+  }
+  
+  .info-links a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-weight: 400;
+    transition: var(--transition);
+    position: relative;
+    display: inline-block;
+  }
+  
+  .info-links a::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 0;
+    height: 1px;
+    background: var(--hover-color);
+    transition: var(--transition);
+  }
+  
+  .info-links a:hover {
+    color: var(--text-primary);
+    transform: translateX(4px);
+  }
+  
+  .info-links a:hover::after {
+    width: 100%;
+  }
+  
+  /* Información de contacto */
+  .contact-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .contact-text {
+    color: var(--text-secondary);
+    margin: 0;
+    font-weight: 500;
+  }
+  
+  .phone-number {
+    color: var(--hover-color);
+    font-size: 1.5rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: var(--transition);
+    display: inline-block;
+  }
+  
+  .phone-number:hover {
+    color: var(--text-primary);
+    transform: scale(1.05);
+  }
+  
+  .contact-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    line-height: 1.5;
+  }
+  
+  .contact-icon {
+    width: 20px;
+    height: 20px;
+    color: var(--hover-color);
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  
+  .contact-item span,
+  .contact-item a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-weight: 400;
+    transition: var(--transition);
+  }
+  
+  .contact-item a:hover {
+    color: var(--text-primary);
+  }
+  
+  /* Footer inferior */
+  .footer-bottom {
+    margin-top: 3rem;
+    padding: 2rem 2rem 2rem;
+    border-top: 1px solid var(--border-color);
+    background: var(--secondary-color);
+  }
+  
+  .footer-bottom > div {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    text-align: center;
+  }
+  
+  @media (min-width: 768px) {
+    .footer-bottom > div {
+      flex-direction: row;
+      justify-content: space-between;
+      text-align: left;
+    }
+  }
+  
+  .copyright {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+  
+  /* Métodos de pago */
+  .payment-methods {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+  
+  @media (min-width: 768px) {
+    .payment-methods {
+      flex-direction: row;
+      align-items: center;
+    }
+  }
+  
+  .payment-text {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  
+  .payment-logos {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  @media (min-width: 768px) {
+    .payment-logos {
+      justify-content: flex-start;
+    }
+  }
+  
+  .payment-logo {
+    height: 32px;
+    border-radius: 4px;
+    overflow: hidden;
+    transition: var(--transition);
+    box-shadow: var(--shadow-light);
+    background: white;
+  }
+  
+  .payment-logo:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-medium);
+  }
+  
+  .payment-logo svg {
+    height: 100%;
+    width: auto;
+    display: block;
+  }
+  
+  .payment-logo.visa svg {
+    width: 50px;
+  }
+  
+  .payment-logo.mastercard svg {
+    width: 50px;
+  }
+  
+  .payment-logo.amex svg {
+    width: 50px;
+  }
+  
+  .payment-logo.paypal svg {
+    width: 50px;
+  }
+  
+  /* Animaciones adicionales */
+  @keyframes slideInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .footer-section {
+    animation: slideInUp 0.6s ease-out;
+  }
+  
+  .footer-section:nth-child(2) {
+    animation-delay: 0.1s;
+  }
+  
+  .footer-section:nth-child(3) {
+    animation-delay: 0.2s;
+  }
+  
+  /* Estados de foco para accesibilidad */
+  .social-btn:focus,
+  .info-links a:focus,
+  .phone-number:focus,
+  .contact-item a:focus {
+    outline: 2px solid var(--hover-color);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  
+  /* Mejoras para modo oscuro */
+  @media (prefers-color-scheme: dark) {
+    .payment-logo {
+      filter: brightness(0.9);
+    }
+    
+    .payment-logo:hover {
+      filter: brightness(1.1);
+    }
+  }
+  
+  /* Responsive adicional para móviles pequeños */
+  @media (max-width: 480px) {
+    .footer {
+      padding: 2rem 0 0;
+    }
+    
+    .footer-content {
+      padding: 0 1rem;
+      gap: 2rem;
+    }
+    
+    .brand-name {
+      font-size: 1.75rem;
+    }
+    
+    .payment-logos {
+      gap: 0.5rem;
+    }
+    
+    .payment-logo {
+      height: 28px;
+    }
+    
+    .social-links {
+      gap: 0.5rem;
+    }
+    
+    .social-btn {
+      width: 40px;
+      height: 40px;
+    }
+  }

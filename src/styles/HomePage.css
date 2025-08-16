@@ -1,4 +1,4 @@
-/* HomePage.css - Layout que respeta la estructura */
+/* HomePage.css - Layout con Sticky Header Corregido */
 
 /* Reset general */
 * {
@@ -7,67 +7,105 @@
   box-sizing: border-box;
 }
 
+/* Asegurar que html y body no interfieran */
+html, body {
+  height: 100%;
+  overflow-x: hidden; /* Solo ocultar overflow horizontal */
+  /* NO poner overflow-y: hidden aquí */
+}
+
 /* Layout principal de la página */
 .page-layout {
   width: 100%;
   min-height: 100vh;
-  background-color: #ffffff; /* Cambiado a blanco */
-  display: flex;
-  flex-direction: column;
+  background-color: #ffffff;
+  position: relative;
+  /* NO usar display: flex aquí - puede interferir con sticky */
+}
+
+/* Sticky Wrapper: Agrupa Topbar + Header */
+.sticky-wrapper {
+  position: sticky;
+  position: -webkit-sticky; /* Compatibilidad Safari */
+  top: 0;
+  z-index: 1000; /* Aumentar z-index */
+  background-color: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  /* Asegurar que tenga contenido para que sticky funcione */
+  min-height: auto;
 }
 
 /* Sección del Topbar */
 .topbar-section {
   width: 100%;
   position: relative;
-  z-index: 100;
-  /* El topbar mantiene su propio fondo */
+  z-index: 102;
+  background-color: #ffffff;
 }
 
 /* Sección del Header */
 .header-section {
   width: 100%;
   position: relative;
-  z-index: 99;
-  background-color: #ffffff; /* Fondo blanco para el header */
+  z-index: 101;
+  background-color: #ffffff;
+  transition: all 0.3s ease;
 }
 
-/* Contenedor del Hero Section - Fondo blanco */
+/* Contenedor del Hero Section */
 .hero-section-wrapper {
   width: 100%;
   padding: 10px 0;
-  background-color: #ffffff; /* Fondo blanco en lugar de transparente */
+  background-color: #ffffff;
   position: relative;
   z-index: 1;
   display: flex;
   align-items: center;
   justify-content: center;
+  /* Añadir margin-top si es necesario para compensar altura del header fijo */
 }
 
 /* Contenido principal */
 .main-content {
-  flex: 1;
   width: 100%;
   position: relative;
   z-index: 1;
-  background-color: #f8f9fa; /* Fondo gris claro para el contenido principal */
+  background-color: #ffffff;
+  /* Asegurar que tenga suficiente altura */
+  min-height: calc(100vh - 120px); /* Ajustar según altura del header */
 }
 
-/* Sección de contenido adicional */
-.content-section {
-  padding: 60px 20px;
-  background: #ffffff; /* Fondo blanco para la sección de contenido */
+/* Secciones específicas */
+.categories-section {
+  background-color: #ffffff;
   position: relative;
   z-index: 1;
 }
 
-.content-section .container {
+.featured-products-section {
+  background-color: #ffffff;
+  position: relative;
+  z-index: 1;
+}
+
+/* Sección de contenido adicional */
+.featured-content {
+  padding: 60px 20px;
+  background: #ffffff;
+  position: relative;
+  z-index: 1;
+  /* Añadir altura mínima para testing */
+  min-height: 500px;
+}
+
+.featured-content .container {
   max-width: 1200px;
   margin: 0 auto;
   text-align: center;
 }
 
-.content-section h1 {
+.featured-content h1 {
   font-size: 2.5rem;
   font-weight: 700;
   color: #2d3748;
@@ -75,7 +113,7 @@
   line-height: 1.2;
 }
 
-.content-section p {
+.featured-content p {
   font-size: 1.2rem;
   color: #718096;
   max-width: 600px;
@@ -83,7 +121,19 @@
   line-height: 1.6;
 }
 
-/* Opcional: Si quieres un efecto de separación entre secciones */
+/* Añadir contenido de prueba para verificar scroll */
+.test-scroll-content {
+  height: 200vh;
+  background: linear-gradient(45deg, #f0f0f0, #ffffff);
+  padding: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: #666;
+}
+
+/* Separador visual del Hero Section */
 .hero-section-wrapper::after {
   content: '';
   position: absolute;
@@ -94,21 +144,73 @@
   background: linear-gradient(to right, transparent, #e2e8f0 50%, transparent);
 }
 
+/* Separadores visuales entre secciones */
+.categories-section::after,
+.featured-products-section::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 1200px;
+  height: 1px;
+  background: linear-gradient(to right, transparent, #e2e8f0 50%, transparent);
+}
+
+/* Clase adicional para cuando el header está "stuck" */
+.sticky-wrapper.stuck {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Transiciones suaves para el sticky header */
+.sticky-wrapper {
+  transition: box-shadow 0.3s ease;
+}
+
+/* Fix para navegadores que no soportan sticky completamente */
+@supports not (position: sticky) {
+  .sticky-wrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+  }
+  
+  .hero-section-wrapper {
+    margin-top: 120px; /* Ajustar según altura real del header */
+  }
+}
+
 /* Responsive */
 @media (max-width: 768px) {
+  .sticky-wrapper {
+    /* En móvil, reducir z-index si hay conflictos */
+    z-index: 999;
+  }
+  
   .hero-section-wrapper {
     padding: 30px 0;
   }
-  
-  .content-section {
-    padding: 40px 15px;
+
+  .categories-section {
+    padding: 5px 0;
   }
-  
-  .content-section h1 {
+
+  .featured-products-section {
+    padding: 15px 0;
+  }
+
+  .featured-content {
+    padding: 40px 15px;
+    min-height: 400px;
+  }
+
+  .featured-content h1 {
     font-size: 2rem;
   }
-  
-  .content-section p {
+
+  .featured-content p {
     font-size: 1.1rem;
   }
 }
@@ -117,16 +219,36 @@
   .hero-section-wrapper {
     padding: 25px 0;
   }
-  
-  .content-section {
-    padding: 30px 10px;
+
+  .categories-section {
+    padding: 5px 0;
   }
-  
-  .content-section h1 {
+
+  .featured-products-section {
+    padding: 10px 0;
+  }
+
+  .featured-content {
+    padding: 30px 10px;
+    min-height: 300px;
+  }
+
+  .featured-content h1 {
     font-size: 1.75rem;
   }
-  
-  .content-section p {
+
+  .featured-content p {
     font-size: 1rem;
   }
+}
+
+/* Debug: clase temporal para verificar que sticky funciona */
+.debug-sticky {
+  position: sticky;
+  top: 0;
+  background: red !important;
+  color: white;
+  text-align: center;
+  padding: 10px;
+  z-index: 9999;
 }

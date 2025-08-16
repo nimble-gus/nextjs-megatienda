@@ -1,0 +1,396 @@
+/* CartSummary.css - VERSIÓN LIMPIA */
+
+.cart-summary {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  position: sticky;
+  top: 20px;
+  height: fit-content;
+  width: 100%;
+}
+
+.summary-header {
+  padding: 15px 20px;
+  border-bottom: 1px solid #e9ecef;
+  background: #f8f9fa;
+}
+
+.summary-header h3 {
+  margin: 0;
+  font-size: 1.3rem;
+  color: #333;
+  font-weight: 600;
+}
+
+.summary-content {
+  padding: 15px 20px;
+}
+
+/* Cupón */
+.coupon-section {
+  margin-bottom: 20px;
+}
+
+.coupon-section label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.coupon-input-group {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.coupon-input-group input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.coupon-input-group input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.1);
+}
+
+.apply-coupon-btn,
+.remove-coupon-btn {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: background-color 0.2s ease;
+}
+
+.apply-coupon-btn {
+  background: #28a745;
+  color: white;
+}
+
+.apply-coupon-btn:hover:not(:disabled) {
+  background: #218838;
+}
+
+.apply-coupon-btn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
+
+.remove-coupon-btn {
+  background: #dc3545;
+  color: white;
+}
+
+.remove-coupon-btn:hover {
+  background: #c82333;
+}
+
+.applied-coupon {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: #d4edda;
+  border: 1px solid #c3e6cb;
+  border-radius: 6px;
+  color: #155724;
+  font-size: 0.9rem;
+}
+
+.applied-coupon button {
+  background: none;
+  border: none;
+  color: #155724;
+  cursor: pointer;
+  font-size: 1.2rem;
+  padding: 0;
+  margin-left: 10px;
+}
+
+/* Resumen de precios */
+.price-summary {
+  margin-bottom: 20px;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  font-size: 0.9rem;
+}
+
+.summary-label {
+  color: #666;
+}
+
+.summary-value {
+  font-weight: 600;
+  color: #333;
+}
+
+.summary-row.subtotal {
+  border-bottom: 1px solid #e9ecef;
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+}
+
+.summary-row.discount-row {
+  color: #28a745;
+}
+
+.discount-value {
+  color: #28a745 !important;
+}
+
+.summary-row.total-row {
+  font-size: 1.1rem;
+  font-weight: 700;
+  border-top: 2px solid #e9ecef;
+  padding-top: 10px;
+  margin-top: 10px;
+}
+
+.total-value {
+  color: #007bff !important;
+  font-size: 1.1rem;
+}
+
+/* Información adicional */
+.summary-info {
+  margin-bottom: 20px;
+  padding: 12px 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  color: #666;
+  font-size: 0.85rem;
+}
+
+.info-item:last-child {
+  margin-bottom: 0;
+}
+
+.info-icon {
+  font-size: 1rem;
+}
+
+.info-text {
+  flex: 1;
+}
+
+/* Botones de acción */
+.checkout-section {
+  margin-bottom: 20px;
+}
+
+.checkout-btn {
+  width: 100%;
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  margin-bottom: 8px;
+}
+
+.checkout-btn:hover {
+  background: #0056b3;
+}
+
+.checkout-btn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
+
+.update-cart-btn {
+  width: 100%;
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.update-cart-btn:hover {
+  background: #5a6268;
+}
+
+/* Métodos de pago */
+.payment-methods {
+  margin-bottom: 0;
+}
+
+.payment-methods h4 {
+  margin: 0 0 12px 0;
+  font-size: 0.95rem;
+  color: #333;
+  font-weight: 600;
+}
+
+.payment-icons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.payment-method {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 45px;
+  height: 45px;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.payment-method:hover {
+  background: #e9ecef;
+  border-color: #007bff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
+}
+
+.payment-icon {
+  font-size: 1.3rem;
+  transition: all 0.3s ease;
+}
+
+.payment-method:hover .payment-icon {
+  transform: scale(1.1);
+}
+
+/* Tooltip personalizado */
+.payment-method::before {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  z-index: 1000;
+  margin-bottom: 8px;
+}
+
+.payment-method::after {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #333;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  margin-bottom: 3px;
+}
+
+.payment-method:hover::before,
+.payment-method:hover::after {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Enlaces útiles */
+.useful-links {
+  border-top: 1px solid #e9ecef;
+  padding-top: 20px;
+}
+
+.useful-links a {
+  display: block;
+  color: #007bff;
+  text-decoration: none;
+  padding: 5px 0;
+  font-size: 0.9rem;
+  transition: color 0.2s ease;
+}
+
+.useful-links a:hover {
+  color: #0056b3;
+  text-decoration: underline;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .cart-summary {
+    position: static;
+    max-height: none;
+  }
+  
+  .summary-content {
+    max-height: none;
+    overflow-y: visible;
+  }
+}
+
+@media (max-width: 768px) {
+  .summary-header {
+    padding: 15px;
+  }
+  
+  .summary-content {
+    padding: 15px;
+  }
+  
+  .summary-header h3 {
+    font-size: 1.2rem;
+  }
+  
+  .checkout-btn {
+    padding: 12px;
+    font-size: 1rem;
+  }
+  
+  .update-cart-btn {
+    padding: 10px;
+    font-size: 0.9rem;
+  }
+  
+  .payment-method {
+    width: 45px;
+    height: 45px;
+  }
+  
+  .payment-icon {
+    font-size: 1.3rem;
+  }
+}

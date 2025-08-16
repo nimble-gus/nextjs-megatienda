@@ -46,11 +46,13 @@ model productos {
   descripcion    String
   url_imagen     String?
   categoria_id   Int
+  featured       Boolean           @default(false)
   categoria      categorias        @relation(fields: [categoria_id], references: [id])
   imagenes       imagenes_producto[]
   stock          stock_detalle[]
   carrito        carrito[]
   ordenDetalle   orden_detalle[]
+  destacado      productos_destacados?
 }
 
 model imagenes_producto {
@@ -101,4 +103,16 @@ model orden_detalle {
   orden          ordenes    @relation(fields: [orden_id], references: [id])
   producto       productos  @relation(fields: [producto_id], references: [id])
   color          colores    @relation(fields: [color_id], references: [id])
+}
+
+model productos_destacados {
+  id           Int       @id @default(autoincrement())
+  producto_id  Int       @unique
+  orden        Int       @default(0)
+  fecha_inicio DateTime  @default(now())
+  fecha_fin    DateTime?
+  activo       Boolean   @default(true)
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
+  producto     productos @relation(fields: [producto_id], references: [id], onDelete: Cascade)
 }
