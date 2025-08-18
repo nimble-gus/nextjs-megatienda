@@ -409,12 +409,16 @@
   }
   
   .payment-logo {
-    height: 32px;
-    border-radius: 4px;
+    height: 40px;
+    border-radius: 6px;
     overflow: hidden;
     transition: var(--transition);
     box-shadow: var(--shadow-light);
     background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 8px;
   }
   
   .payment-logo:hover {
@@ -422,26 +426,44 @@
     box-shadow: var(--shadow-medium);
   }
   
-  .payment-logo svg {
+  .payment-logo .payment-image {
     height: 100%;
     width: auto;
     display: block;
+    object-fit: contain;
   }
   
-  .payment-logo.visa svg {
-    width: 50px;
+  .payment-logo.visa .payment-image {
+    width: 70px;
+    height: 24px;
   }
   
-  .payment-logo.mastercard svg {
-    width: 50px;
+  .payment-logo.mastercard .payment-image {
+    width: 60px;
+    height: 40px;
   }
   
-  .payment-logo.amex svg {
-    width: 50px;
+  /* Estilos específicos para cada logo */
+  .payment-logo.visa {
+    background: white;
+    border: 1px solid #E5E7EB;
   }
   
-  .payment-logo.paypal svg {
-    width: 50px;
+  .payment-logo.mastercard {
+    background: white;
+    border: 1px solid #E5E7EB;
+  }
+  
+  .payment-logo.visa:hover {
+    background: white;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  }
+  
+  .payment-logo.mastercard:hover {
+    background: white;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
   }
   
   /* Animaciones adicionales */
@@ -509,7 +531,17 @@
     }
     
     .payment-logo {
-      height: 28px;
+      height: 32px;
+    }
+    
+    .payment-logo.visa .payment-image {
+      width: 60px;
+      height: 20px;
+    }
+    
+    .payment-logo.mastercard .payment-image {
+      width: 50px;
+      height: 32px;
     }
     
     .social-links {

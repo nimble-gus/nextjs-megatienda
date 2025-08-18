@@ -1,31 +1,34 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { executeWithRetry } from '@/lib/db-utils';
 
 export async function GET() {
   try {
     console.log('=== API /api/featured-products iniciada ===');
     
-    // Obtener productos destacados (solo los que tienen featured = 1)
-    const featuredProducts = await prisma.productos.findMany({
-      where: {
-        featured: true // Solo productos marcados como destacados
-      },
-      include: {
-        categoria: true,
-        imagenes: {
-          take: 1
+    // Obtener productos destacados (solo los que tienen featured = 1) usando retry
+    const featuredProducts = await executeWithRetry(async () => {
+      return await prisma.productos.findMany({
+        where: {
+          featured: true // Solo productos marcados como destacados
         },
-        stock: {
-          include: {
-            color: true
+        include: {
+          categoria: true,
+          imagenes: {
+            take: 1
+          },
+          stock: {
+            include: {
+              color: true
+            }
           }
-        }
-      },
-      orderBy: {
-        // Ordenar por ID de forma aleatoria usando una función de base de datos
-        id: 'asc'
-      },
-      take: 4 // Limitar a 4 productos destacados
+        },
+        orderBy: {
+          // Ordenar por ID de forma aleatoria usando una función de base de datos
+          id: 'asc'
+        },
+        take: 4 // Limitar a 4 productos destacados
+      });
     });
     
     console.log('Productos destacados obtenidos:', featuredProducts.length);

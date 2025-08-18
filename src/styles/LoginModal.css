@@ -1,26 +1,4 @@
-/* Variables CSS para el modal moderno */
-:root {
-    --primary-blue: #1e3a8a;
-    --primary-blue-dark: #1e40af;
-    --primary-blue-light: #3b82f6;
-    --accent-orange: #f97316;
-    --text-dark: #1f2937;
-    --text-light: #6b7280;
-    --text-muted: #9ca3af;
-    --bg-white: #ffffff;
-    --bg-light: #f8fafc;
-    --bg-glass: rgba(255, 255, 255, 0.98);
-    --border-light: #e5e7eb;
-    --error-color: #dc2626;
-    --success-color: #059669;
-    --shadow-light: 0 4px 20px rgba(0, 0, 0, 0.08);
-    --shadow-medium: 0 8px 30px rgba(0, 0, 0, 0.12);
-    --shadow-heavy: 0 20px 60px rgba(0, 0, 0, 0.25);
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-    --gradient-primary: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-dark) 100%);
-    --gradient-accent: linear-gradient(135deg, var(--accent-orange) 0%, #ea580c 100%);
-}
+/* Estilos del modal de login - Usa variables CSS globales */
 
 /* Overlay del modal con blur mejorado */
 .modal-overlay {
@@ -78,7 +56,7 @@
     justify-content: space-between;
     align-items: flex-start;
     border-bottom: 1px solid var(--border-light);
-    background: linear-gradient(135deg, rgba(30, 58, 138, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%);
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%);
     border-radius: 24px 24px 0 0;
 }
 
@@ -91,13 +69,13 @@
 }
 
 .close-btn {
-    background: rgba(255, 255, 255, 0.8);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     border: none;
     cursor: pointer;
     padding: 12px;
     border-radius: 50%;
     transition: var(--transition-smooth);
-    color: var(--text-light);
+    color: white;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -105,8 +83,8 @@
 }
 
 .close-btn:hover {
-    background: rgba(30, 58, 138, 0.1);
-    color: var(--primary-blue);
+    background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+    color: white;
     transform: scale(1.1) rotate(90deg);
 }
 
@@ -119,7 +97,7 @@
 .modal-subtitle {
     padding: 0 30px 20px;
     margin: 0;
-    color: var(--text-light);
+    color: #4a5568;
     font-size: 16px;
     font-weight: 500;
     line-height: 1.5;
@@ -146,16 +124,16 @@
     font-size: 15px;
     cursor: pointer;
     transition: var(--transition-smooth);
-    color: var(--text-light);
+    color: #4a5568;
     border-radius: 12px;
     position: relative;
     z-index: 2;
 }
 
 .toggle-btn.active {
-    color: var(--text-dark);
+    color: white;
     font-weight: 700;
-    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .toggle-slider {
@@ -163,7 +141,7 @@
     top: 4px;
     bottom: 4px;
     width: calc(50% - 4px);
-    background: var(--gradient-primary);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
     border-radius: 12px;
     transition: var(--transition-bounce);
     box-shadow: var(--shadow-light);
@@ -230,8 +208,8 @@
 
 .input-wrapper:focus-within {
     background: white;
-    border-color: var(--primary-blue);
-    box-shadow: 0 0 0 4px rgba(30, 58, 138, 0.1);
+    border-color: #667eea;
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
     transform: translateY(-2px);
 }
 
@@ -255,7 +233,7 @@
 }
 
 .input-wrapper:focus-within .field-icon {
-    color: var(--primary-blue);
+    color: #667eea;
     transform: scale(1.1);
 }
 
@@ -297,8 +275,8 @@
 }
 
 .password-toggle:hover {
-    color: var(--primary-blue);
-    background: rgba(30, 58, 138, 0.1);
+    color: #667eea;
+    background: rgba(102, 126, 234, 0.1);
     transform: scale(1.1);
 }
 
@@ -331,8 +309,8 @@
 /* Botón de envío moderno */
 .btn-submit {
     width: 100%;
-    background: var(--gradient-primary);
-    color: white;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: white !important;
     border: none;
     border-radius: 16px;
     padding: 18px 24px;
@@ -349,11 +327,13 @@
 }
 
 .btn-submit:hover {
+    background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%) !important;
     transform: translateY(-3px);
     box-shadow: var(--shadow-medium);
 }
 
 .btn-submit:active {
+    background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%) !important;
     transform: translateY(-1px);
 }
 
@@ -361,10 +341,12 @@
     cursor: not-allowed;
     opacity: 0.8;
     transform: none;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
 }
 
 .btn-submit.loading {
     pointer-events: none;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
 }
 
 /* Efecto shine del botón */
@@ -412,7 +394,7 @@
 }
 
 .forgot-link {
-    color: var(--accent-orange);
+    color: var(--primary-orange);
     text-decoration: none;
     font-weight: 600;
     font-size: 14px;
@@ -422,7 +404,7 @@
 }
 
 .forgot-link:hover {
-    color: #ea580c;
+    color: var(--primary-orange-dark);
     transform: translateY(-1px);
 }
 
@@ -431,21 +413,21 @@
 }
 
 .terms-text p {
-    color: var(--text-light);
+    color: #4a5568;
     font-size: 13px;
     margin: 0;
     line-height: 1.5;
 }
 
 .link {
-    color: var(--accent-orange);
+    color: var(--primary-orange);
     text-decoration: none;
     font-weight: 600;
     transition: var(--transition-smooth);
 }
 
 .link:hover {
-    color: #ea580c;
+    color: var(--primary-orange-dark);
     text-decoration: underline;
 }
 
@@ -457,7 +439,7 @@
     left: 0;
     right: 0;
     height: 2px;
-    background: var(--gradient-primary);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     border-radius: 24px 24px 0 0;
     opacity: 0.8;
 }
@@ -478,7 +460,7 @@
 }
 
 .modal-container::-webkit-scrollbar-thumb:hover {
-    background: var(--primary-blue);
+    background: #667eea;
 }
 
 /* Responsive Design */
@@ -585,7 +567,7 @@
 .btn-submit:focus,
 .forgot-link:focus,
 .link:focus {
-    outline: 2px solid var(--primary-blue);
+    outline: 2px solid #667eea;
     outline-offset: 2px;
 }
 

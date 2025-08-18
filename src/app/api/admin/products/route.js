@@ -1,28 +1,43 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { executeWithRetry } from '@/lib/db-utils';
 
 export async function GET() {
   try {
-    console.log('=== API /api/admin/products iniciada ===');
+    console.log('=== Iniciando GET /api/admin/products ===');
     
-    // Obtener productos para el admin (sin filtros, sin paginación)
-    const products = await prisma.productos.findMany({
-      include: {
-        categoria: true,
-        stock: {
-          include: {
-            color: true
-          }
-        }
-      },
-      orderBy: {
-        id: 'desc'
-      }
+    // Usar executeWithRetry para manejar reconexiones automáticas
+    const productCount = await executeWithRetry(async () => {
+      return await prisma.productos.count();
     });
     
-    console.log('Productos obtenidos para admin:', products.length);
+    console.log(`📊 Total de productos en BD: ${productCount}`);
     
-    // Formatear productos para el admin
+    if (productCount === 0) {
+      console.log('📭 No hay productos en la base de datos');
+      return NextResponse.json([]);
+    }
+    
+    // Si hay productos, obtenerlos con relaciones usando retry
+    const products = await executeWithRetry(async () => {
+      return await prisma.productos.findMany({
+        include: {
+          categoria: true,
+          stock: {
+            include: {
+              color: true
+            }
+          }
+        },
+        orderBy: {
+          id: 'desc'
+        }
+      });
+    });
+
+    console.log(`✅ Productos encontrados: ${products.length}`);
+
+    // Formatear los productos para el admin
     const formattedProducts = products.map(product => {
       const hasStock = product.stock.length > 0 && product.stock.some(item => item.cantidad > 0);
       const totalStock = product.stock.reduce((total, item) => total + item.cantidad, 0);
@@ -35,40 +50,42 @@ export async function GET() {
         maxPrice = Math.max(...product.stock.map(s => s.precio));
       }
 
-      return {
+      const formattedProduct = {
         id: product.id,
         sku: product.sku,
         nombre: product.nombre,
         descripcion: product.descripcion,
         url_imagen: product.url_imagen,
-        categoria: product.categoria,
+        categoria: product.categoria?.nombre || 'Sin categoría',
         featured: product.featured,
-        stock: product.stock,
+        stock: totalStock,
         hasStock,
-        totalStock,
         minPrice,
         maxPrice,
-        priceFormatted: minPrice > 0 ? `Q${minPrice.toFixed(2)}` : 'Sin precio'
+        precio: minPrice > 0 ? minPrice : null
       };
+
+      // Debug: Log para verificar la imagen del producto en admin
+      console.log(`Admin - Producto ${product.id} - ${product.nombre}:`, {
+        url_imagen: product.url_imagen
+      });
+
+      return formattedProduct;
     });
-    
-    return NextResponse.json({
-      success: true,
-      products: formattedProducts,
-      total: products.length
-    });
+
+    console.log('✅ Productos formateados exitosamente');
+    return NextResponse.json(formattedProducts);
     
   } catch (error) {
-    console.error('=== ERROR EN API /api/admin/products ===');
+    console.error('=== ERROR EN GET /api/admin/products ===');
     console.error('Error completo:', error);
     console.error('Stack trace:', error.stack);
     console.error('Mensaje:', error.message);
     
     return NextResponse.json(
       { 
-        success: false,
         error: 'Error interno del servidor',
-        details: error.message
+        details: error.message 
       },
       { status: 500 }
     );

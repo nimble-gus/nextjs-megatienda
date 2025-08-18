@@ -7,12 +7,13 @@ import { uploadImageToCloudinary } from '@/services/cloudinaryService';
 import { createFullProduct } from '@/services/productService';
 import '@/styles/ProductForm.css';
 
-export default function ProductForm() {
+export default function ProductForm({ onProductAdded }) {
   const [nombre, setNombre] = useState('');
   const [descripcion, setDescripcion] = useState('');
   const [urlImagen, setUrlImagen] = useState(''); // Imagen principal
   const [imagenesAdicionales, setImagenesAdicionales] = useState([]); // Imágenes adicionales
   const [categoriaId, setCategoriaId] = useState('');
+  const [featured, setFeatured] = useState(false);
   const [categorias, setCategorias] = useState([]);
   const [colores, setColores] = useState([]);
   const [stock, setStock] = useState([]);
@@ -115,6 +116,7 @@ export default function ProductForm() {
       descripcion,
       url_imagen: urlImagen, // Imagen principal
       categoria_id: parseInt(categoriaId),
+      featured: featured,
       imagenes_adicionales: imagenesAdicionales, // Array de URLs de imágenes adicionales
       stock: stock.map((s) => ({
         color_id: parseInt(s.color_id),
@@ -133,7 +135,9 @@ export default function ProductForm() {
       setUrlImagen('');
       setImagenesAdicionales([]);
       setCategoriaId('');
+      setFeatured(false);
       setStock([]);
+      onProductAdded(); // Llamar la prop para notificar el cambio
     } catch (error) {
       console.error('Error creando producto:', error);
       alert('Error al crear el producto');
@@ -208,6 +212,21 @@ export default function ProductForm() {
               <option value="" disabled>No hay categorías disponibles</option>
             )}
           </select>
+        </div>
+
+        <div className="form-group checkbox-group">
+          <label className="checkbox-label">
+            <input
+              type="checkbox"
+              checked={featured}
+              onChange={(e) => setFeatured(e.target.checked)}
+            />
+            <span className="checkmark"></span>
+            Marcar como producto destacado
+          </label>
+          <small style={{ color: '#6b7280', fontStyle: 'italic' }}>
+            Los productos destacados aparecerán en la página principal
+          </small>
         </div>
 
         {/* Imagen Principal */}

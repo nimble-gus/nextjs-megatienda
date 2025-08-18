@@ -1,8 +1,8 @@
-'use client';
+        'use client';
 import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { addToCart } from '@/services/cartService';
+
 import '@/styles/ProductGrid.css';
 
 const ProductGrid = ({ 
@@ -19,8 +19,7 @@ const ProductGrid = ({
   onSortChange, 
   onItemsPerPageChange 
 }) => {
-  const [addingToCart, setAddingToCart] = useState({});
-  const [cartMessages, setCartMessages] = useState({});
+
 
   // Calcular índices para mostrar información
   const startIndex = (currentPage - 1) * itemsPerPage + 1;
@@ -39,91 +38,7 @@ const ProductGrid = ({
     ));
   };
 
-  const handleAddToCart = async (product, event) => {
-    event.preventDefault();
-    event.stopPropagation();
 
-    // Verificar si el usuario está logueado
-    const user = JSON.parse(localStorage.getItem('user') || 'null');
-    if (!user) {
-      alert('Debes iniciar sesión para agregar productos al carrito');
-      return;
-    }
-
-    // Verificar si el producto tiene colores disponibles
-    if (!product.colors || product.colors.length === 0) {
-      alert('Este producto no tiene colores disponibles');
-      return;
-    }
-
-    // Si tiene múltiples colores, redirigir a la página del producto
-    if (product.colors.length > 1) {
-      window.location.href = `/product/${product.id}`;
-      return;
-    }
-
-    // Si solo tiene un color, agregar directamente al carrito
-    const selectedColor = product.colors[0];
-    
-    if (!selectedColor.available) {
-      alert('Este producto no está disponible');
-      return;
-    }
-
-    try {
-      setAddingToCart(prev => ({ ...prev, [product.id]: true }));
-      setCartMessages(prev => ({ ...prev, [product.id]: '' }));
-
-      const productData = {
-        usuario_id: user.id || user.usuario_id,
-        producto_id: product.id,
-        color_id: selectedColor.id,
-        cantidad: 1
-      };
-
-      const result = await addToCart(productData);
-      
-      // Mostrar mensaje de éxito
-      setCartMessages(prev => ({ 
-        ...prev, 
-        [product.id]: result.message 
-      }));
-      
-      // Disparar evento para actualizar contador en el header
-      window.dispatchEvent(new CustomEvent('cartUpdated'));
-      
-      // Limpiar mensaje después de 3 segundos
-      setTimeout(() => {
-        setCartMessages(prev => {
-          const newMessages = { ...prev };
-          delete newMessages[product.id];
-          return newMessages;
-        });
-      }, 3000);
-
-    } catch (error) {
-      console.error('Error agregando al carrito:', error);
-      setCartMessages(prev => ({ 
-        ...prev, 
-        [product.id]: `Error: ${error.message}` 
-      }));
-      
-      // Limpiar mensaje de error después de 5 segundos
-      setTimeout(() => {
-        setCartMessages(prev => {
-          const newMessages = { ...prev };
-          delete newMessages[product.id];
-          return newMessages;
-        });
-      }, 5000);
-    } finally {
-      setAddingToCart(prev => {
-        const newState = { ...prev };
-        delete newState[product.id];
-        return newState;
-      });
-    }
-  };
 
   // Componente de producto individual
   const ProductCard = ({ product }) => (
@@ -153,22 +68,6 @@ const ProductGrid = ({
                  <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
                </svg>
              </button>
-             <button 
-               className="add-to-cart-btn"
-               onClick={(e) => handleAddToCart(product, e)}
-               disabled={addingToCart[product.id]}
-               title="Agregar al Carrito"
-             >
-               {addingToCart[product.id] ? (
-                 <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-                   <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                 </svg>
-               ) : (
-                 <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-                   <path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12L8.1 13h7.45c.75 0 1.41-.41 1.75-1.03L21.7 4H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/>
-                 </svg>
-               )}
-             </button>
            </div>
         </div>
         
@@ -186,69 +85,63 @@ const ProductGrid = ({
           </div>
         </div>
       </Link>
-      
-      {/* Mensaje del carrito */}
-      {cartMessages[product.id] && (
-        <div className={`cart-message ${cartMessages[product.id].includes('Error') ? 'error' : 'success'}`}>
-          {cartMessages[product.id]}
-        </div>
-      )}
     </div>
   );
 
   // Componente de producto en vista lista
   const ProductListItem = ({ product }) => (
     <div className="product-list-item">
-      <Link href={`/product/${product.id}`} className="product-link">
-        <div className="product-image-container">
-          {product.image ? (
-            <Image 
-              src={product.image} 
-              alt={product.name}
-              width={100}
-              height={100}
-              className="product-image"
-              priority={false}
-            />
-          ) : (
-            <div className="product-image-placeholder">
-              <span>Sin imagen</span>
-            </div>
-          )}
-        </div>
-        
-        <div className="product-info">
-          <div className="product-brand">{product.brand}</div>
-          <h3 className="product-name">{product.name}</h3>
-          <div className="product-rating">
-            {renderStars(product.rating)}
-          </div>
-          <div className="product-price">
-            <span className="current-price">{formatPrice(product.price)}</span>
-            {product.originalPrice > product.price && (
-              <span className="original-price">{formatPrice(product.originalPrice)}</span>
+      <div className="product-list-image-section">
+        <Link href={`/product/${product.id}`} className="product-link">
+          <div className="product-image-container">
+            {product.image ? (
+              <Image 
+                src={product.image} 
+                alt={product.name}
+                width={120}
+                height={120}
+                className="product-image"
+                priority={false}
+              />
+            ) : (
+              <div className="product-image-placeholder">
+                <span>Sin imagen</span>
+              </div>
             )}
           </div>
-        </div>
-      </Link>
-      
-      <div className="product-actions">
-        <button className="quick-view-btn">Ver Detalles</button>
-        <button 
-          className="add-to-cart-btn"
-          onClick={(e) => handleAddToCart(product, e)}
-          disabled={addingToCart[product.id]}
-        >
-          {addingToCart[product.id] ? 'Agregando...' : 'Agregar al Carrito'}
-        </button>
+        </Link>
       </div>
       
-      {/* Mensaje del carrito */}
-      {cartMessages[product.id] && (
-        <div className={`cart-message ${cartMessages[product.id].includes('Error') ? 'error' : 'success'}`}>
-          {cartMessages[product.id]}
+      <div className="product-list-info-section">
+        <Link href={`/product/${product.id}`} className="product-link">
+          <div className="product-info">
+            <div className="product-brand">{product.brand}</div>
+            <h3 className="product-name">{product.name}</h3>
+            <div className="product-rating">
+              {renderStars(product.rating)}
+              <span className="rating-text">({product.rating}/5)</span>
+            </div>
+            <div className="product-price">
+              <span className="current-price">{formatPrice(product.price)}</span>
+              {product.originalPrice > product.price && (
+                <span className="original-price">{formatPrice(product.originalPrice)}</span>
+              )}
+            </div>
+          </div>
+        </Link>
+      </div>
+      
+      <div className="product-list-actions-section">
+        <div className="product-actions">
+          <Link href={`/product/${product.id}`} className="action-btn view-details-btn">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+              <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+            </svg>
+            Ver Detalles
+          </Link>
+
         </div>
-      )}
+      </div>
     </div>
   );
 

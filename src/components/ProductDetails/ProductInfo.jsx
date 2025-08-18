@@ -117,7 +117,7 @@ const ProductInfo = ({
           disabled={selectedColor?.stock === 0 || isAddingToCart}
         >
           <span>{isAddingToCart ? 'Agregando...' : 'Agregar al Carrito'}</span>
-          <span className="heart-icon">❤️</span>
+          <span className="cart-icon">🛒</span>
         </button>
         
         <button 

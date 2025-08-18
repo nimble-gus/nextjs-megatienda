@@ -129,3 +129,4 @@ const testCartWidthFix = async () => {
 
 // Ejecutar la verificación
 testCartWidthFix();
+

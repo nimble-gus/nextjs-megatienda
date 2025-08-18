@@ -7,22 +7,16 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Rol {
-  cliente
-  admin
-}
-
 model usuarios {
-  id          Int       @id @default(autoincrement())
-  nombre      String
-  correo      String    @unique
-  password    String    @map("contraseña")
-  rol         Rol?      // Nullable ENUM
-  creado_en   DateTime? @default(now())  @db.Timestamp(0)
-  ordenes     ordenes[]
-  carrito     carrito[]
+  id        Int       @id @default(autoincrement())
+  nombre    String
+  correo    String    @unique
+  password  String    @map("contraseña")
+  rol       Rol?
+  creado_en DateTime? @default(now()) @db.Timestamp(0)
+  carrito   carrito[]
+  ordenes   ordenes[]
 }
-
 
 model categorias {
   id        Int         @id @default(autoincrement())
@@ -31,56 +25,67 @@ model categorias {
 }
 
 model colores {
-  id          Int             @id @default(autoincrement())
-  nombre      String
-  codigo_hex  String
-  carrito     carrito[]
-  stock       stock_detalle[]
+  id           Int             @id @default(autoincrement())
+  nombre       String
+  codigo_hex   String
+  carrito      carrito[]
   ordenDetalle orden_detalle[]
+  stock        stock_detalle[]
 }
 
 model productos {
-  id             Int               @id @default(autoincrement())
-  sku            String
-  nombre         String
-  descripcion    String
-  url_imagen     String?
-  categoria_id   Int
-  featured       Boolean           @default(false)
-  categoria      categorias        @relation(fields: [categoria_id], references: [id])
-  imagenes       imagenes_producto[]
-  stock          stock_detalle[]
-  carrito        carrito[]
-  ordenDetalle   orden_detalle[]
-  destacado      productos_destacados?
+  id           Int                   @id @default(autoincrement())
+  sku          String
+  nombre       String
+  descripcion  String
+  url_imagen   String?
+  categoria_id Int
+  featured     Boolean               @default(false)
+  carrito      carrito[]
+  imagenes     imagenes_producto[]
+  ordenDetalle orden_detalle[]
+  categoria    categorias            @relation(fields: [categoria_id], references: [id])
+  destacado    productos_destacados?
+  stock        stock_detalle[]
+
+  @@index([categoria_id], map: "productos_categoria_id_fkey")
 }
 
 model imagenes_producto {
-  id          Int        @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   producto_id Int
   url_imagen  String
-  producto    productos  @relation(fields: [producto_id], references: [id])
+  producto    productos @relation(fields: [producto_id], references: [id])
+
+  @@index([producto_id], map: "imagenes_producto_producto_id_fkey")
 }
 
 model stock_detalle {
-  id          Int        @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   producto_id Int
   color_id    Int
   cantidad    Int
   precio      Float
-  producto    productos  @relation(fields: [producto_id], references: [id])
-  color       colores    @relation(fields: [color_id], references: [id])
+  color       colores   @relation(fields: [color_id], references: [id])
+  producto    productos @relation(fields: [producto_id], references: [id])
+
+  @@index([color_id], map: "stock_detalle_color_id_fkey")
+  @@index([producto_id], map: "stock_detalle_producto_id_fkey")
 }
 
 model carrito {
-  id          Int        @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   usuario_id  Int
   producto_id Int
   color_id    Int
   cantidad    Int
-  usuario     usuarios   @relation(fields: [usuario_id], references: [id])
-  producto    productos  @relation(fields: [producto_id], references: [id])
-  color       colores    @relation(fields: [color_id], references: [id])
+  color       colores   @relation(fields: [color_id], references: [id])
+  producto    productos @relation(fields: [producto_id], references: [id])
+  usuario     usuarios  @relation(fields: [usuario_id], references: [id])
+
+  @@index([color_id], map: "carrito_color_id_fkey")
+  @@index([producto_id], map: "carrito_producto_id_fkey")
+  @@index([usuario_id], map: "carrito_usuario_id_fkey")
 }
 
 model ordenes {
@@ -89,20 +94,26 @@ model ordenes {
   fecha      DateTime        @default(now())
   total      Float
   estado     String
-  usuario    usuarios        @relation(fields: [usuario_id], references: [id])
   detalle    orden_detalle[]
+  usuario    usuarios        @relation(fields: [usuario_id], references: [id])
+
+  @@index([usuario_id], map: "ordenes_usuario_id_fkey")
 }
 
 model orden_detalle {
-  id             Int        @id @default(autoincrement())
-  orden_id       Int
-  producto_id    Int
-  color_id       Int
-  cantidad       Int
+  id              Int       @id @default(autoincrement())
+  orden_id        Int
+  producto_id     Int
+  color_id        Int
+  cantidad        Int
   precio_unitario Float
-  orden          ordenes    @relation(fields: [orden_id], references: [id])
-  producto       productos  @relation(fields: [producto_id], references: [id])
-  color          colores    @relation(fields: [color_id], references: [id])
+  color           colores   @relation(fields: [color_id], references: [id])
+  orden           ordenes   @relation(fields: [orden_id], references: [id])
+  producto        productos @relation(fields: [producto_id], references: [id])
+
+  @@index([color_id], map: "orden_detalle_color_id_fkey")
+  @@index([orden_id], map: "orden_detalle_orden_id_fkey")
+  @@index([producto_id], map: "orden_detalle_producto_id_fkey")
 }
 
 model productos_destacados {
@@ -115,4 +126,47 @@ model productos_destacados {
   created_at   DateTime  @default(now())
   updated_at   DateTime  @updatedAt
   producto     productos @relation(fields: [producto_id], references: [id], onDelete: Cascade)
+}
+
+model mensajes_contacto {
+  id              Int       @id @default(autoincrement())
+  nombre          String
+  email           String
+  asunto          String
+  mensaje         String    @db.Text
+  leido           Boolean   @default(false)
+  creado_en       DateTime  @default(now())
+  respondido      Boolean   @default(false)
+  respuesta       String?   @db.Text
+  fecha_respuesta DateTime?
+}
+
+model hero_images {
+  id                  Int      @id @default(autoincrement())
+  titulo              String
+  subtitulo           String?  @db.Text
+  url_imagen          String
+  cloudinary_id       String?
+  orden               Int      @default(0)
+  activo              Boolean  @default(true)
+  fecha_creacion      DateTime @default(now())
+  fecha_actualizacion DateTime
+}
+
+model promo_banners {
+  id                  Int      @id @default(autoincrement())
+  titulo              String
+  descripcion         String?  @db.Text
+  url_imagen          String
+  cloudinary_id       String?
+  enlace              String?
+  orden               Int      @default(0)
+  activo              Boolean  @default(true)
+  fecha_creacion      DateTime @default(now())
+  fecha_actualizacion DateTime
+}
+
+enum Rol {
+  cliente
+  admin
 }

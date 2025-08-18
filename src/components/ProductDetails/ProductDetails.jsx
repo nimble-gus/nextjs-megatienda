@@ -48,7 +48,9 @@ const ProductDetails = ({ product }) => {
 
     // Verificar si el usuario está logueado
     const user = JSON.parse(localStorage.getItem('user') || 'null');
-    if (!user) {
+    const token = localStorage.getItem('token');
+    
+    if (!user || !token) {
       alert('Debes iniciar sesión para agregar productos al carrito');
       return;
     }
@@ -64,6 +66,7 @@ const ProductDetails = ({ product }) => {
         cantidad: quantity
       };
 
+      console.log('Enviando datos al carrito:', productData);
       const result = await addToCart(productData);
       
       // Mostrar mensaje de éxito

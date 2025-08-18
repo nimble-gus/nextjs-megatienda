@@ -1,7 +1,7 @@
 import React from 'react';
 import '../../styles/DashboardHeader.css';
 
-const DashboardHeader = ({ startDate, endDate, onDateChange, onAddProduct }) => {
+const DashboardHeader = ({ startDate, endDate, onDateChange }) => {
     return (
         <div className="dashboard-header">
             <div className="date-filters">
@@ -10,9 +10,6 @@ const DashboardHeader = ({ startDate, endDate, onDateChange, onAddProduct }) => 
                 <label>Hasta:</label>
                 <input type="date" value={endDate} onChange={(e) => onDateChange('end', e.target.value)} />
             </div>
-            <button className="add-product-btn" onClick={onAddProduct}>
-                + Subir Producto
-            </button>
         </div>
     );
 };

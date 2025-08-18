@@ -207,3 +207,4 @@ const testCartLayoutComplete = async () => {
 
 // Ejecutar la verificación completa
 testCartLayoutComplete();
+

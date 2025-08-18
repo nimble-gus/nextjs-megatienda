@@ -153,3 +153,4 @@ const testCartFinal = async () => {
 
 // Ejecutar la verificación final
 testCartFinal();
+

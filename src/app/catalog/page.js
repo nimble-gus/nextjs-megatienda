@@ -6,7 +6,7 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import ProductFilters from '@/components/Catalog/ProductFilters';
 import ProductGrid from '@/components/Catalog/ProductGrid';
-import { getProducts } from '@/services/productService';
+import { getProducts } from '@/services/catalogService';
 import '@/styles/CatalogPage.css';
 
 export default function CatalogPage() {

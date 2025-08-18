@@ -281,11 +281,15 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  width: 100%;
+  min-width: 0; /* Permite que los elementos hijos se reduzcan */
 }
 
 .price-input {
   flex: 1;
-  padding: 12px 16px;
+  min-width: 0; /* Permite que el input se reduzca */
+  max-width: 120px; /* Limita el ancho máximo */
+  padding: 12px 12px; /* Reducir padding horizontal */
   border: 2px solid rgba(229, 231, 235, 0.5);
   border-radius: 12px;
   font-size: 14px;
@@ -296,6 +300,7 @@
   transition: all 0.3s ease;
   font-weight: 600;
   color: var(--text-dark);
+  box-sizing: border-box; /* Incluye padding y border en el ancho */
 }
 
 .price-input:focus {
@@ -304,6 +309,30 @@
   background: rgba(255, 255, 255, 0.95);
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
   transform: translateY(-1px);
+}
+
+/* Estilos para inputs con error de validación */
+.price-input:invalid {
+  border-color: #ef4444;
+  background: rgba(254, 242, 242, 0.8);
+  box-shadow: 0 0 0 1px #ef4444;
+}
+
+.price-input:invalid:focus {
+  border-color: #dc2626;
+  background: rgba(254, 242, 242, 0.95);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+}
+
+/* Remover flechas de input number */
+.price-input::-webkit-outer-spin-button,
+.price-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.price-input[type=number] {
+  -moz-appearance: textfield;
 }
 
 .price-separator {
@@ -576,6 +605,23 @@
   
   .price-input {
     width: 100%;
+    max-width: none; /* Remover límite de ancho en móvil */
+  }
+}
+
+@media (max-width: 480px) {
+  .product-filters {
+    padding: 12px;
+  }
+  
+  .price-input {
+    padding: 10px 8px; /* Reducir aún más el padding en móvil */
+    font-size: 13px;
+  }
+  
+  .price-range-display {
+    font-size: 14px;
+    padding: 10px 12px;
   }
 }
 

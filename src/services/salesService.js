@@ -9,7 +9,30 @@ export async function getSales(start, end) {
 }
 
 export async function getKpis() {
-  const res = await fetch('/api/sales/kpis');
-  if (!res.ok) throw new Error('Error obteniendo KPIs');
-  return res.json();
+  try {
+    // Obtener KPIs de ventas
+    const salesRes = await fetch('/api/sales/kpis');
+    const salesData = await salesRes.json();
+    
+    // Obtener contador de mensajes nuevos
+    const messagesRes = await fetch('/api/admin/contact-messages');
+    const messagesData = await messagesRes.json();
+    
+    const unreadMessages = messagesData.success 
+      ? messagesData.data.filter(msg => !msg.leido).length 
+      : 0;
+    
+    return {
+      ...salesData,
+      mensajesNuevos: unreadMessages
+    };
+  } catch (error) {
+    console.error('Error obteniendo KPIs:', error);
+    return {
+      totalVentas: 0,
+      totalPedidos: 0,
+      totalClientes: 0,
+      mensajesNuevos: 0
+    };
+  }
 }

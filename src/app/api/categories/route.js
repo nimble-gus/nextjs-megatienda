@@ -1,22 +1,25 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { executeWithRetry } from '@/lib/db-utils';
 
 export async function GET() {
   try {
     console.log('=== API /api/categories iniciada ===');
     
-    // Obtener categorías con conteo de productos
-    const categories = await prisma.categorias.findMany({
-      include: {
-        _count: {
-          select: {
-            productos: true
+    // Obtener categorías con conteo de productos usando retry
+    const categories = await executeWithRetry(async () => {
+      return await prisma.categorias.findMany({
+        include: {
+          _count: {
+            select: {
+              productos: true
+            }
           }
+        },
+        orderBy: {
+          nombre: 'asc'
         }
-      },
-      orderBy: {
-        nombre: 'asc'
-      }
+      });
     });
     
     console.log('Categorías obtenidas:', categories.length);

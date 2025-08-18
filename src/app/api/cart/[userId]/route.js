@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma';
 // GET - Obtener items del carrito de un usuario
 export async function GET(request, { params }) {
   try {
-    const { userId } = params;
+    const { userId } = await params;
     
     console.log('Obteniendo carrito para usuario:', userId);
 
@@ -77,7 +77,7 @@ export async function GET(request, { params }) {
 // DELETE - Limpiar todo el carrito de un usuario
 export async function DELETE(request, { params }) {
   try {
-    const { userId } = params;
+    const { userId } = await params;
     
     console.log('Limpiando carrito para usuario:', userId);
 

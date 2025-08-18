@@ -1,9 +1,31 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import jwt from 'jsonwebtoken';
 
 // POST - Agregar producto al carrito
 export async function POST(request) {
   try {
+    // Verificar autenticación
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json(
+        { error: 'Token de autenticación requerido' },
+        { status: 401 }
+      );
+    }
+
+    const token = authHeader.substring(7);
+    let decoded;
+    
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+    } catch (error) {
+      return NextResponse.json(
+        { error: 'Token inválido' },
+        { status: 401 }
+      );
+    }
+
     const { usuario_id, producto_id, color_id, cantidad } = await request.json();
     
     console.log('Agregando al carrito:', {
@@ -12,6 +34,14 @@ export async function POST(request) {
       color_id,
       cantidad
     });
+
+    // Validar que el usuario del token coincida con el usuario_id enviado
+    if (decoded.id !== parseInt(usuario_id)) {
+      return NextResponse.json(
+        { error: 'No autorizado para modificar este carrito' },
+        { status: 403 }
+      );
+    }
 
     // Validaciones
     if (!usuario_id || !producto_id || !color_id || !cantidad) {

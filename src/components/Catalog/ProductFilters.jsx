@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { getCatalogFilters } from '@/services/productService';
+import { getCatalogFilters } from '@/services/catalogService';
 import '@/styles/ProductFilters.css';
 
 const ProductFilters = ({ filters, onFilterChange }) => {
@@ -74,16 +74,18 @@ const ProductFilters = ({ filters, onFilterChange }) => {
 
   // Función para manejar el cambio de rango completo
   const handleRangeChange = (type, value) => {
-    const numValue = parseInt(value);
+    const numValue = parseInt(value) || 0;
     
     if (type === 'min') {
-      if (numValue <= priceRange[1]) {
-        handlePriceChange([numValue, priceRange[1]]);
-      }
+      // Asegurar que el valor mínimo no sea mayor que el máximo
+      const newMin = Math.min(numValue, priceRange[1]);
+      const newMax = Math.max(newMin, priceRange[1]);
+      handlePriceChange([newMin, newMax]);
     } else if (type === 'max') {
-      if (numValue >= priceRange[0]) {
-        handlePriceChange([priceRange[0], numValue]);
-      }
+      // Asegurar que el valor máximo no sea menor que el mínimo
+      const newMax = Math.max(numValue, priceRange[0]);
+      const newMin = Math.min(priceRange[0], newMax);
+      handlePriceChange([newMin, newMax]);
     }
   };
 
@@ -171,23 +173,27 @@ const ProductFilters = ({ filters, onFilterChange }) => {
                />
              </div>
             <div className="price-inputs">
-                             <input
-                 type="number"
-                 value={priceRange[0]}
-                 onChange={(e) => handleRangeChange('min', e.target.value)}
-                 className="price-input"
-                 min={priceRangeData.min}
-                 max={priceRange[1]}
-               />
-               <span className="price-separator">-</span>
-               <input
-                 type="number"
-                 value={priceRange[1]}
-                 onChange={(e) => handleRangeChange('max', e.target.value)}
-                 className="price-input"
-                 min={priceRange[0]}
-                 max={priceRangeData.max}
-               />
+              <input
+                type="number"
+                value={priceRange[0]}
+                onChange={(e) => handleRangeChange('min', e.target.value)}
+                className="price-input"
+                min={priceRangeData.min}
+                max={priceRange[1]}
+                step="0.01"
+                placeholder="Mín"
+              />
+              <span className="price-separator">-</span>
+              <input
+                type="number"
+                value={priceRange[1]}
+                onChange={(e) => handleRangeChange('max', e.target.value)}
+                className="price-input"
+                min={priceRange[0]}
+                max={priceRangeData.max}
+                step="0.01"
+                placeholder="Máx"
+              />
             </div>
           </div>
         )}

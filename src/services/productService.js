@@ -1,55 +1,107 @@
-export async function getProducts(filters = {}) {
-  const params = new URLSearchParams();
+// ProductService.js - Servicio para operaciones CRUD de productos
+
+const API_BASE = '/api/admin/products';
+
+// Obtener todos los productos
+export const getProducts = async () => {
+  const maxRetries = 3;
+  let lastError;
   
-  // Agregar filtros a los parámetros
-  if (filters.page) params.append('page', filters.page);
-  if (filters.limit) params.append('limit', filters.limit);
-  if (filters.category) params.append('category', filters.category);
-  if (filters.minPrice) params.append('minPrice', filters.minPrice);
-  if (filters.maxPrice) params.append('maxPrice', filters.maxPrice);
-  if (filters.colors) params.append('colors', filters.colors.join(','));
-  if (filters.sortBy) params.append('sortBy', filters.sortBy);
-  if (filters.search) params.append('search', filters.search);
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await fetch(API_BASE);
+      if (!response.ok) {
+        throw new Error('Error al obtener productos');
+      }
+      return await response.json();
+    } catch (error) {
+      lastError = error;
+      console.error(`Error fetching products (attempt ${attempt}/${maxRetries}):`, error);
+      
+      if (attempt === maxRetries) {
+        throw error;
+      }
+      
+      // Esperar antes del siguiente intento
+      await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+    }
+  }
+  
+  throw lastError;
+};
 
-  const res = await fetch(`/api/products?${params.toString()}`);
-  if (!res.ok) throw new Error('Error al obtener productos');
-  return res.json();
-}
+// Obtener un producto específico
+export const getProduct = async (id) => {
+  try {
+    const response = await fetch(`${API_BASE}/${id}`);
+    if (!response.ok) {
+      throw new Error('Error al obtener el producto');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching product:', error);
+    throw error;
+  }
+};
 
-export async function createFullProduct(productData) {
-  const res = await fetch('/api/products/full', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(productData),
-  });
-  if (!res.ok) throw new Error('Error creando producto');
-  return res.json();
-}
+// Actualizar un producto
+export const updateProduct = async (id, productData) => {
+  try {
+    const response = await fetch(`${API_BASE}/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(productData),
+    });
+    
+    if (!response.ok) {
+      throw new Error('Error al actualizar el producto');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating product:', error);
+    throw error;
+  }
+};
 
-// Obtener detalles completos de un producto por ID
-export async function getProductById(productId) {
-  const res = await fetch(`/api/products/${productId}`);
-  if (!res.ok) throw new Error('Error al obtener detalles del producto');
-  return res.json();
-}
+// Eliminar un producto
+export const deleteProduct = async (id) => {
+  try {
+    const response = await fetch(`${API_BASE}/${id}`, {
+      method: 'DELETE',
+    });
+    
+    if (!response.ok) {
+      throw new Error('Error al eliminar el producto');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error deleting product:', error);
+    throw error;
+  }
+};
 
-// Obtener productos relacionados por categoría
-export async function getRelatedProducts(categoryId, currentProductId, limit = 4) {
-  const res = await fetch(`/api/products/related?categoryId=${categoryId}&excludeId=${currentProductId}&limit=${limit}`);
-  if (!res.ok) throw new Error('Error al obtener productos relacionados');
-  return res.json();
-}
-
-// Obtener stock disponible por producto y color
-export async function getProductStock(productId) {
-  const res = await fetch(`/api/products/${productId}/stock`);
-  if (!res.ok) throw new Error('Error al obtener stock del producto');
-  return res.json();
-}
-
-// Obtener filtros disponibles para el catálogo
-export async function getCatalogFilters() {
-  const res = await fetch('/api/catalog/filters');
-  if (!res.ok) throw new Error('Error al obtener filtros del catálogo');
-  return res.json();
-}
+// Crear un producto completo (para el admin)
+export const createFullProduct = async (productData) => {
+  try {
+    const response = await fetch('/api/products/full', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(productData),
+    });
+    
+    if (!response.ok) {
+      throw new Error('Error al crear el producto');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error creating product:', error);
+    throw error;
+  }
+};

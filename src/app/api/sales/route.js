@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { executeWithRetry } from '@/lib/db-utils';
 
 export async function GET(req) {
   try {
@@ -15,14 +16,16 @@ export async function GET(req) {
       };
     }
 
-    const sales = await prisma.ordenes.findMany({
-      where,
-      include: {
-        usuario: {
-          select: { nombre: true }
-        }
-      },
-      orderBy: { fecha: 'desc' }
+    const sales = await executeWithRetry(async () => {
+      return await prisma.ordenes.findMany({
+        where,
+        include: {
+          usuario: {
+            select: { nombre: true }
+          }
+        },
+        orderBy: { fecha: 'desc' }
+      });
     });
 
     const formattedSales = sales.map(s => ({

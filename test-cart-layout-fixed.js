@@ -137,3 +137,4 @@ const testCartLayoutFixed = async () => {
 
 // Ejecutar la verificación
 testCartLayoutFixed();
+

@@ -128,3 +128,4 @@ const testCartData = async () => {
 
 // Ejecutar la verificación
 testCartData();
+
