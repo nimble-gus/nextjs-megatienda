@@ -1,40 +1,49 @@
 const { exec } = require('child_process');
-const { promisify } = require('util');
+const fs = require('fs');
 
-const execAsync = promisify(exec);
+console.log('🔄 Reiniciando servidor...');
 
-async function restartServer() {
-  console.log('🔄 Reiniciando servidor...');
-  
-  try {
-    // Detener procesos de Node.js
-    console.log('⏹️ Deteniendo procesos de Node.js...');
-    await execAsync('taskkill /f /im node.exe');
-    console.log('✅ Procesos detenidos');
-  } catch (error) {
-    console.log('ℹ️ No hay procesos de Node.js ejecutándose');
-  }
-  
-  // Esperar un momento
-  await new Promise(resolve => setTimeout(resolve, 2000));
-  
-  try {
-    // Reiniciar el servidor
-    console.log('🚀 Iniciando servidor...');
-    const { stdout, stderr } = await execAsync('npm run dev', { 
-      cwd: process.cwd(),
-      stdio: 'inherit'
+// Función para matar procesos de Node.js
+function killNodeProcesses() {
+  return new Promise((resolve) => {
+    exec('taskkill /f /im node.exe', (error) => {
+      if (error) {
+        console.log('No hay procesos de Node.js ejecutándose');
+      } else {
+        console.log('✅ Procesos de Node.js terminados');
+      }
+      resolve();
     });
-    
-    console.log('✅ Servidor reiniciado exitosamente');
-    console.log(stdout);
-    
-    if (stderr) {
-      console.log('⚠️ Advertencias:', stderr);
-    }
-  } catch (error) {
-    console.error('❌ Error reiniciando servidor:', error.message);
-  }
+  });
 }
 
-restartServer();
+// Función para iniciar el servidor
+function startServer() {
+  console.log('🚀 Iniciando servidor...');
+  const child = exec('npm run dev', (error, stdout, stderr) => {
+    if (error) {
+      console.error('❌ Error iniciando servidor:', error);
+      return;
+    }
+    if (stderr) {
+      console.error('⚠️ Advertencias:', stderr);
+    }
+    console.log('✅ Servidor iniciado correctamente');
+  });
+
+  // Mostrar output en tiempo real
+  child.stdout.pipe(process.stdout);
+  child.stderr.pipe(process.stderr);
+}
+
+// Ejecutar reinicio
+async function restart() {
+  await killNodeProcesses();
+  
+  // Esperar un momento antes de iniciar
+  setTimeout(() => {
+    startServer();
+  }, 3000);
+}
+
+restart();

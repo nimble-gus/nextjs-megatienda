@@ -9,6 +9,7 @@ import ProductForm from './ProductForm';
 import ProductList from './ProductList';
 import ContactMessages from './ContactMessages';
 import LowStockAlert from './LowStockAlert';
+import MultimediaManager from './MultimediaManager';
 import '@/styles/AdminDashboard.css';
 
 export default function AdminDashboard() {
@@ -127,6 +128,8 @@ export default function AdminDashboard() {
             <SalesTable sales={sales} />
           </div>
         );
+      case 'multimedia':
+        return <MultimediaManager />;
       default:
         return <div>Sección no encontrada</div>;
     }
@@ -181,6 +184,14 @@ export default function AdminDashboard() {
             <span className="nav-icon">💰</span>
             <span className="nav-text">Ventas</span>
           </button>
+          
+          <button 
+            className={`nav-item ${activeTab === 'multimedia' ? 'active' : ''}`}
+            onClick={() => setActiveTab('multimedia')}
+          >
+            <span className="nav-icon">🖼️</span>
+            <span className="nav-text">Multimedia</span>
+          </button>
         </nav>
       </aside>
 
@@ -214,6 +225,7 @@ function getPageTitle(tab) {
     case 'products': return 'Gestión de Productos';
     case 'messages': return 'Mensajes de Contacto';
     case 'sales': return 'Reportes de Ventas';
+    case 'multimedia': return 'Gestión de Multimedia';
     default: return 'Admin Panel';
   }
 }

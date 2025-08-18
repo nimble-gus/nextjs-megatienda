@@ -18,7 +18,8 @@ export async function executeWithRetry(operation, maxRetries = 3, delay = 1000) 
         error.message.includes('Can\'t reach database server') ||
         error.message.includes('Connection') ||
         error.message.includes('timeout') ||
-        error.message.includes('Engine is not yet connected');
+        error.message.includes('Engine is not yet connected') ||
+        error.message.includes('GenericFailure');
       
       if (!isConnectionError || attempt === maxRetries) {
         throw error;
@@ -64,10 +65,23 @@ export async function forceReconnect() {
     // Desconectar primero
     await prisma.$disconnect();
     // Esperar un momento
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    // Reconectar
-    await prisma.$connect();
-    console.log('✅ Reconexión forzada exitosa');
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    // Intentar reconectar múltiples veces
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        await prisma.$connect();
+        console.log('✅ Reconexión forzada exitosa');
+        return;
+      } catch (connectError) {
+        console.log(`⚠️ Intento ${attempt}/3 de reconexión falló:`, connectError.message);
+        if (attempt < 3) {
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+        } else {
+          throw connectError;
+        }
+      }
+    }
   } catch (error) {
     console.log('❌ Error en reconexión forzada:', error.message);
     throw error;

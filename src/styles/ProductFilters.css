@@ -167,6 +167,23 @@
   border: 1px solid rgba(59, 130, 246, 0.2);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+
+.price-filtering-indicator {
+  font-size: 0.8rem;
+  color: #667eea;
+  font-weight: 500;
+  animation: pulse 1.5s infinite;
+  margin-left: 8px;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
 
 .price-slider-container {

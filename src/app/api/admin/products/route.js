@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { executeWithRetry } from '@/lib/db-utils';
+import { invalidateProductRelatedCache } from '@/lib/redis';
 
 export async function GET() {
   try {
@@ -84,6 +85,46 @@ export async function GET() {
     
     return NextResponse.json(
       { 
+        error: 'Error interno del servidor',
+        details: error.message 
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(request) {
+  try {
+    const productData = await request.json();
+    
+    console.log('=== Iniciando POST /api/admin/products ===');
+    console.log('Datos del producto:', productData);
+    
+    // Crear el producto usando executeWithRetry
+    const newProduct = await executeWithRetry(async () => {
+      return await prisma.productos.create({
+        data: productData
+      });
+    });
+    
+    console.log('✅ Producto creado exitosamente:', newProduct.id);
+    
+    // Invalidar caché de productos
+    await invalidateProductRelatedCache();
+    
+    return NextResponse.json({
+      success: true,
+      product: newProduct,
+      message: 'Producto creado exitosamente'
+    });
+    
+  } catch (error) {
+    console.error('=== ERROR EN POST /api/admin/products ===');
+    console.error('Error completo:', error);
+    
+    return NextResponse.json(
+      { 
+        success: false,
         error: 'Error interno del servidor',
         details: error.message 
       },

@@ -1,4 +1,8 @@
 import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { executeWithRetry, checkDatabaseHealth } from '@/lib/db-utils';
+import { ProductCache } from '@/lib/redis';
+import { queueQuery } from '@/lib/query-queue';
 import 'dotenv/config';
 
 export async function GET(request) {
@@ -137,18 +141,38 @@ export async function GET(request) {
       });
     }
     
-    // Si DATABASE_URL está configurada, intentar usar Prisma
-    console.log('✅ DATABASE_URL configurada, intentando conectar a la base de datos');
-    
-         try {
-       const { prisma } = await import('@/lib/prisma');
-       const { executeWithRetry, checkDatabaseHealth } = await import('@/lib/db-utils');
-       
-       console.log('✅ Intentando conectar a la base de datos...');
-       
-       // Verificar salud de la conexión
-       const health = await checkDatabaseHealth();
-       console.log('🔍 Estado de la conexión:', health.message);
+         // Si DATABASE_URL está configurada, intentar usar Prisma
+     console.log('✅ DATABASE_URL configurada, intentando conectar a la base de datos');
+     
+     // Verificar caché primero
+     const cacheKey = {
+       page,
+       limit,
+       sortBy,
+       minPrice,
+       maxPrice,
+       category,
+       colors: colors.sort(),
+       search
+     };
+     
+           const cachedData = await ProductCache.get(cacheKey);
+      if (cachedData) {
+        console.log('✅ Datos obtenidos del caché Redis');
+        return NextResponse.json(cachedData);
+      }
+     
+     console.log('🔄 Datos no encontrados en caché, consultando base de datos...');
+     
+     try {
+        const { prisma } = await import('@/lib/prisma');
+        const { executeWithRetry, checkDatabaseHealth } = await import('@/lib/db-utils');
+        
+        console.log('✅ Intentando conectar a la base de datos...');
+        
+        // Verificar salud de la conexión
+        const health = await checkDatabaseHealth();
+        console.log('🔍 Estado de la conexión:', health.message);
       
       // Calcular offset para paginación
       const offset = (page - 1) * limit;
@@ -223,31 +247,35 @@ export async function GET(request) {
           orderBy = { id: 'desc' };
       }
       
-             // Obtener productos con relaciones usando reintentos
-       const products = await executeWithRetry(async () => {
-         return await prisma.productos.findMany({
-           where,
-           include: {
-             categoria: true,
-             stock: {
+                                                     // Obtener productos con relaciones usando cola de consultas
+         const products = await queueQuery(async () => {
+           return await executeWithRetry(async () => {
+             return await prisma.productos.findMany({
+               where,
                include: {
-                 color: true
-               }
-             },
-             imagenes: true
-           },
-           orderBy,
-           skip: offset,
-           take: limit
+                 categoria: true,
+                 stock: {
+                   include: {
+                     color: true
+                   }
+                 },
+                 imagenes: true
+               },
+               orderBy,
+               skip: offset,
+               take: limit
+             });
+           });
          });
-       });
       
       console.log(`✅ Productos encontrados: ${products.length}`);
       
-             // Contar total de productos para paginación usando reintentos
-       const totalProducts = await executeWithRetry(async () => {
-         return await prisma.productos.count({ where });
-       });
+                           // Contar total de productos para paginación usando cola de consultas
+        const totalProducts = await queueQuery(async () => {
+          return await executeWithRetry(async () => {
+            return await prisma.productos.count({ where });
+          });
+        });
       const totalPages = Math.ceil(totalProducts / limit);
       
       // Formatear productos para el frontend
@@ -309,20 +337,26 @@ export async function GET(request) {
         return formattedProduct;
       });
       
-      await prisma.$disconnect();
-      
-      return NextResponse.json({
-        success: true,
-        products: formattedProducts,
-        pagination: {
-          currentPage: page,
-          totalPages,
-          totalProducts,
-          itemsPerPage: limit,
-          hasNextPage: page < totalPages,
-          hasPrevPage: page > 1
-        }
-      });
+             await prisma.$disconnect();
+       
+       const responseData = {
+         success: true,
+         products: formattedProducts,
+         pagination: {
+           currentPage: page,
+           totalPages,
+           totalProducts,
+           itemsPerPage: limit,
+           hasNextPage: page < totalPages,
+           hasPrevPage: page > 1
+         }
+       };
+       
+               // Almacenar en caché Redis para futuras consultas
+        await ProductCache.set(cacheKey, responseData);
+        console.log('✅ Datos almacenados en caché Redis');
+       
+       return NextResponse.json(responseData);
       
          } catch (dbError) {
        console.error('❌ Error de base de datos:', dbError);
