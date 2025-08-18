@@ -71,3 +71,4 @@ console.log('4. Ejecuta: npx prisma db push (si es necesario)');
 console.log('5. Inicia el servidor: npm run dev');
 console.log('\n🔗 Para probar la conexión, visita: http://localhost:3000/api/admin/products/debug');
 
+

@@ -3,8 +3,8 @@ class QueryQueue {
   constructor() {
     this.queue = [];
     this.isProcessing = false;
-    this.maxConcurrent = 1; // Solo una consulta a la vez
-    this.delay = 300; // 300ms entre consultas
+    this.maxConcurrent = 3; // Permitir 3 consultas simultáneas
+    this.delay = 50; // Reducir delay a 50ms
   }
 
   // Agregar consulta a la cola

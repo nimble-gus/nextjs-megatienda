@@ -247,35 +247,31 @@ export async function GET(request) {
           orderBy = { id: 'desc' };
       }
       
-                                                     // Obtener productos con relaciones usando cola de consultas
-         const products = await queueQuery(async () => {
-           return await executeWithRetry(async () => {
-             return await prisma.productos.findMany({
-               where,
-               include: {
-                 categoria: true,
-                 stock: {
-                   include: {
-                     color: true
-                   }
-                 },
-                 imagenes: true
-               },
-               orderBy,
-               skip: offset,
-               take: limit
-             });
-           });
-         });
+                                                                                                           // Obtener productos con relaciones optimizado
+          const products = await executeWithRetry(async () => {
+            return await prisma.productos.findMany({
+              where,
+              include: {
+                categoria: true,
+                stock: {
+                  include: {
+                    color: true
+                  }
+                },
+                imagenes: true
+              },
+              orderBy,
+              skip: offset,
+              take: limit
+            });
+          });
       
       console.log(`✅ Productos encontrados: ${products.length}`);
       
-                           // Contar total de productos para paginación usando cola de consultas
-        const totalProducts = await queueQuery(async () => {
-          return await executeWithRetry(async () => {
-            return await prisma.productos.count({ where });
-          });
-        });
+                                                       // Contar total de productos para paginación optimizado
+         const totalProducts = await executeWithRetry(async () => {
+           return await prisma.productos.count({ where });
+         });
       const totalPages = Math.ceil(totalProducts / limit);
       
       // Formatear productos para el frontend

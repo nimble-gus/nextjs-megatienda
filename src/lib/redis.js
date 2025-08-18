@@ -1,11 +1,22 @@
 // Servicio de Redis con Upstash para caché distribuido
 import { Redis } from '@upstash/redis';
 
-// Configuración de Redis
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN,
-});
+// Configuración de Redis con fallback
+let redis = null;
+
+try {
+  if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+    redis = new Redis({
+      url: process.env.UPSTASH_REDIS_REST_URL,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN,
+    });
+    console.log('✅ Redis configurado correctamente');
+  } else {
+    console.log('⚠️ Redis no configurado, usando fallback');
+  }
+} catch (error) {
+  console.log('⚠️ Error configurando Redis, usando fallback:', error.message);
+}
 
 // Configuración de TTL (Time To Live) en segundos
 const TTL_CONFIG = {
@@ -40,6 +51,7 @@ const deserialize = (data) => {
 export class ProductCache {
   static async get(filters) {
     try {
+      if (!redis) return null;
       const key = generateCacheKey('products', filters);
       const cached = await redis.get(key);
       return cached ? deserialize(cached) : null;
@@ -51,6 +63,7 @@ export class ProductCache {
 
   static async set(filters, data) {
     try {
+      if (!redis) return;
       const key = generateCacheKey('products', filters);
       await redis.setex(key, TTL_CONFIG.PRODUCTS, serialize(data));
       console.log('✅ Productos almacenados en Redis');
@@ -76,6 +89,7 @@ export class ProductCache {
 export class FilterCache {
   static async get() {
     try {
+      if (!redis) return null;
       const key = 'megatienda:filters:all';
       const cached = await redis.get(key);
       return cached ? deserialize(cached) : null;
@@ -87,6 +101,7 @@ export class FilterCache {
 
   static async set(data) {
     try {
+      if (!redis) return;
       const key = 'megatienda:filters:all';
       await redis.setex(key, TTL_CONFIG.FILTERS, serialize(data));
       console.log('✅ Filtros almacenados en Redis');
@@ -97,6 +112,7 @@ export class FilterCache {
 
   static async invalidate() {
     try {
+      if (!redis) return;
       const keys = await redis.keys('megatienda:filters:*');
       if (keys.length > 0) {
         await redis.del(...keys);
@@ -112,6 +128,7 @@ export class FilterCache {
 export class CategoryCache {
   static async get() {
     try {
+      if (!redis) return null;
       const key = 'megatienda:categories:all';
       const cached = await redis.get(key);
       return cached ? deserialize(cached) : null;
@@ -123,6 +140,7 @@ export class CategoryCache {
 
   static async set(data) {
     try {
+      if (!redis) return;
       const key = 'megatienda:categories:all';
       await redis.setex(key, TTL_CONFIG.CATEGORIES, serialize(data));
       console.log('✅ Categorías almacenadas en Redis');
@@ -133,6 +151,7 @@ export class CategoryCache {
 
   static async invalidate() {
     try {
+      if (!redis) return;
       const keys = await redis.keys('megatienda:categories:*');
       if (keys.length > 0) {
         await redis.del(...keys);
@@ -148,6 +167,7 @@ export class CategoryCache {
 export class ColorCache {
   static async get() {
     try {
+      if (!redis) return null;
       const key = 'megatienda:colors:all';
       const cached = await redis.get(key);
       return cached ? deserialize(cached) : null;
@@ -159,6 +179,7 @@ export class ColorCache {
 
   static async set(data) {
     try {
+      if (!redis) return;
       const key = 'megatienda:colors:all';
       await redis.setex(key, TTL_CONFIG.COLORS, serialize(data));
       console.log('✅ Colores almacenados en Redis');
@@ -169,6 +190,7 @@ export class ColorCache {
 
   static async invalidate() {
     try {
+      if (!redis) return;
       const keys = await redis.keys('megatienda:colors:*');
       if (keys.length > 0) {
         await redis.del(...keys);
@@ -184,6 +206,7 @@ export class ColorCache {
 export class MultimediaCache {
   static async getHeroImages() {
     try {
+      if (!redis) return null;
       const key = 'megatienda:hero:images';
       const cached = await redis.get(key);
       return cached ? deserialize(cached) : null;
@@ -195,6 +218,7 @@ export class MultimediaCache {
 
   static async setHeroImages(data) {
     try {
+      if (!redis) return;
       const key = 'megatienda:hero:images';
       await redis.setex(key, TTL_CONFIG.HERO_IMAGES, serialize(data));
       console.log('✅ Hero images almacenadas en Redis');
@@ -205,6 +229,7 @@ export class MultimediaCache {
 
   static async getPromoBanners() {
     try {
+      if (!redis) return null;
       const key = 'megatienda:promo:banners';
       const cached = await redis.get(key);
       return cached ? deserialize(cached) : null;
@@ -216,6 +241,7 @@ export class MultimediaCache {
 
   static async setPromoBanners(data) {
     try {
+      if (!redis) return;
       const key = 'megatienda:promo:banners';
       await redis.setex(key, TTL_CONFIG.PROMO_BANNERS, serialize(data));
       console.log('✅ Promo banners almacenados en Redis');
@@ -226,6 +252,7 @@ export class MultimediaCache {
 
   static async invalidate() {
     try {
+      if (!redis) return;
       const keys = await redis.keys('megatienda:hero:*');
       const promoKeys = await redis.keys('megatienda:promo:*');
       const allKeys = [...keys, ...promoKeys];
@@ -259,6 +286,7 @@ export const invalidateFilterCache = async () => {
 
 export const invalidateAllCache = async () => {
   try {
+    if (!redis) return;
     const keys = await redis.keys('megatienda:*');
     if (keys.length > 0) {
       await redis.del(...keys);
@@ -272,6 +300,7 @@ export const invalidateAllCache = async () => {
 // Función para obtener estadísticas del caché
 export const getCacheStats = async () => {
   try {
+    if (!redis) return null;
     const keys = await redis.keys('megatienda:*');
     const stats = {
       totalKeys: keys.length,

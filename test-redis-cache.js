@@ -1,5 +1,5 @@
 // Script para probar el caché de Redis
-const BASE_URL = 'http://localhost:3001'; // Puerto 3001 según el terminal
+const BASE_URL = 'http://localhost:3000'; // Puerto 3000 donde está corriendo el servidor
 
 async function testRedisCache() {
   console.log('🧪 Probando caché de Redis...\n');

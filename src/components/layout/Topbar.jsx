@@ -8,7 +8,7 @@ const Topbar = () => {
     
     const promociones = [
         'Envío GRATIS en todos los pedidos',
-        '20% OFF en compras mayores a Q500',
+        'Precio ESPECIAL para compras mayores a 6 unidades',
         'Nuevos productos cada semana',
         'Soporte 24/7 para nuestros clientes'
     ];
@@ -84,11 +84,11 @@ const Topbar = () => {
                     <div className="contact-container">
                         <PhoneIcon />
                         <a 
-                            href="tel:+50222258889" 
+                            href="tel: 4505 3015" 
                             className="phone-link"
                             onClick={handlePhoneClick}
                         >
-                            +(502) 2225-8889
+                            4505 3015
                         </a>
                         <div className="call-tooltip">Click para llamar</div>
                     </div>
