@@ -113,17 +113,18 @@ export default function ProductList() {
   };
 
   const handleDelete = async (productId) => {
-    if (!confirm('¿Estás seguro de que quieres eliminar este producto?')) {
+    if (!confirm('¿Estás seguro de que quieres eliminar este producto? Esta acción no se puede deshacer.')) {
       return;
     }
 
     try {
-      await deleteProduct(productId);
+      const result = await deleteProduct(productId);
+      console.log('Producto eliminado:', result);
       await fetchProducts(); // Recargar la lista
       alert('Producto eliminado exitosamente');
     } catch (err) {
-      alert('Error al eliminar el producto');
       console.error('Error deleting product:', err);
+      alert(`Error al eliminar el producto: ${err.message}`);
     }
   };
 

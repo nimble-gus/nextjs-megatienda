@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image'; // Componente optimizado de Next.js
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import '@/styles/Header.css';
 import LoginModal from '../Auth/LoginModal';
 
@@ -34,6 +35,7 @@ const Header = () => {
     // Función para cargar el carrito del usuario
     const loadUserCart = async (userId) => {
         try {
+            console.log('🛒 Cargando carrito para usuario:', userId);
             const token = localStorage.getItem('token');
             const response = await fetch(`/api/cart/${userId}`, {
                 headers: {
@@ -46,6 +48,7 @@ const Header = () => {
                 const cartData = await response.json();
                 if (cartData.success && cartData.items) {
                     const totalItems = cartData.items.reduce((total, item) => total + (item.cantidad || 0), 0);
+                    console.log('🛒 Total de items en carrito:', totalItems);
                     setCartCount(totalItems);
                 } else {
                     console.warn('Respuesta del carrito sin formato esperado:', cartData);
@@ -72,6 +75,7 @@ const Header = () => {
     // Escuchar cambios en el carrito (evento personalizado)
     useEffect(() => {
         const handleCartUpdate = () => {
+            console.log('🔄 Evento cartUpdated recibido, actualizando contador...');
             updateCartCount();
         };
 
@@ -97,6 +101,9 @@ const Header = () => {
         loadUserCart(userData.id || userData.usuario_id);
         setShowLoginModal(false);
         
+        // Disparar evento de login exitoso
+        window.dispatchEvent(new CustomEvent('loginSuccess'));
+        
         console.log(`¡Bienvenido ${userData.nombre}!`);
     };
 
@@ -107,6 +114,9 @@ const Header = () => {
         
         localStorage.removeItem('user');
         localStorage.removeItem('token');
+        
+        // Disparar evento de logout
+        window.dispatchEvent(new CustomEvent('logout'));
         
         console.log('Sesión cerrada correctamente');
     };
@@ -198,6 +208,7 @@ const Header = () => {
                             type="button" 
                             className="search-btn"
                             onClick={handleSearchClick}
+                            suppressHydrationWarning
                         >
                             <Image 
                                 src="/assets/sch.svg" 
@@ -220,6 +231,7 @@ const Header = () => {
                     <button 
                         className="login-btn" 
                         onClick={() => setShowLoginModal(true)}
+                        suppressHydrationWarning
                     >
                         <span>Login</span>
                         <div className="btn-glow"></div>
@@ -259,9 +271,9 @@ const Header = () => {
                                 </div>
                                 <div className="dropdown-divider"></div>
                                 
-                                <div className="dropdown-item">
+                                <Link href="/orders" className="dropdown-item">
                                     📦 Mis Pedidos
-                                </div>
+                                </Link>
 
                                 <div className="dropdown-divider"></div>
                                 <div 

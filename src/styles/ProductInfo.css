@@ -315,13 +315,20 @@
 }
 
 .buy-now-btn:hover:not(:disabled) {
-  background: var(--primary-dark);
+  background: var(--primary-blue-dark);
   transform: translateY(-2px);
 }
 
 .add-to-cart-btn:disabled,
 .buy-now-btn:disabled {
   opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.action-btn.loading {
+  background: var(--bg-light);
+  color: var(--text-muted);
+  border: 2px solid var(--border-light);
   cursor: not-allowed;
 }
 

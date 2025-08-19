@@ -219,6 +219,7 @@ const ProductFilters = ({ filters, onFilterChange }) => {
         <button 
           className="clear-filters-btn"
           onClick={clearAllFilters}
+          suppressHydrationWarning
         >
           Limpiar todo
         </button>
@@ -349,7 +350,7 @@ const ProductFilters = ({ filters, onFilterChange }) => {
 
       {/* Botón aplicar filtros */}
       <div className="filters-actions">
-        <button className="apply-filters-btn">
+        <button className="apply-filters-btn" suppressHydrationWarning>
           Aplicar Filtros
         </button>
       </div>

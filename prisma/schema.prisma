@@ -8,14 +8,14 @@ datasource db {
 }
 
 model usuarios {
-  id        Int       @id @default(autoincrement())
-  nombre    String
-  correo    String    @unique
-  password  String    @map("contraseña")
-  rol       Rol?
-  creado_en DateTime? @default(now()) @db.Timestamp(0)
-  carrito   carrito[]
-  ordenes   ordenes[]
+  id           Int       @id @default(autoincrement())
+  nombre       String
+  correo       String    @unique
+  password     String    @map("contraseña")
+  rol          Rol?
+  creado_en    DateTime? @default(now()) @db.Timestamp(0)
+  carrito      carrito[]
+  ordenes      ordenes[]
   validaciones ordenes[] @relation("validaciones")
 }
 
@@ -91,37 +91,31 @@ model carrito {
 
 model ordenes {
   id                             Int             @id @default(autoincrement())
-  codigo_orden                   String          @unique
   usuario_id                     Int?
-  // Datos del cliente (para usuarios no registrados)
+  fecha                          DateTime        @default(now())
+  total                          Float
+  estado                         String
+  codigo_orden                   String          @unique
   nombre_cliente                 String?
   email_cliente                  String?
   telefono_cliente               String?
   direccion_cliente              String?         @db.Text
-  ciudad_cliente                 String?
+  municipio_cliente              String?
   codigo_postal_cliente          String?
-  nit_cliente                    String?
-  // Datos de la orden
-  fecha                          DateTime        @default(now())
-  total                          Float
+  nit_cliente                    String?         @db.VarChar(20)
   subtotal                       Float
   costo_envio                    Float
-  // Método de pago
-  metodo_pago                    MetodoPago
-  // Estado de la orden
-  estado                         EstadoOrden     @default(pendiente)
-  // Para transferencias
   comprobante_transferencia      String?
   fecha_validacion_transferencia DateTime?
   validado_por                   Int?
-  // Notas
   notas                          String?         @db.Text
-  // Relaciones
+  metodo_pago                    String
   detalle                        orden_detalle[]
-  usuario                        usuarios?       @relation(fields: [usuario_id], references: [id])
+  usuario                        usuarios?       @relation(fields: [usuario_id], references: [id], onDelete: Restrict)
   validador                      usuarios?       @relation("validaciones", fields: [validado_por], references: [id])
 
   @@index([usuario_id], map: "ordenes_usuario_id_fkey")
+  @@index([validado_por], map: "ordenes_validado_por_fkey")
 }
 
 model orden_detalle {
@@ -193,19 +187,4 @@ model promo_banners {
 enum Rol {
   cliente
   admin
-}
-
-enum MetodoPago {
-  contra_entrega
-  transferencia
-}
-
-enum EstadoOrden {
-  pendiente
-  pagado
-  validado
-  en_preparacion
-  enviado
-  entregado
-  cancelado
 }

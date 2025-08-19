@@ -12,7 +12,9 @@ const ProductInfo = ({
   onBuyNow, 
   formatPrice, 
   renderStars,
-  isAddingToCart = false
+  isAddingToCart = false,
+  isLoggedIn = false,
+  isLoading = false
 }) => {
   return (
     <div className="product-info">
@@ -111,22 +113,31 @@ const ProductInfo = ({
 
       {/* Botones de acción */}
       <div className="action-buttons">
-        <button 
-          className="add-to-cart-btn"
-          onClick={onAddToCart}
-          disabled={selectedColor?.stock === 0 || isAddingToCart}
-        >
-          <span>{isAddingToCart ? 'Agregando...' : 'Agregar al Carrito'}</span>
-          <span className="cart-icon">🛒</span>
-        </button>
-        
-        <button 
-          className="buy-now-btn"
-          onClick={onBuyNow}
-          disabled={selectedColor?.stock === 0 || isAddingToCart}
-        >
-          {isAddingToCart ? 'Procesando...' : 'Comprar Ahora'}
-        </button>
+        {isLoading ? (
+          // Mostrar loading mientras se verifica el estado de autenticación
+          <button className="action-btn loading" disabled>
+            <span>Cargando...</span>
+          </button>
+        ) : isLoggedIn ? (
+          // Usuario logueado: mostrar botón "Agregar al Carrito"
+          <button 
+            className="add-to-cart-btn"
+            onClick={onAddToCart}
+            disabled={selectedColor?.stock === 0 || isAddingToCart}
+          >
+            <span>{isAddingToCart ? 'Agregando...' : 'Agregar al Carrito'}</span>
+            <span className="cart-icon">🛒</span>
+          </button>
+        ) : (
+          // Usuario no logueado: mostrar botón "Comprar Ahora"
+          <button 
+            className="buy-now-btn"
+            onClick={onBuyNow}
+            disabled={selectedColor?.stock === 0 || isAddingToCart}
+          >
+            {isAddingToCart ? 'Procesando...' : 'Comprar Ahora'}
+          </button>
+        )}
       </div>
 
       {/* Información del producto */}

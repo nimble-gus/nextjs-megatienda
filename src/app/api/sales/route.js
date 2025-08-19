@@ -31,7 +31,7 @@ export async function GET(req) {
     const formattedSales = sales.map(s => ({
       id: s.id,
       fecha: s.fecha,
-      cliente: s.usuario.nombre,
+      cliente: s.usuario?.nombre || s.nombre_cliente || 'Cliente no registrado',
       total: s.total
     }));
 

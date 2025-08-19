@@ -51,6 +51,8 @@ export async function GET(request, { params }) {
       { error: 'Error al obtener el producto', details: error.message },
       { status: 500 }
     );
+  } finally {
+    await prisma.$disconnect();
   }
 }
 
@@ -96,6 +98,8 @@ export async function PUT(request, { params }) {
       { error: 'Error al actualizar el producto', details: error.message },
       { status: 500 }
     );
+  } finally {
+    await prisma.$disconnect();
   }
 }
 
@@ -105,32 +109,85 @@ export async function DELETE(request, { params }) {
     const { id } = params;
     console.log(`=== DELETE /api/admin/products/${id} ===`);
     
-    // Primero eliminar registros relacionados
-    await prisma.stock_detalle.deleteMany({
-      where: { producto_id: parseInt(id) }
+    // Verificar que el producto existe
+    const product = await prisma.productos.findUnique({
+      where: { id: parseInt(id) }
     });
     
-    await prisma.imagenes_producto.deleteMany({
+    if (!product) {
+      console.log(`Producto con ID ${id} no encontrado`);
+      return NextResponse.json(
+        { error: 'Producto no encontrado' },
+        { status: 404 }
+      );
+    }
+    
+    // Eliminar registros relacionados en el orden correcto
+    console.log('Eliminando registros relacionados...');
+    
+    // 1. Eliminar detalles de órdenes (orden_detalle)
+    const deletedOrderDetails = await prisma.orden_detalle.deleteMany({
       where: { producto_id: parseInt(id) }
     });
+    console.log(`Eliminados ${deletedOrderDetails.count} detalles de órdenes`);
     
-    await prisma.carrito.deleteMany({
+    // 2. Eliminar stock
+    const deletedStock = await prisma.stock_detalle.deleteMany({
       where: { producto_id: parseInt(id) }
     });
+    console.log(`Eliminados ${deletedStock.count} registros de stock`);
     
-    // Finalmente eliminar el producto
+    // 3. Eliminar imágenes del producto
+    const deletedImages = await prisma.imagenes_producto.deleteMany({
+      where: { producto_id: parseInt(id) }
+    });
+    console.log(`Eliminadas ${deletedImages.count} imágenes`);
+    
+    // 4. Eliminar del carrito
+    const deletedCart = await prisma.carrito.deleteMany({
+      where: { producto_id: parseInt(id) }
+    });
+    console.log(`Eliminados ${deletedCart.count} items del carrito`);
+    
+    // 5. Eliminar productos destacados
+    const deletedFeatured = await prisma.productos_destacados.deleteMany({
+      where: { producto_id: parseInt(id) }
+    });
+    console.log(`Eliminados ${deletedFeatured.count} productos destacados`);
+    
+    // 6. Finalmente eliminar el producto
     await prisma.productos.delete({
       where: { id: parseInt(id) }
     });
 
     console.log(`Producto ${id} eliminado exitosamente`);
-    return NextResponse.json({ message: 'Producto eliminado exitosamente' });
+    return NextResponse.json({ 
+      message: 'Producto eliminado exitosamente',
+      deleted: {
+        orderDetails: deletedOrderDetails.count,
+        stock: deletedStock.count,
+        images: deletedImages.count,
+        cart: deletedCart.count,
+        featured: deletedFeatured.count
+      }
+    });
   } catch (error) {
     console.error(`=== ERROR EN DELETE /api/admin/products/${params?.id} ===`);
     console.error('Error completo:', error);
+    
+    // Manejar errores específicos de Prisma
+    if (error.code === 'P2003') {
+      return NextResponse.json(
+        { error: 'No se puede eliminar el producto porque tiene registros relacionados' },
+        { status: 400 }
+      );
+    }
+    
     return NextResponse.json(
       { error: 'Error al eliminar el producto', details: error.message },
       { status: 500 }
     );
+  } finally {
+    await prisma.$disconnect();
   }
 }

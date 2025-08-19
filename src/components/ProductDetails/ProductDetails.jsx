@@ -1,5 +1,6 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import ProductGallery from './ProductGallery';
 import ProductInfo from './ProductInfo';
@@ -9,6 +10,8 @@ import { addToCart } from '@/services/cartService';
 import '@/styles/ProductDetails.css';
 
 const ProductDetails = ({ product }) => {
+  const router = useRouter();
+  
   // Seleccionar el primer color disponible por defecto
   const defaultColor = product.colors?.find(color => color.available) || product.colors?.[0] || null;
   const [selectedColor, setSelectedColor] = useState(defaultColor);
@@ -16,6 +19,68 @@ const ProductDetails = ({ product }) => {
   const [selectedImage, setSelectedImage] = useState(0);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [cartMessage, setCartMessage] = useState('');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Detectar estado de autenticación al montar el componente y escuchar cambios
+  useEffect(() => {
+    const checkAuthStatus = () => {
+      try {
+        const user = localStorage.getItem('user');
+        const token = localStorage.getItem('token');
+        
+        if (user && token) {
+          const userData = JSON.parse(user);
+          if (userData && (userData.id || userData.usuario_id)) {
+            setIsLoggedIn(true);
+          } else {
+            setIsLoggedIn(false);
+          }
+        } else {
+          setIsLoggedIn(false);
+        }
+      } catch (error) {
+        console.error('Error verificando autenticación:', error);
+        setIsLoggedIn(false);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    // Verificar estado inicial
+    checkAuthStatus();
+
+    // Escuchar cambios en localStorage para detectar login/logout
+    const handleStorageChange = (e) => {
+      if (e.key === 'user' || e.key === 'token') {
+        console.log('🔄 Cambio detectado en autenticación, actualizando estado...');
+        checkAuthStatus();
+      }
+    };
+
+    // Escuchar eventos personalizados de login/logout
+    const handleLoginSuccess = () => {
+      console.log('🔄 Login exitoso detectado, actualizando estado...');
+      checkAuthStatus();
+    };
+
+    const handleLogout = () => {
+      console.log('🔄 Logout detectado, actualizando estado...');
+      setIsLoggedIn(false);
+    };
+
+    // Agregar event listeners
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('loginSuccess', handleLoginSuccess);
+    window.addEventListener('logout', handleLogout);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('loginSuccess', handleLoginSuccess);
+      window.removeEventListener('logout', handleLogout);
+    };
+  }, []);
 
   // Función para formatear precio en Quetzales
   const formatPrice = (price) => {
@@ -47,10 +112,7 @@ const ProductDetails = ({ product }) => {
     }
 
     // Verificar si el usuario está logueado
-    const user = JSON.parse(localStorage.getItem('user') || 'null');
-    const token = localStorage.getItem('token');
-    
-    if (!user || !token) {
+    if (!isLoggedIn) {
       alert('Debes iniciar sesión para agregar productos al carrito');
       return;
     }
@@ -59,6 +121,7 @@ const ProductDetails = ({ product }) => {
       setIsAddingToCart(true);
       setCartMessage('');
 
+      const user = JSON.parse(localStorage.getItem('user'));
       const productData = {
         usuario_id: user.id || user.usuario_id,
         producto_id: product.id,
@@ -94,13 +157,29 @@ const ProductDetails = ({ product }) => {
   };
 
   const handleBuyNow = () => {
-    // Primero agregar al carrito y luego redirigir al checkout
-    handleAddToCart().then(() => {
-      // Redirigir al carrito después de agregar
-      window.location.href = '/cart';
-    }).catch((error) => {
-      console.error('Error en compra directa:', error);
-    });
+    if (!selectedColor) {
+      alert('Por favor selecciona un color');
+      return;
+    }
+
+    // Si el usuario está logueado, agregar al carrito y redirigir al checkout
+    if (isLoggedIn) {
+      handleAddToCart().then(() => {
+        // Redirigir al checkout después de agregar al carrito
+        router.push('/checkout');
+      }).catch((error) => {
+        console.error('Error en compra directa:', error);
+      });
+    } else {
+      // Si no está logueado, ir directamente al checkout con parámetros del producto
+      const params = new URLSearchParams({
+        producto: product.id,
+        color: selectedColor.id,
+        cantidad: quantity
+      });
+      
+      router.push(`/checkout?${params.toString()}`);
+    }
   };
 
   return (
@@ -146,6 +225,8 @@ const ProductDetails = ({ product }) => {
               formatPrice={formatPrice}
               renderStars={renderStars}
               isAddingToCart={isAddingToCart}
+              isLoggedIn={isLoggedIn}
+              isLoading={isLoading}
             />
           ) : (
             <div className="no-colors-available">

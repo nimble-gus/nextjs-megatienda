@@ -1,14 +1,32 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { uploadToCloudinary } from '@/services/cloudinaryService';
 
 const prisma = new PrismaClient();
 
 export async function POST(request) {
   try {
-    const body = await request.json();
-    
-    // Debug: Log the received data
-    console.log('📥 Datos recibidos en la API:', JSON.stringify(body, null, 2));
+    console.log('🚀 Iniciando procesamiento de orden...');
+
+    // Verificar si es FormData (archivo de transferencia) o JSON normal
+    const contentType = request.headers.get('content-type');
+    let body;
+    let comprobanteFile = null;
+
+    if (contentType && contentType.includes('multipart/form-data')) {
+      // Es FormData con archivo
+      const formData = await request.formData();
+      const orderDataString = formData.get('orderData');
+      body = JSON.parse(orderDataString);
+      comprobanteFile = formData.get('comprobante_transferencia');
+      
+      console.log('📥 Datos recibidos (FormData):', JSON.stringify(body, null, 2));
+      console.log('📁 Archivo de comprobante:', comprobanteFile ? comprobanteFile.name : 'No hay archivo');
+    } else {
+      // Es JSON normal
+      body = await request.json();
+      console.log('📥 Datos recibidos (JSON):', JSON.stringify(body, null, 2));
+    }
     
     const {
       // Datos del cliente
@@ -16,7 +34,7 @@ export async function POST(request) {
       email_cliente,
       telefono_cliente,
       direccion_cliente,
-      ciudad_cliente,
+      municipio_cliente,
       codigo_postal_cliente,
       nit_cliente,
       
@@ -29,8 +47,7 @@ export async function POST(request) {
       estado = 'pendiente',
       notas,
       
-      // Para transferencias
-      comprobante_transferencia,
+      // Para transferencias (ya no se extrae de body, se maneja por separado)
       
       // Usuario (opcional para guest checkout)
       usuario_id = null
@@ -42,6 +59,7 @@ export async function POST(request) {
     console.log('- Nombre cliente:', nombre_cliente);
     console.log('- Email cliente:', email_cliente);
     console.log('- Teléfono cliente:', telefono_cliente);
+    console.log('- Usuario ID:', usuario_id);
 
     // Validaciones básicas
     if (!productos || productos.length === 0) {
@@ -63,13 +81,36 @@ export async function POST(request) {
       );
     }
 
-    // Generar código de orden único
-    const codigo_orden = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+    // Función para procesar el pedido
+    const processOrder = async (orderData) => {
+      console.log('🔧 Iniciando processOrder...');
+      const { body } = orderData;
+      
+      // Subir archivo de comprobante a Cloudinary si existe
+      let comprobanteUrl = null;
+      if (comprobanteFile) {
+        try {
+          console.log('☁️ Subiendo comprobante a Cloudinary...');
+          console.log('📁 Archivo a subir:', comprobanteFile.name, 'Tamaño:', comprobanteFile.size);
+          const uploadResult = await uploadToCloudinary(comprobanteFile, 'comprobantes-transferencia');
+          comprobanteUrl = uploadResult.secure_url;
+          console.log('✅ Comprobante subido a Cloudinary:', comprobanteUrl);
+        } catch (uploadError) {
+          console.error('❌ Error subiendo comprobante a Cloudinary:', uploadError);
+          console.error('❌ Stack trace:', uploadError.stack);
+          throw new Error('Error al subir el comprobante de transferencia');
+        }
+      } else {
+        console.log('ℹ️ No hay archivo de comprobante para subir');
+      }
+      
+      // Generar código de orden único
+      const codigo_orden = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
 
-    console.log('✅ Creando orden con código:', codigo_orden);
+      console.log('✅ Creando orden con código:', codigo_orden);
 
-    // Crear la orden principal
-    const orden = await prisma.ordenes.create({
+      // Crear la orden principal
+      const orden = await prisma.ordenes.create({
       data: {
         codigo_orden,
         usuario_id,
@@ -77,7 +118,7 @@ export async function POST(request) {
         email_cliente,
         telefono_cliente,
         direccion_cliente,
-        ciudad_cliente,
+        municipio_cliente,
         codigo_postal_cliente,
         nit_cliente,
         fecha: new Date(),
@@ -87,16 +128,16 @@ export async function POST(request) {
         metodo_pago,
         estado,
         notas,
-        comprobante_transferencia
+        comprobante_transferencia: comprobanteUrl
       }
     });
 
     console.log('✅ Orden creada:', orden.id);
 
-    // Crear los detalles de la orden
-    const detallesOrden = [];
-    
-    for (const producto of productos) {
+      // Crear los detalles de la orden
+      const detallesOrden = [];
+      
+      for (const producto of productos) {
       console.log('🔍 Procesando producto:', JSON.stringify(producto, null, 2));
       console.log('🔍 Estructura del producto:');
       console.log('- producto_id:', producto.producto_id);
@@ -167,34 +208,43 @@ export async function POST(request) {
       console.log('✅ Detalle creado:', detalle.id);
     }
 
-    // Si es un usuario registrado, limpiar el carrito
-    if (usuario_id) {
-      await prisma.carrito.deleteMany({
-        where: { usuario_id }
-      });
-      console.log('✅ Carrito limpiado para usuario:', usuario_id);
-    }
+      // Si es un usuario registrado, limpiar el carrito
+      if (usuario_id) {
+        console.log('🧹 Limpiando carrito para usuario:', usuario_id);
+        const deletedItems = await prisma.carrito.deleteMany({
+          where: { usuario_id }
+        });
+        console.log('✅ Carrito limpiado para usuario:', usuario_id, '- Items eliminados:', deletedItems.count);
+      } else {
+        console.log('ℹ️ No se limpia carrito - usuario no registrado');
+      }
 
-    // Obtener la orden completa con detalles
-    const ordenCompleta = await prisma.ordenes.findUnique({
-      where: { id: orden.id },
-      include: {
-        detalle: {
-          include: {
-            producto: true,
-            color: true
+      // Obtener la orden completa con detalles
+      const ordenCompleta = await prisma.ordenes.findUnique({
+        where: { id: orden.id },
+        include: {
+          detalle: {
+            include: {
+              producto: true,
+              color: true
+            }
           }
         }
-      }
-    });
+      });
 
-    console.log('✅ Orden procesada exitosamente:', orden.codigo_orden);
+      console.log('✅ Orden procesada exitosamente:', orden.codigo_orden);
 
-    return NextResponse.json({
-      success: true,
-      orden: ordenCompleta,
-      mensaje: 'Orden creada exitosamente'
-    });
+      return {
+        success: true,
+        orden: ordenCompleta,
+        mensaje: 'Orden creada exitosamente'
+      };
+    };
+
+    // Procesar el pedido directamente
+    const result = await processOrder({ body });
+    
+    return NextResponse.json(result);
 
   } catch (error) {
     console.error('❌ Error creando orden:', error);

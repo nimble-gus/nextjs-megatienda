@@ -141,19 +141,19 @@ export default function CheckoutConfirmationPage() {
                     <h3 style={{ margin: '0 0 15px 0', color: '#333' }}>Información de la Orden</h3>
                     <div style={{ display: 'grid', gap: '10px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ fontWeight: '600' }}>Código de Orden:</span>
+                        <span style={{ fontWeight: '600', color: '#000' }}>Código de Orden:</span>
                         <span style={{ fontFamily: 'monospace', color: '#007bff' }}>
                           {orden?.codigo_orden || orderId}
                         </span>
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ fontWeight: '600' }}>Fecha:</span>
-                        <span>
+                        <span style={{ fontWeight: '600', color: '#000' }}>Fecha:</span>
+                        <span style={{ color: '#000' }}>
                           {orden?.fecha ? new Date(orden.fecha).toLocaleDateString('es-ES') : 'N/A'}
                         </span>
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ fontWeight: '600' }}>Estado:</span>
+                        <span style={{ fontWeight: '600', color: '#000' }}>Estado:</span>
                         <span style={{ 
                           color: orden?.estado === 'pendiente' ? '#ffc107' : '#28a745',
                           fontWeight: '600'
@@ -162,8 +162,8 @@ export default function CheckoutConfirmationPage() {
                         </span>
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ fontWeight: '600' }}>Método de Pago:</span>
-                        <span>
+                        <span style={{ fontWeight: '600', color: '#000' }}>Método de Pago:</span>
+                        <span style={{ color: '#000' }}>
                           {orden?.metodo_pago === 'contra_entrega' ? 'Contra Entrega' : 'Transferencia'}
                         </span>
                       </div>
@@ -174,23 +174,23 @@ export default function CheckoutConfirmationPage() {
                   <div style={{ marginBottom: '30px' }}>
                     <h3 style={{ margin: '0 0 15px 0', color: '#333' }}>Información de Envío</h3>
                     <div style={{ background: '#f8f9fa', padding: '20px', borderRadius: '8px' }}>
-                      <p style={{ margin: '0 0 10px 0', fontWeight: '600' }}>
-                        {orden?.nombre_cliente}
-                      </p>
-                      <p style={{ margin: '0 0 5px 0', color: '#666' }}>
+                                             <p style={{ margin: '0 0 10px 0', fontWeight: '600', color: '#000' }}>
+                         {orden?.nombre_cliente}
+                       </p>
+                      <p style={{ margin: '0 0 5px 0', color: '#000' }}>
                         {orden?.direccion_cliente}
                       </p>
-                      <p style={{ margin: '0 0 5px 0', color: '#666' }}>
-                        {orden?.ciudad_cliente}, {orden?.codigo_postal_cliente}
+                      <p style={{ margin: '0 0 5px 0', color: '#000' }}>
+                        {orden?.municipio_cliente}, {orden?.codigo_postal_cliente}
                       </p>
-                      <p style={{ margin: '0 0 5px 0', color: '#666' }}>
+                      <p style={{ margin: '0 0 5px 0', color: '#000' }}>
                         Tel: {orden?.telefono_cliente}
                       </p>
-                      <p style={{ margin: '0 0 5px 0', color: '#666' }}>
+                      <p style={{ margin: '0 0 5px 0', color: '#000' }}>
                         Email: {orden?.email_cliente}
                       </p>
                       {orden?.nit_cliente && (
-                        <p style={{ margin: '0', color: '#666' }}>
+                        <p style={{ margin: '0', color: '#000' }}>
                           NIT: {orden.nit_cliente}
                         </p>
                       )}
@@ -202,7 +202,7 @@ export default function CheckoutConfirmationPage() {
                     <div style={{ marginBottom: '30px' }}>
                       <h3 style={{ margin: '0 0 15px 0', color: '#333' }}>Notas de la Orden</h3>
                       <div style={{ background: '#f8f9fa', padding: '20px', borderRadius: '8px' }}>
-                        <p style={{ margin: 0, fontStyle: 'italic' }}>{orden.notas}</p>
+                        <p style={{ margin: 0, fontStyle: 'italic', color: '#000' }}>{orden.notas}</p>
                       </div>
                     </div>
                   )}
@@ -212,16 +212,16 @@ export default function CheckoutConfirmationPage() {
                     <h3 style={{ margin: '0 0 15px 0', color: '#333' }}>Próximos Pasos</h3>
                     <div style={{ background: '#e7f3ff', padding: '20px', borderRadius: '8px', border: '1px solid #b3d9ff' }}>
                       <ul style={{ margin: 0, paddingLeft: '20px' }}>
-                        <li style={{ marginBottom: '8px' }}>
+                        <li style={{ marginBottom: '8px', color: '#000' }}>
                           Recibirás una confirmación por email en los próximos minutos
                         </li>
-                        <li style={{ marginBottom: '8px' }}>
+                        <li style={{ marginBottom: '8px', color: '#000' }}>
                           Procesaremos tu orden y te contactaremos si necesitamos información adicional
                         </li>
-                        <li style={{ marginBottom: '8px' }}>
+                        <li style={{ marginBottom: '8px', color: '#000' }}>
                           Una vez confirmado el pago, prepararemos tu envío
                         </li>
-                        <li>
+                        <li style={{ color: '#000' }}>
                           Te enviaremos actualizaciones sobre el estado de tu pedido
                         </li>
                       </ul>
@@ -245,9 +245,12 @@ export default function CheckoutConfirmationPage() {
                     {orden?.detalle?.map((item, index) => (
                       <div key={index} className="order-item">
                         <img
-                          src={item.producto?.url_imagen || '/assets/placeholder.jpg'}
+                          src={item.producto?.url_imagen || 'https://res.cloudinary.com/demo/image/upload/v1/samples/ecommerce/accessories-bag'}
                           alt={item.producto?.nombre}
                           className="item-image"
+                          onError={(e) => {
+                            e.target.src = 'https://res.cloudinary.com/demo/image/upload/v1/samples/ecommerce/accessories-bag';
+                          }}
                         />
                         <div className="item-details">
                           <div className="item-name">{item.producto?.nombre}</div>
@@ -257,7 +260,7 @@ export default function CheckoutConfirmationPage() {
                           </div>
                         </div>
                         <div className="item-price">
-                          ${(item.precio_unitario * item.cantidad).toFixed(2)}
+                          Q{(item.precio_unitario * item.cantidad).toFixed(2)}
                         </div>
                       </div>
                     ))}
@@ -267,15 +270,15 @@ export default function CheckoutConfirmationPage() {
                   <div className="order-totals">
                     <div className="total-row">
                       <span>Subtotal</span>
-                      <span>${orden?.subtotal?.toFixed(2) || '0.00'}</span>
+                      <span>Q{orden?.subtotal?.toFixed(2) || '0.00'}</span>
                     </div>
                     <div className="total-row">
                       <span>Envío</span>
-                      <span>${orden?.costo_envio?.toFixed(2) || '0.00'}</span>
+                      <span>Q{orden?.costo_envio?.toFixed(2) || '0.00'}</span>
                     </div>
                     <div className="total-row final">
                       <span>Total</span>
-                      <span>${orden?.total?.toFixed(2) || '0.00'}</span>
+                      <span>Q{orden?.total?.toFixed(2) || '0.00'}</span>
                     </div>
                   </div>
 

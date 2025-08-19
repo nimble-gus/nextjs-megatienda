@@ -10,6 +10,7 @@ import ProductList from './ProductList';
 import ContactMessages from './ContactMessages';
 import LowStockAlert from './LowStockAlert';
 import MultimediaManager from './MultimediaManager';
+import OrdersManager from './OrdersManager';
 import '@/styles/AdminDashboard.css';
 
 export default function AdminDashboard() {
@@ -23,11 +24,20 @@ export default function AdminDashboard() {
   const [refreshProducts, setRefreshProducts] = useState(0);
 
   const fetchData = async () => {
-    const salesData = await getSales(startDate, endDate);
-    setSales(salesData);
+    try {
+      console.log('🔄 Cargando datos del dashboard...');
+      
+      const salesData = await getSales(startDate, endDate);
+      setSales(salesData);
 
-    const kpisData = await getKpis();
-    setKpis(kpisData);
+      const kpisData = await getKpis();
+      setKpis(kpisData);
+      
+      console.log('✅ Datos del dashboard cargados');
+    } catch (error) {
+      console.error('❌ Error cargando datos del dashboard:', error);
+      // Los servicios ya manejan los errores y retornan valores por defecto
+    }
   };
 
   useEffect(() => {
@@ -130,6 +140,8 @@ export default function AdminDashboard() {
         );
       case 'multimedia':
         return <MultimediaManager />;
+      case 'orders':
+        return <OrdersManager />;
       default:
         return <div>Sección no encontrada</div>;
     }
@@ -192,6 +204,14 @@ export default function AdminDashboard() {
             <span className="nav-icon">🖼️</span>
             <span className="nav-text">Multimedia</span>
           </button>
+          
+          <button 
+            className={`nav-item ${activeTab === 'orders' ? 'active' : ''}`}
+            onClick={() => setActiveTab('orders')}
+          >
+            <span className="nav-icon">📦</span>
+            <span className="nav-text">Pedidos</span>
+          </button>
         </nav>
       </aside>
 
@@ -226,6 +246,7 @@ function getPageTitle(tab) {
     case 'messages': return 'Mensajes de Contacto';
     case 'sales': return 'Reportes de Ventas';
     case 'multimedia': return 'Gestión de Multimedia';
+    case 'orders': return 'Gestión de Pedidos';
     default: return 'Admin Panel';
   }
 }

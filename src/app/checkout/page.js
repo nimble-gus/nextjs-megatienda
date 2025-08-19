@@ -33,15 +33,16 @@ export default function CheckoutPage() {
   
   // Estados de opciones
   const [metodoPago, setMetodoPago] = useState('contra_entrega');
-  const [costoEnvio, setCostoEnvio] = useState(20); // Flat rate por defecto
+  const [costoEnvio, setCostoEnvio] = useState(0); // Envío gratis por defecto
   const [comprobanteTransferencia, setComprobanteTransferencia] = useState(null);
-  const [createAccount, setCreateAccount] = useState(false);
-  const [shipToDifferentAddress, setShipToDifferentAddress] = useState(false);
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   
   // Estados de UI
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedShipping, setSelectedShipping] = useState('flat_rate');
+  const [selectedShipping, setSelectedShipping] = useState('free_shipping');
+  const [isGuestCheckout, setIsGuestCheckout] = useState(false);
+  const [queuePosition, setQueuePosition] = useState(null);
+  const [processingStatus, setProcessingStatus] = useState('');
 
   // Cargar productos al montar el componente
   useEffect(() => {
@@ -50,8 +51,12 @@ export default function CheckoutPage() {
     const cantidad = searchParams.get('cantidad');
 
     if (productoId && colorId && cantidad) {
+      // Es un guest checkout (Comprar Ahora)
+      setIsGuestCheckout(true);
       cargarProductoEspecifico(productoId, colorId, parseInt(cantidad));
     } else {
+      // Es checkout desde carrito (usuario logueado)
+      setIsGuestCheckout(false);
       cargarProductosDelCarrito();
     }
   }, [searchParams]);
@@ -67,16 +72,29 @@ export default function CheckoutPage() {
       
       if (response.ok) {
         // Buscar el color específico
-        const stockItem = producto.stock.find(item => item.color.id === parseInt(colorId));
+        const colorItem = producto.colors.find(color => color.id === parseInt(colorId));
         
-        if (stockItem) {
+        if (colorItem) {
           const productoConCantidad = {
             ...producto,
+            nombre: producto.name, // Asegurar que el nombre esté disponible
+            url_imagen: producto.mainImage, // Usar la imagen principal del producto
             cantidad: cantidad,
-            precio: stockItem.precio,
-            color: stockItem.color,
-            stockId: stockItem.id
+            precio: colorItem.price,
+            color: {
+              id: colorItem.id,
+              nombre: colorItem.name,
+              hex: colorItem.hex
+            },
+            stockId: colorItem.id // Usar el color ID como stockId
           };
+          
+          console.log('🔍 Producto cargado para checkout:', {
+            nombre: productoConCantidad.nombre,
+            url_imagen: productoConCantidad.url_imagen,
+            mainImage: producto.mainImage,
+            imagenes: producto.images
+          });
           
           setProductos([productoConCantidad]);
         } else {
@@ -99,16 +117,41 @@ export default function CheckoutPage() {
       setIsLoadingProducts(true);
       setError('');
       
-      // Obtener usuario actual (si está logueado)
-      const userId = 8; // Temporal - después implementar autenticación
+      // Obtener usuario actual del localStorage
+      const savedUser = localStorage.getItem('user');
       
-      const response = await fetch(`/api/cart/${userId}`);
+      // Si no hay usuario, mostrar error para carrito
+      if (!savedUser) {
+        setError('No hay productos para procesar. Agrega productos al carrito o usa "Comprar Ahora"');
+        return;
+      }
+      
+      const userData = JSON.parse(savedUser);
+      const userId = userData.id || userData.usuario_id;
+      
+      if (!userId) {
+        setError('Usuario no válido');
+        return;
+      }
+      
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/cart/${userId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
       const carrito = await response.json();
       
       if (response.ok && carrito.items && carrito.items.length > 0) {
+        console.log('🔍 Productos del carrito cargados:', carrito.items.map(item => ({
+          nombre: item.producto.nombre,
+          url_imagen: item.producto.url_imagen
+        })));
         setProductos(carrito.items);
       } else {
-        setError('Carrito vacío');
+        setError('Carrito vacío. Agrega productos al carrito o usa "Comprar Ahora"');
       }
     } catch (error) {
       console.error('Error cargando carrito:', error);
@@ -137,9 +180,6 @@ export default function CheckoutPage() {
   const handleShippingChange = (option) => {
     setSelectedShipping(option);
     switch (option) {
-      case 'flat_rate':
-        setCostoEnvio(20);
-        break;
       case 'local_pickup':
         setCostoEnvio(0);
         break;
@@ -147,7 +187,7 @@ export default function CheckoutPage() {
         setCostoEnvio(0);
         break;
       default:
-        setCostoEnvio(20);
+        setCostoEnvio(0);
     }
   };
 
@@ -166,16 +206,60 @@ export default function CheckoutPage() {
 
   const total = subtotal + costoEnvio;
 
+  // Validar NIT
+  const validateNIT = (nit) => {
+    const nitValue = nit.trim().toUpperCase();
+    
+    // Si el total es menor o igual a Q2499, permitir CF, C/F, Cliente final
+    if (total <= 2499) {
+      const allowedCFValues = ['CF', 'C/F', 'CLIENTE FINAL', 'CLIENTE FINAL.'];
+      if (allowedCFValues.includes(nitValue)) {
+        return true;
+      }
+    }
+    
+    // Para montos mayores a Q2499, NIT es obligatorio y no puede ser CF
+    if (total >= 2500) {
+      if (!nitValue || nitValue === '' || ['CF', 'C/F', 'CLIENTE FINAL', 'CLIENTE FINAL.'].includes(nitValue)) {
+        return false;
+      }
+    }
+    
+    // Validar formato de NIT (debe tener al menos 4 caracteres y ser alfanumérico)
+    if (nitValue && nitValue.length < 4) {
+      return false;
+    }
+    
+    // Validar que el NIT tenga un formato válido (números y letras, sin caracteres especiales excepto guiones)
+    if (nitValue && !/^[A-Z0-9-]+$/.test(nitValue)) {
+      return false;
+    }
+    
+    return true;
+  };
+
+  // Obtener mensaje de error para NIT
+  const getNITErrorMessage = () => {
+    if (total >= 2500) {
+      return 'Para compras mayores a Q2,500 es obligatorio proporcionar un NIT válido';
+    } else {
+      return 'Puede usar "CF" para Cliente Final o proporcionar un NIT válido';
+    }
+  };
+
   // Validar formulario
   const isFormValid = () => {
     const requiredFields = ['firstName', 'lastName', 'streetAddress', 'city', 'state', 'postcode', 'phone', 'email'];
     const hasRequiredFields = requiredFields.every(field => formData[field].trim() !== '');
     
+    // Validar NIT
+    const isNITValid = validateNIT(formData.nit);
+    
     if (metodoPago === 'transferencia' && !comprobanteTransferencia) {
       return false;
     }
     
-    return hasRequiredFields && agreeToTerms;
+    return hasRequiredFields && isNITValid && agreeToTerms;
   };
 
   // Manejar envío del formulario
@@ -183,6 +267,12 @@ export default function CheckoutPage() {
     e.preventDefault();
     
     if (!isFormValid()) {
+      // Verificar específicamente el NIT
+      if (formData.nit && !validateNIT(formData.nit)) {
+        alert(getNITErrorMessage());
+        return;
+      }
+      
       alert('Por favor completa todos los campos requeridos y acepta los términos');
       return;
     }
@@ -190,14 +280,22 @@ export default function CheckoutPage() {
     setIsLoading(true);
 
     try {
+      // Obtener usuario actual del localStorage
+      const savedUser = localStorage.getItem('user');
+      const userData = savedUser ? JSON.parse(savedUser) : null;
+      const userId = userData ? (userData.id || userData.usuario_id) : null;
+      
       const orderData = {
+        // Datos del usuario (si está logueado)
+        usuario_id: userId,
+        
         // Datos del cliente
         nombre_cliente: `${formData.firstName} ${formData.lastName}`,
         email_cliente: formData.email,
         telefono_cliente: formData.phone,
-        direccion_cliente: `${formData.streetAddress}${formData.apartment ? `, ${formData.apartment}` : ''}`,
-        ciudad_cliente: formData.city,
-        codigo_postal_cliente: formData.postcode,
+                 direccion_cliente: `${formData.streetAddress}${formData.apartment ? `, ${formData.apartment}` : ''}`,
+         municipio_cliente: formData.city,
+         codigo_postal_cliente: formData.postcode,
         nit_cliente: formData.nit,
         
         // Datos de la orden
@@ -216,19 +314,52 @@ export default function CheckoutPage() {
       // Debug: Log what we're sending
       console.log('📤 Enviando datos a la API:', JSON.stringify(orderData, null, 2));
 
+      // Preparar los datos para enviar
+      let requestData;
+      let headers = {};
+
+      if (metodoPago === 'transferencia' && comprobanteTransferencia) {
+        // Si hay archivo de transferencia, usar FormData
+        const formData = new FormData();
+        
+        // Agregar el archivo
+        formData.append('comprobante_transferencia', comprobanteTransferencia);
+        
+        // Agregar todos los demás datos como JSON string
+        const orderDataWithoutFile = { ...orderData };
+        delete orderDataWithoutFile.comprobante_transferencia;
+        formData.append('orderData', JSON.stringify(orderDataWithoutFile));
+        
+        requestData = formData;
+        // No establecer Content-Type, dejar que el navegador lo establezca automáticamente para FormData
+      } else {
+        // Si no hay archivo, usar JSON normal
+        requestData = JSON.stringify(orderData);
+        headers['Content-Type'] = 'application/json';
+      }
+
       // Llamada a la API para crear la orden
       const response = await fetch('/api/checkout/create-order', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(orderData)
+        headers,
+        body: requestData
       });
+
+      if (response.status === 429) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Demasiadas peticiones. Intenta de nuevo en unos minutos.');
+      }
 
       const result = await response.json();
 
       if (response.ok) {
         // Orden creada exitosamente
+        console.log('✅ Orden creada, actualizando contador del carrito...');
+        
+        // Disparar evento para actualizar el contador del carrito en el header
+        window.dispatchEvent(new CustomEvent('cartUpdated'));
+        
+        // Redirigir a la página de confirmación
         router.push(`/checkout/confirmation?orderId=${result.orden.codigo_orden}`);
       } else {
         throw new Error(result.error || 'Error al procesar la orden');
@@ -291,8 +422,15 @@ export default function CheckoutPage() {
         <div className="checkout-main">
           <div className="empty-state">
             <div className="empty-icon">🛒</div>
-            <div className="empty-title">Carrito vacío</div>
-            <div className="empty-message">No hay productos en tu carrito para procesar</div>
+            <div className="empty-title">
+              {isGuestCheckout ? 'Producto no disponible' : 'Carrito vacío'}
+            </div>
+            <div className="empty-message">
+              {isGuestCheckout 
+                ? 'No se pudo cargar el producto seleccionado'
+                : 'No hay productos en tu carrito para procesar'
+              }
+            </div>
             <Link href="/catalog" className="empty-action">
               Continuar comprando
             </Link>
@@ -312,14 +450,30 @@ export default function CheckoutPage() {
         {/* Header de la página */}
         <div className="page-header">
           <div className="page-header-content">
-            <h1>Finalizar Compra</h1>
+            <h1>{isGuestCheckout ? 'Compra Rápida' : 'Finalizar Compra'}</h1>
             <div className="breadcrumb">
               <span>Inicio</span>
               <span>•</span>
-              <span>Carrito</span>
-              <span>•</span>
-              <span>Checkout</span>
+              {isGuestCheckout ? (
+                <>
+                  <span>Producto</span>
+                  <span>•</span>
+                  <span>Compra Rápida</span>
+                </>
+              ) : (
+                <>
+                  <span>Carrito</span>
+                  <span>•</span>
+                  <span>Checkout</span>
+                </>
+              )}
             </div>
+            {isGuestCheckout && (
+              <div className="guest-notice">
+                <span className="guest-icon">👤</span>
+                <span>Compra sin cuenta - Completa tus datos para continuar</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -390,30 +544,30 @@ export default function CheckoutPage() {
                     </div>
 
                     <div className="form-row">
-                      <div className="form-group">
-                        <label className="form-label required">Ciudad</label>
-                        <input
-                          type="text"
-                          name="city"
-                          value={formData.city}
-                          onChange={handleInputChange}
-                          className="form-input"
-                          placeholder="Ciudad"
-                          required
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label className="form-label required">Estado</label>
-                        <input
-                          type="text"
-                          name="state"
-                          value={formData.state}
-                          onChange={handleInputChange}
-                          className="form-input"
-                          placeholder="Estado"
-                          required
-                        />
-                      </div>
+                                             <div className="form-group">
+                         <label className="form-label required">Municipio</label>
+                         <input
+                           type="text"
+                           name="city"
+                           value={formData.city}
+                           onChange={handleInputChange}
+                           className="form-input"
+                           placeholder="Municipio"
+                           required
+                         />
+                       </div>
+                                             <div className="form-group">
+                         <label className="form-label required">Departamento</label>
+                         <input
+                           type="text"
+                           name="state"
+                           value={formData.state}
+                           onChange={handleInputChange}
+                           className="form-input"
+                           placeholder="Departamento"
+                           required
+                         />
+                       </div>
                     </div>
 
                     <div className="form-row">
@@ -429,17 +583,34 @@ export default function CheckoutPage() {
                           required
                         />
                       </div>
-                      <div className="form-group">
-                        <label className="form-label">NIT (Opcional)</label>
-                        <input
-                          type="text"
-                          name="nit"
-                          value={formData.nit}
-                          onChange={handleInputChange}
-                          className="form-input"
-                          placeholder="NIT de la empresa"
-                        />
-                      </div>
+                                             <div className="form-group">
+                         <label className={`form-label ${total >= 2500 ? 'required' : ''}`}>
+                           NIT {total >= 2500 ? '(Obligatorio)' : '(Opcional)'}
+                         </label>
+                         <input
+                           type="text"
+                           name="nit"
+                           value={formData.nit}
+                           onChange={handleInputChange}
+                           className={`form-input ${formData.nit && !validateNIT(formData.nit) ? 'form-input-error' : ''}`}
+                           placeholder={total >= 2500 ? 'NIT obligatorio para facturación' : 'CF para Cliente Final o NIT de la empresa'}
+                         />
+                         {formData.nit && !validateNIT(formData.nit) && (
+                           <div className="form-error-message">
+                             {getNITErrorMessage()}
+                           </div>
+                         )}
+                         {total >= 2500 && (
+                           <div className="form-help-text">
+                             💡 Para compras mayores a Q2,500 se requiere NIT para facturación
+                           </div>
+                         )}
+                         {total <= 2499 && (
+                           <div className="form-help-text">
+                             💡 Puede usar "CF" para Cliente Final o proporcionar un NIT
+                           </div>
+                         )}
+                       </div>
                     </div>
 
                     <div className="form-row">
@@ -471,59 +642,43 @@ export default function CheckoutPage() {
 
 
 
-                    {/* Opciones de envío */}
-                    <div className="form-group full-width">
-                      <label className="form-label">Opciones de Envío</label>
-                      <div className="shipping-options">
-                        <div 
-                          className={`shipping-option ${selectedShipping === 'flat_rate' ? 'selected' : ''}`}
-                          onClick={() => handleShippingChange('flat_rate')}
-                        >
-                          <input
-                            type="radio"
-                            name="shipping"
-                            value="flat_rate"
-                            checked={selectedShipping === 'flat_rate'}
-                            onChange={() => handleShippingChange('flat_rate')}
-                            className="shipping-radio"
-                          />
-                          <div className="shipping-label">Tarifa plana</div>
-                          <div className="shipping-price">$20.00</div>
-                        </div>
-                        
-                        <div 
-                          className={`shipping-option ${selectedShipping === 'local_pickup' ? 'selected' : ''}`}
-                          onClick={() => handleShippingChange('local_pickup')}
-                        >
-                          <input
-                            type="radio"
-                            name="shipping"
-                            value="local_pickup"
-                            checked={selectedShipping === 'local_pickup'}
-                            onChange={() => handleShippingChange('local_pickup')}
-                            className="shipping-radio"
-                          />
-                          <div className="shipping-label">Recogida local</div>
-                          <div className="shipping-price">$0.00</div>
-                        </div>
-                        
-                        <div 
-                          className={`shipping-option ${selectedShipping === 'free_shipping' ? 'selected' : ''}`}
-                          onClick={() => handleShippingChange('free_shipping')}
-                        >
-                          <input
-                            type="radio"
-                            name="shipping"
-                            value="free_shipping"
-                            checked={selectedShipping === 'free_shipping'}
-                            onChange={() => handleShippingChange('free_shipping')}
-                            className="shipping-radio"
-                          />
-                          <div className="shipping-label">Envío gratis</div>
-                          <div className="shipping-price">$0.00</div>
-                        </div>
-                      </div>
-                    </div>
+                                         {/* Opciones de envío */}
+                     <div className="form-group full-width">
+                       <label className="form-label">Opciones de Envío</label>
+                       <div className="shipping-options">
+                         <div 
+                           className={`shipping-option ${selectedShipping === 'local_pickup' ? 'selected' : ''}`}
+                           onClick={() => handleShippingChange('local_pickup')}
+                         >
+                           <input
+                             type="radio"
+                             name="shipping"
+                             value="local_pickup"
+                             checked={selectedShipping === 'local_pickup'}
+                             onChange={() => handleShippingChange('local_pickup')}
+                             className="shipping-radio"
+                           />
+                           <div className="shipping-label">Recoger en bodega</div>
+                           <div className="shipping-price">Q0.00</div>
+                         </div>
+                         
+                         <div 
+                           className={`shipping-option ${selectedShipping === 'free_shipping' ? 'selected' : ''}`}
+                           onClick={() => handleShippingChange('free_shipping')}
+                         >
+                           <input
+                             type="radio"
+                             name="shipping"
+                             value="free_shipping"
+                             checked={selectedShipping === 'free_shipping'}
+                             onChange={() => handleShippingChange('free_shipping')}
+                             className="shipping-radio"
+                           />
+                           <div className="shipping-label">Envío gratis</div>
+                           <div className="shipping-price">Q0.00</div>
+                         </div>
+                       </div>
+                     </div>
 
                     {/* Métodos de pago */}
                     <div className="form-group full-width">
@@ -602,46 +757,20 @@ export default function CheckoutPage() {
                       />
                     </div>
 
-                    {/* Checkboxes adicionales */}
-                    <div className="form-checkbox-group">
-                      <input
-                        type="checkbox"
-                        id="createAccount"
-                        checked={createAccount}
-                        onChange={(e) => setCreateAccount(e.target.checked)}
-                        className="form-checkbox"
-                      />
-                      <label htmlFor="createAccount" className="form-checkbox-label">
-                        Crear una cuenta para hacer seguimiento de mi orden
-                      </label>
-                    </div>
-
-                    <div className="form-checkbox-group">
-                      <input
-                        type="checkbox"
-                        id="shipToDifferentAddress"
-                        checked={shipToDifferentAddress}
-                        onChange={(e) => setShipToDifferentAddress(e.target.checked)}
-                        className="form-checkbox"
-                      />
-                      <label htmlFor="shipToDifferentAddress" className="form-checkbox-label">
-                        Enviar a una dirección diferente
-                      </label>
-                    </div>
-
-                    <div className="form-checkbox-group">
-                      <input
-                        type="checkbox"
-                        id="agreeToTerms"
-                        checked={agreeToTerms}
-                        onChange={(e) => setAgreeToTerms(e.target.checked)}
-                        className="form-checkbox"
-                        required
-                      />
-                      <label htmlFor="agreeToTerms" className="form-checkbox-label">
-                        He leído y acepto los <Link href="/terms" style={{ color: 'var(--primary-orange)' }}>términos y condiciones</Link> *
-                      </label>
-                    </div>
+                                         {/* Checkbox de términos y condiciones */}
+                     <div className="form-checkbox-group">
+                       <input
+                         type="checkbox"
+                         id="agreeToTerms"
+                         checked={agreeToTerms}
+                         onChange={(e) => setAgreeToTerms(e.target.checked)}
+                         className="form-checkbox"
+                         required
+                       />
+                       <label htmlFor="agreeToTerms" className="form-checkbox-label">
+                         He leído y acepto los <Link href="/terms" style={{ color: 'var(--primary-orange)' }}>términos y condiciones</Link> *
+                       </label>
+                     </div>
                   </form>
                 </div>
               </div>
@@ -651,7 +780,12 @@ export default function CheckoutPage() {
             <div className="order-summary-section">
               <div className="checkout-card order-summary">
                 <div className="card-header">
-                  <h2>Tu Orden</h2>
+                  <h2>{isGuestCheckout ? 'Resumen de Compra' : 'Tu Orden'}</h2>
+                  {isGuestCheckout && (
+                    <div className="guest-summary-notice">
+                      Compra directa sin cuenta
+                    </div>
+                  )}
                 </div>
                 <div className="card-body">
                   
@@ -659,39 +793,43 @@ export default function CheckoutPage() {
                   <div className="order-items">
                     {productos.map((producto, index) => (
                       <div key={index} className="order-item">
-                        <img
-                          src={producto.imagenes?.[0]?.url || '/assets/placeholder.jpg'}
-                          alt={producto.nombre}
+                                                                         <img
+                          src={producto.url_imagen || producto.producto?.url_imagen || producto.imagenes?.[0]?.url || 'https://res.cloudinary.com/demo/image/upload/v1/samples/ecommerce/accessories-bag'}
+                          alt={producto.nombre || producto.producto?.nombre}
                           className="item-image"
+                          onError={(e) => {
+                            console.log('❌ Error cargando imagen:', e.target.src);
+                            e.target.src = 'https://res.cloudinary.com/demo/image/upload/v1/samples/ecommerce/accessories-bag';
+                          }}
                         />
                         <div className="item-details">
-                          <div className="item-name">{producto.nombre}</div>
+                          <div className="item-name">{producto.nombre || producto.producto?.nombre}</div>
                           <div className="item-meta">
                             Cantidad: {producto.cantidad} | 
                             Color: {producto.color?.nombre || 'N/A'}
                           </div>
                         </div>
-                        <div className="item-price">
-                          ${(producto.precio * producto.cantidad).toFixed(2)}
-                        </div>
+                                                 <div className="item-price">
+                           Q{(producto.precio * producto.cantidad).toFixed(2)}
+                         </div>
                       </div>
                     ))}
                   </div>
 
                   {/* Totales */}
                   <div className="order-totals">
-                    <div className="total-row">
-                      <span>Subtotal</span>
-                      <span>${subtotal.toFixed(2)}</span>
-                    </div>
-                    <div className="total-row">
-                      <span>Envío</span>
-                      <span>${costoEnvio.toFixed(2)}</span>
-                    </div>
-                    <div className="total-row final">
-                      <span>Total</span>
-                      <span>${total.toFixed(2)}</span>
-                    </div>
+                                         <div className="total-row">
+                       <span>Subtotal</span>
+                       <span>Q{subtotal.toFixed(2)}</span>
+                     </div>
+                     <div className="total-row">
+                       <span>Envío</span>
+                       <span>Q{costoEnvio.toFixed(2)}</span>
+                     </div>
+                     <div className="total-row final">
+                       <span>Total</span>
+                       <span>Q{total.toFixed(2)}</span>
+                     </div>
                   </div>
 
                   {/* Botón de orden */}
@@ -701,7 +839,12 @@ export default function CheckoutPage() {
                     disabled={!isFormValid() || isLoading}
                     className="place-order-btn"
                   >
-                    {isLoading ? 'Procesando...' : 'Realizar Pedido'}
+                    {isLoading 
+                      ? 'Procesando...' 
+                      : isGuestCheckout 
+                        ? 'Completar Compra' 
+                        : 'Realizar Pedido'
+                    }
                   </button>
                 </div>
               </div>

@@ -10,14 +10,24 @@ export const uploadToCloudinary = async (file, folder = 'megatienda') => {
     throw new Error('Faltan variables de entorno de Cloudinary. Verifica NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME y NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET');
   }
 
-  console.log('Subiendo imagen a Cloudinary...', {
+  // Determinar el tipo de archivo para usar el endpoint correcto
+  const fileExtension = file.name.split('.').pop().toLowerCase();
+  const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExtension);
+  const isPdf = fileExtension === 'pdf';
+  
+  // Usar endpoint automático para mejor compatibilidad
+  const endpoint = isPdf ? 'auto' : 'image';
+
+  console.log('Subiendo archivo a Cloudinary...', {
     cloudName,
     uploadPreset: process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET,
-    folder
+    folder,
+    endpoint,
+    fileType: isPdf ? 'PDF' : 'Imagen'
   });
-
+  
   const res = await fetch(
-    `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+    `https://api.cloudinary.com/v1_1/${cloudName}/${endpoint}/upload`,
     {
       method: 'POST',
       body: formData,
@@ -31,7 +41,7 @@ export const uploadToCloudinary = async (file, folder = 'megatienda') => {
   }
 
   const data = await res.json();
-  console.log('Imagen subida exitosamente:', data.secure_url);
+  console.log('Archivo subido exitosamente:', data.secure_url);
   
   return {
     secure_url: data.secure_url,

@@ -69,12 +69,13 @@ export const updateProduct = async (id, productData) => {
 // Eliminar un producto
 export const deleteProduct = async (id) => {
   try {
-    const response = await fetch(`${API_BASE}/${id}`, {
+    const response = await fetch(`/api/admin/products/${id}`, {
       method: 'DELETE',
     });
     
     if (!response.ok) {
-      throw new Error('Error al eliminar el producto');
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Error al eliminar el producto');
     }
     
     return await response.json();

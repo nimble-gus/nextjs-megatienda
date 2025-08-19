@@ -120,7 +120,7 @@ export default function FeaturedProducts() {
                       borderRadius: '8px'
                     }}
                   >
-                    <span style={{ color: '#6c757d', fontSize: '14px', textAlign: 'center' }}>
+                    <span style={{ color: '#495057', fontSize: '14px', textAlign: 'center' }}>
                       {prod.name}
                     </span>
                   </div>
