@@ -1,5 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Topbar from '@/components/layout/Topbar';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
@@ -8,6 +9,7 @@ import CartSummary from '@/components/Cart/CartSummary';
 import '@/styles/CartPage.css';
 
 export default function CartPage() {
+  const router = useRouter();
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -151,9 +153,9 @@ export default function CartPage() {
   };
 
   const handleCheckout = () => {
-    // Implementar lógica de checkout
+    // Redirigir a la página de checkout
     console.log('Procediendo al checkout...');
-    // Aquí redirigirías a la página de checkout
+    router.push('/checkout');
   };
 
   if (loading) {
