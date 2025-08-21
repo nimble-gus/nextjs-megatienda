@@ -1,25 +1,17 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
+import { sessionManager } from '@/lib/session-manager';
 import { prisma } from '@/lib/prisma';
 
 export async function POST(req) {
   try {
-    // Cambié 'password' por 'contraseña' para mantener consistencia en español
     const { nombre, correo, contraseña } = await req.json();
 
-    console.log('📝 Datos recibidos en registro:');
-    console.log('- Nombre:', nombre);
-    console.log('- Correo:', correo);
-    console.log('- Contraseña:', contraseña ? '***hidden***' : 'undefined');
+    console.log('📝 Procesando registro para:', correo);
 
     // Validar datos básicos
     if (!nombre || !correo || !contraseña) {
-      console.log('❌ Campos faltantes:');
-      console.log('- Nombre:', !!nombre);
-      console.log('- Correo:', !!correo);
-      console.log('- Contraseña:', !!contraseña);
-      
+      console.log('❌ Campos faltantes en registro');
       return NextResponse.json(
         { error: 'Todos los campos son obligatorios' },
         { status: 400 }
@@ -77,65 +69,35 @@ export async function POST(req) {
       data: {
         nombre,
         correo,
-        password: hashedPassword, // En la BD sigue siendo 'password'
+        password: hashedPassword,
         rol: 'cliente',
       },
     });
 
     console.log('✅ Usuario creado con ID:', newUser.id);
 
-    // Verificar JWT_SECRET
-    if (!process.env.JWT_SECRET) {
-      console.error("❌ JWT_SECRET no está definida en .env");
-      return NextResponse.json(
-        { error: 'Error de configuración en el servidor' },
-        { status: 500 }
-      );
-    }
-
-    console.log('🔑 Generando token JWT...');
-
-    // Generar token JWT
-    let token;
-    try {
-      token = jwt.sign(
-        { id: newUser.id, correo: newUser.correo },
-        process.env.JWT_SECRET,
-        { expiresIn: '24h' }
-      );
-    } catch (jwtError) {
-      console.error('❌ Error al generar token JWT:', jwtError);
-      return NextResponse.json(
-        { error: 'No se pudo generar el token' },
-        { status: 500 }
-      );
-    }
+    // Crear sesión automáticamente después del registro
+    const session = await sessionManager.createSession({
+      id: newUser.id,
+      nombre: newUser.nombre,
+      correo: newUser.correo,
+      rol: newUser.rol
+    });
 
     console.log('🎉 Registro exitoso para:', correo);
 
-    // Respuesta sin enviar la contraseña
+    // Respuesta con tokens
     return NextResponse.json({
+      success: true,
       message: 'Usuario registrado correctamente',
-      token,
-      user: {
-        id: newUser.id,
-        nombre: newUser.nombre,
-        correo: newUser.correo,
-        rol: newUser.rol,
-      },
+      accessToken: session.accessToken,
+      refreshToken: session.refreshToken,
+      user: session.user,
+      expiresAt: session.expiresAt
     });
 
   } catch (error) {
     console.error('❌ Error inesperado en registro:', error);
-    
-    // Manejo específico de errores de Prisma
-    if (error.code === 'P2002') {
-      return NextResponse.json(
-        { error: 'El correo ya está registrado' },
-        { status: 400 }
-      );
-    }
-    
     return NextResponse.json(
       { error: 'Error interno del servidor' },
       { status: 500 }

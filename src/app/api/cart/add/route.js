@@ -5,23 +5,28 @@ import jwt from 'jsonwebtoken';
 // POST - Agregar producto al carrito
 export async function POST(request) {
   try {
-    // Verificar autenticación
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    // Verificar autenticación desde cookies
+    console.log('🔍 API CART - Verificando cookies...');
+    const accessToken = request.cookies.get('accessToken')?.value;
+    console.log('🍪 API CART - Access token encontrado:', !!accessToken);
+    
+    if (!accessToken) {
+      console.log('❌ API CART - No hay token de acceso');
       return NextResponse.json(
         { error: 'Token de autenticación requerido' },
         { status: 401 }
       );
     }
 
-    const token = authHeader.substring(7);
     let decoded;
     
     try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+      decoded = jwt.verify(accessToken, process.env.JWT_SECRET || 'your-secret-key');
+      console.log('✅ API CART - Token válido para usuario:', decoded.id);
     } catch (error) {
+      console.log('❌ API CART - Error verificando token:', error.message);
       return NextResponse.json(
-        { error: 'Token inválido' },
+        { error: 'Token inválido o expirado' },
         { status: 401 }
       );
     }

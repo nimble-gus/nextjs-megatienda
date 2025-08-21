@@ -9,11 +9,19 @@ import HeroSection from '@/components/Home/HeroSection';
 import CategoriesSection from '@/components/Home/CategoriesSection';
 import FeaturedProducts from '@/components/Home/FeaturedProducts';
 import PromoBanners from '@/components/Home/PromoBanners';
+import CacheMonitor from '@/components/debug/CacheMonitor';
+import { preloadHomeData } from '@/lib/home-cache';
 
 import '@/styles/HomePage.css';
 
 
 export default function Home() {
+  // Precargar datos de la página Home para optimizar rendimiento
+  useEffect(() => {
+    // Precargar datos en segundo plano
+    preloadHomeData().catch(console.error);
+  }, []);
+
   // Debug: Efecto para monitorear el sticky behavior
   useEffect(() => {
     const stickyWrapper = document.querySelector('.sticky-wrapper');
@@ -86,6 +94,9 @@ export default function Home() {
 
       {/* Footer */}
       <Footer />
+      
+      {/* Monitor de caché para desarrollo */}
+      <CacheMonitor />
     </div>
   );
 }

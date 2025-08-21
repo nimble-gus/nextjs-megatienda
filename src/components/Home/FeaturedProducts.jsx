@@ -1,43 +1,13 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { useFeaturedProducts } from '@/hooks/useHomeData';
 import '../../styles/FeaturedProducts.css';
 
 export default function FeaturedProducts() {
   const router = useRouter();
-  const [featuredProducts, setFeaturedProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  // Cargar productos destacados desde la API
-  useEffect(() => {
-    const loadFeaturedProducts = async () => {
-      try {
-        setLoading(true);
-        
-        const response = await fetch('/api/featured-products');
-        if (!response.ok) {
-          throw new Error('Error al cargar productos destacados');
-        }
-        
-        const data = await response.json();
-        
-        if (data.success) {
-          setFeaturedProducts(data.products);
-        } else {
-          throw new Error(data.error || 'Error desconocido');
-        }
-      } catch (error) {
-        console.error('Error cargando productos destacados:', error);
-        setError('Error al cargar productos destacados');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadFeaturedProducts();
-  }, []);
+  const { featuredProducts, loading, error } = useFeaturedProducts();
 
   const handleViewDetails = (id) => {
     router.push(`/product/${id}`);

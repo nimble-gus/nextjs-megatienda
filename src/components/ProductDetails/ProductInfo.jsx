@@ -16,6 +16,8 @@ const ProductInfo = ({
   isLoggedIn = false,
   isLoading = false
 }) => {
+  // Debug: Log para verificar el estado de autenticación
+  console.log('🔍 ProductInfo - Estado de autenticación:', { isLoggedIn, isLoading });
   return (
     <div className="product-info">
       {/* Categoría */}
@@ -40,7 +42,6 @@ const ProductInfo = ({
 
       {/* SKU */}
       <div className="product-sku">
-        <span className="sku-label">SKU:</span>
         <span className="sku-value">{product.sku}</span>
       </div>
 
@@ -65,7 +66,7 @@ const ProductInfo = ({
               className={`color-option ${selectedColor.id === color.id ? 'selected' : ''} ${!color.available ? 'unavailable' : ''}`}
               onClick={() => color.available && onColorSelect(color)}
               disabled={!color.available}
-              title={`${color.name} (${color.stock} disponibles)`}
+              /*title={`${color.name} (${color.stock} disponibles)`}*/
             >
               <div 
                 className="color-swatch"
@@ -162,32 +163,8 @@ const ProductInfo = ({
         </div>
       </div>
 
-      {/* Compartir en redes sociales */}
-      <div className="social-sharing">
-        <button className="share-btn facebook">
-          <span>📘</span>
-        </button>
-        <button className="share-btn linkedin">
-          <span>💼</span>
-        </button>
-        <button className="share-btn generic">
-          <span>📤</span>
-        </button>
-      </div>
-
       {/* Información de pago seguro */}
-      <div className="payment-info">
-        <div className="secure-checkout">
-          <span className="secure-icon">🔒</span>
-          <span>Pago Seguro y Garantizado</span>
-        </div>
-        
-        <div className="payment-methods">
-          <span className="payment-method">PayPal</span>
-          <span className="payment-method">VISA</span>
-          <span className="payment-method">Stripe</span>
-        </div>
-      </div>
+
     </div>
   );
 };

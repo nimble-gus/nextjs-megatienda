@@ -36,7 +36,11 @@ export async function GET(request, { params }) {
         include: {
           detalle: {
             include: {
-              producto: true,
+              producto: {
+                include: {
+                  imagenes: true
+                }
+              },
               color: true
             }
           }
@@ -60,15 +64,27 @@ export async function GET(request, { params }) {
       costo_envio: order.costo_envio,
       total: order.total,
       metodo_pago: order.metodo_pago,
-             detalles: order.detalle.map(detalle => ({
+      notas: order.notas,
+      // Información del cliente
+      nombre_cliente: order.nombre_cliente,
+      email_cliente: order.email_cliente,
+      telefono_cliente: order.telefono_cliente,
+      direccion_cliente: order.direccion_cliente,
+      municipio_cliente: order.municipio_cliente,
+      codigo_postal_cliente: order.codigo_postal_cliente,
+      nit_cliente: order.nit_cliente,
+      detalles: order.detalle.map(detalle => ({
         id: detalle.id,
         cantidad: detalle.cantidad,
         precio_unitario: detalle.precio_unitario,
-                 producto: {
-           id: detalle.producto.id,
-           nombre: detalle.producto.nombre,
-           imagenes: []
-         },
+        producto: {
+          id: detalle.producto.id,
+          nombre: detalle.producto.nombre,
+          imagenes: detalle.producto.imagenes.map(img => ({
+            id: img.id,
+            url: img.url_imagen
+          }))
+        },
         color: {
           id: detalle.color.id,
           nombre: detalle.color.nombre,

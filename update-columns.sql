@@ -7,7 +7,7 @@ ALTER TABLE `ordenes` ADD COLUMN `municipio_cliente` VARCHAR(191) NULL AFTER `di
 -- 2. Copiar los datos de ciudad_cliente a municipio_cliente
 UPDATE `ordenes` SET `municipio_cliente` = `ciudad_cliente` WHERE `ciudad_cliente` IS NOT NULL;
 
--- 3. Eliminar la columna ciudad_cliente
+-- 3. Eliminar la columna ciudad_cliente    
 ALTER TABLE `ordenes` DROP COLUMN `ciudad_cliente`;
 
 -- 4. Verificar que el cambio se aplicó correctamente

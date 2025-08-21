@@ -13,35 +13,70 @@ const Header = () => {
     const [cartCount, setCartCount] = useState(0);
     const [showLoginModal, setShowLoginModal] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+    const [recentSearches, setRecentSearches] = useState([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
 
     // Animación de entrada al cargar y verificar usuario guardado
     useEffect(() => {
         setTimeout(() => setHeaderVisible(true), 100);
         
-        // Verificar si hay usuario logueado en localStorage
-        const savedUser = localStorage.getItem('user');
-        if (savedUser) {
+        // Verificar estado de autenticación
+        const checkAuthStatus = async () => {
             try {
-                const userData = JSON.parse(savedUser);
-                setUser(userData);
-                loadUserCart(userData.id || userData.usuario_id);
+                const response = await fetch('/api/auth/status', {
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.isAuthenticated) {
+                        // Si el token es válido, cargar datos del usuario desde localStorage
+                        const savedUser = localStorage.getItem('user');
+                        if (savedUser) {
+                            try {
+                                const userData = JSON.parse(savedUser);
+                                setUser(userData);
+                                loadUserCart(userData.id || userData.usuario_id);
+                            } catch (error) {
+                                console.error('Error parsing user data:', error);
+                                localStorage.removeItem('user');
+                            }
+                        }
+                    } else {
+                        // Token inválido o expirado, limpiar sesión
+                        console.warn('Token inválido, limpiando sesión...');
+                        setUser(null);
+                        setCartCount(0);
+                        localStorage.removeItem('user');
+                    }
+                } else {
+                    // Error en la verificación, limpiar sesión
+                    console.warn('Error verificando autenticación, limpiando sesión...');
+                    setUser(null);
+                    setCartCount(0);
+                    localStorage.removeItem('user');
+                }
             } catch (error) {
-                console.error('Error parsing saved user:', error);
-                localStorage.removeItem('user');
+                console.error('Error checking auth status:', error);
+                // En caso de error, mantener el estado actual
             }
-        }
+        };
+
+        checkAuthStatus();
+
+        // Cargar búsquedas recientes
+        loadRecentSearches();
     }, []);
 
     // Función para cargar el carrito del usuario
     const loadUserCart = async (userId) => {
         try {
             console.log('🛒 Cargando carrito para usuario:', userId);
-            const token = localStorage.getItem('token');
             const response = await fetch(`/api/cart/${userId}`, {
                 headers: {
-                    'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
-                }
+                },
+                credentials: 'include'
             });
             
             if (response.ok) {
@@ -54,6 +89,13 @@ const Header = () => {
                     console.warn('Respuesta del carrito sin formato esperado:', cartData);
                     setCartCount(0);
                 }
+            } else if (response.status === 401) {
+                // Token expirado o inválido - limpiar sesión
+                console.warn('Token expirado o inválido, limpiando sesión...');
+                setUser(null);
+                setCartCount(0);
+                localStorage.removeItem('user');
+                window.dispatchEvent(new CustomEvent('logout'));
             } else {
                 const errorData = await response.json().catch(() => ({}));
                 console.error('Error cargando carrito:', response.status, errorData.error || response.statusText);
@@ -94,9 +136,7 @@ const Header = () => {
         setUser(userData);
         
         localStorage.setItem('user', JSON.stringify(userData));
-        if (data.token) {
-            localStorage.setItem('token', data.token);
-        }
+        // Los tokens ahora se manejan automáticamente por cookies HttpOnly
         
         loadUserCart(userData.id || userData.usuario_id);
         setShowLoginModal(false);
@@ -108,12 +148,21 @@ const Header = () => {
     };
 
     // Manejar logout
-    const handleLogout = () => {
+    const handleLogout = async () => {
+        try {
+            // Llamar a la API de logout para eliminar cookies
+            await fetch('/api/auth/logout', {
+                method: 'POST',
+                credentials: 'include'
+            });
+        } catch (error) {
+            console.error('Error en logout:', error);
+        }
+        
         setUser(null);
         setCartCount(0);
         
         localStorage.removeItem('user');
-        localStorage.removeItem('token');
         
         // Disparar evento de logout
         window.dispatchEvent(new CustomEvent('logout'));
@@ -121,26 +170,76 @@ const Header = () => {
         console.log('Sesión cerrada correctamente');
     };
 
+    // Función para cargar búsquedas recientes
+    const loadRecentSearches = () => {
+        try {
+            const saved = localStorage.getItem('recentSearches');
+            if (saved) {
+                const searches = JSON.parse(saved);
+                setRecentSearches(searches);
+            }
+        } catch (error) {
+            console.error('Error cargando búsquedas recientes:', error);
+        }
+    };
+
+    // Función para guardar una búsqueda reciente
+    const saveRecentSearch = (query) => {
+        try {
+            const trimmedQuery = query.trim().toLowerCase();
+            if (!trimmedQuery) return;
+
+            const currentSearches = [...recentSearches];
+            
+            // Remover si ya existe
+            const existingIndex = currentSearches.findIndex(
+                search => search.toLowerCase() === trimmedQuery
+            );
+            if (existingIndex > -1) {
+                currentSearches.splice(existingIndex, 1);
+            }
+            
+            // Agregar al inicio
+            currentSearches.unshift(trimmedQuery);
+            
+            // Mantener solo las últimas 5 búsquedas
+            const limitedSearches = currentSearches.slice(0, 5);
+            
+            setRecentSearches(limitedSearches);
+            localStorage.setItem('recentSearches', JSON.stringify(limitedSearches));
+        } catch (error) {
+            console.error('Error guardando búsqueda reciente:', error);
+        }
+    };
+
     // Función para manejar la búsqueda
     const handleSearch = (e) => {
         e.preventDefault();
         
         if (searchQuery.trim()) {
+            // Guardar búsqueda reciente
+            saveRecentSearch(searchQuery);
+            
             // Redirigir al catálogo con el término de búsqueda
             const encodedQuery = encodeURIComponent(searchQuery.trim());
             router.push(`/catalog?search=${encodedQuery}`);
             
-            // Limpiar el campo de búsqueda
+            // Limpiar el campo de búsqueda y ocultar sugerencias
             setSearchQuery('');
+            setShowSuggestions(false);
         }
     };
 
     // Función para manejar la búsqueda al hacer click en la lupa
     const handleSearchClick = () => {
         if (searchQuery.trim()) {
+            // Guardar búsqueda reciente
+            saveRecentSearch(searchQuery);
+            
             const encodedQuery = encodeURIComponent(searchQuery.trim());
             router.push(`/catalog?search=${encodedQuery}`);
             setSearchQuery('');
+            setShowSuggestions(false);
         }
     };
 
@@ -149,6 +248,21 @@ const Header = () => {
         if (e.key === 'Enter') {
             handleSearch(e);
         }
+    };
+
+    // Función para manejar click en una sugerencia
+    const handleSuggestionClick = (suggestion) => {
+        setSearchQuery(suggestion);
+        saveRecentSearch(suggestion);
+        const encodedQuery = encodeURIComponent(suggestion);
+        router.push(`/catalog?search=${encodedQuery}`);
+        setShowSuggestions(false);
+    };
+
+    // Función para limpiar búsquedas recientes
+    const clearRecentSearches = () => {
+        setRecentSearches([]);
+        localStorage.removeItem('recentSearches');
     };
 
     const isLoggedIn = !!user;
@@ -200,8 +314,15 @@ const Header = () => {
                             placeholder="Busca tu producto" 
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            onFocus={() => setSearchFocused(true)}
-                            onBlur={() => setSearchFocused(false)}
+                            onFocus={() => {
+                                setSearchFocused(true);
+                                setShowSuggestions(true);
+                            }}
+                            onBlur={() => {
+                                setSearchFocused(false);
+                                // Delay para permitir clicks en sugerencias
+                                setTimeout(() => setShowSuggestions(false), 200);
+                            }}
                             onKeyPress={handleKeyPress}
                         />
                         <button 
@@ -219,11 +340,38 @@ const Header = () => {
                             />
                         </button>
                     </form>
-                    <div className="search-suggestions">
-                        <div className="suggestion">Caminadora iWalk Pro</div>
-                        <div className="suggestion">Yoga Mat 6MM</div>
-                        <div className="suggestion">Cama de Pilates</div>
-                    </div>
+                    {showSuggestions && (
+                        <div className="search-suggestions">
+                            {recentSearches.length > 0 ? (
+                                <>
+                                    <div className="suggestions-header">
+                                        <span>Búsquedas recientes</span>
+                                        <button 
+                                            className="clear-searches-btn"
+                                            onClick={clearRecentSearches}
+                                            title="Limpiar historial"
+                                        >
+                                            🗑️
+                                        </button>
+                                    </div>
+                                    {recentSearches.map((search, index) => (
+                                        <div 
+                                            key={index}
+                                            className="suggestion recent-search"
+                                            onClick={() => handleSuggestionClick(search)}
+                                        >
+                                            <span className="search-icon">🔍</span>
+                                            <span className="search-text">{search}</span>
+                                        </div>
+                                    ))}
+                                </>
+                            ) : (
+                                <div className="no-searches">
+                                    <span>No hay búsquedas recientes</span>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 {/* Botón de login cuando no está logueado */}

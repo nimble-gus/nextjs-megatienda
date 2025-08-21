@@ -1,14 +1,24 @@
-import { prisma } from './prisma';
+import { prisma } from './prisma.js';
 
-// Función para ejecutar queries con reintentos
-export async function executeWithRetry(operation, maxRetries = 3, delay = 1000) {
+// Configuración de reintentos
+const RETRY_CONFIG = {
+  maxRetries: 3,
+  baseDelay: 1000,
+  maxDelay: 5000
+};
+
+// Función para ejecutar con reintentos
+export async function executeWithRetry(operation, maxRetries = RETRY_CONFIG.maxRetries) {
   let lastError;
   
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      // Verificar conexión antes de ejecutar
+      // Asegurar conexión antes de cada intento
       await ensureConnection();
+      
+      // Ejecutar la operación
       return await operation();
+      
     } catch (error) {
       lastError = error;
       
@@ -19,7 +29,8 @@ export async function executeWithRetry(operation, maxRetries = 3, delay = 1000) 
         error.message.includes('Connection') ||
         error.message.includes('timeout') ||
         error.message.includes('Engine is not yet connected') ||
-        error.message.includes('GenericFailure');
+        error.message.includes('GenericFailure') ||
+        error.message.includes('Response from the Engine was empty');
       
       if (!isConnectionError || attempt === maxRetries) {
         throw error;
@@ -27,8 +38,9 @@ export async function executeWithRetry(operation, maxRetries = 3, delay = 1000) 
       
       console.log(`🔄 Reintento ${attempt}/${maxRetries} después de error de conexión:`, error.message);
       
-      // Esperar antes del siguiente intento
-      await new Promise(resolve => setTimeout(resolve, delay * attempt));
+      // Esperar antes del siguiente intento (backoff exponencial)
+      const delay = Math.min(RETRY_CONFIG.baseDelay * Math.pow(2, attempt - 1), RETRY_CONFIG.maxDelay);
+      await new Promise(resolve => setTimeout(resolve, delay));
       
       // Intentar reconectar
       try {
@@ -49,10 +61,22 @@ export async function ensureConnection() {
     // Verificar si ya está conectado
     await prisma.$queryRaw`SELECT 1 as health_check`;
   } catch (error) {
+    // Si es un error de conexión, intentar reconectar
     if (error.message.includes('Engine is not yet connected') || 
-        error.message.includes('Can\'t reach database server')) {
+        error.message.includes('Can\'t reach database server') ||
+        error.message.includes('Response from the Engine was empty')) {
       console.log('🔌 Reconectando...');
       await forceReconnect();
+      
+      // Verificar nuevamente después de reconectar
+      try {
+        await prisma.$queryRaw`SELECT 1 as health_check`;
+      } catch (retryError) {
+        console.log('❌ Error de base de datos:', retryError.message);
+        console.log('🔍 Tipo de error:', retryError.constructor.name);
+        console.log('🔍 Código de error:', retryError.code);
+        throw retryError;
+      }
     } else {
       throw error;
     }
@@ -110,4 +134,28 @@ export async function cleanupConnections() {
   } catch (error) {
     console.log('⚠️ Error limpiando conexiones:', error.message);
   }
+}
+
+// Función para manejar errores de Prisma de manera más robusta
+export async function handlePrismaError(error, context = '') {
+  console.log(`❌ Error de base de datos:`, error.message);
+  console.log(`🔍 Tipo de error:`, error.constructor.name);
+  console.log(`🔍 Código de error:`, error.code);
+  
+  if (context) {
+    console.log(`🔍 Contexto:`, context);
+  }
+  
+  // Si es un error de conexión, intentar reconectar
+  if (error.message.includes('Engine is not yet connected') ||
+      error.message.includes('Response from the Engine was empty')) {
+    try {
+      await forceReconnect();
+      return { success: true, message: 'Reconexión exitosa' };
+    } catch (reconnectError) {
+      return { success: false, message: 'Error en reconexión', error: reconnectError };
+    }
+  }
+  
+  return { success: false, message: 'Error no relacionado con conexión', error };
 }

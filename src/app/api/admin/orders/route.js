@@ -9,6 +9,7 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
     const paymentMethod = searchParams.get('paymentMethod');
+    const search = searchParams.get('search');
     const page = parseInt(searchParams.get('page')) || 1;
     const limit = parseInt(searchParams.get('limit')) || 20;
     const skip = (page - 1) * limit;
@@ -22,6 +23,12 @@ export async function GET(request) {
     
     if (paymentMethod && paymentMethod !== 'all') {
       where.metodo_pago = paymentMethod;
+    }
+    
+    if (search && search.trim() !== '') {
+      where.codigo_orden = {
+        contains: search.trim()
+      };
     }
 
     const orders = await executeWithRetry(async () => {

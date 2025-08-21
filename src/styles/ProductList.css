@@ -108,7 +108,7 @@
   background: #f8fafc;
   color: #374151;
   font-weight: 600;
-  text-align: left;
+  text-align: center;
   padding: 1rem;
   border-bottom: 2px solid #e5e7eb;
   font-size: 0.875rem;
@@ -121,6 +121,7 @@
   border-bottom: 1px solid #f3f4f6;
   color: #1f2937;
   font-size: 0.95rem;
+  text-align: center;
 }
 
 .product-row:hover {
@@ -142,6 +143,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  text-align: left; /* Mantener nombre alineado a la izquierda para mejor legibilidad */
 }
 
 /* Category Badge */
@@ -170,23 +172,36 @@
 
 /* Stock Badge */
 .stock-badge {
-  padding: 0.25rem 0.75rem;
+  padding: 0.375rem 0.875rem;
   border-radius: 12px;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   font-weight: 600;
   text-align: center;
-  min-width: 40px;
+  min-width: 60px;
   display: inline-block;
+  white-space: nowrap;
+  position: relative;
+  transition: all 0.3s ease;
 }
 
 .stock-badge.in-stock {
-  background: #dcfce7;
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
   color: #166534;
+  border: 1px solid #bbf7d0;
+  box-shadow: 0 2px 4px rgba(34, 197, 94, 0.1);
+}
+
+.stock-badge.in-stock:hover {
+  background: linear-gradient(135deg, #bbf7d0 0%, #86efac 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(34, 197, 94, 0.2);
 }
 
 .stock-badge.out-of-stock {
-  background: #fef2f2;
+  background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%);
   color: #dc2626;
+  border: 1px solid #fecaca;
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.1);
 }
 
 /* Actions */
@@ -397,7 +412,107 @@
 
 /* ===== STOCK MODAL STYLES ===== */
   .stock-modal {
-    max-width: 700px;
+    max-width: 900px;
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+
+  .stock-section {
+    margin-bottom: 2rem;
+  }
+
+  .stock-section h4 {
+    color: #374151;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e5e7eb;
+  }
+
+  .new-variants-section {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 2px solid #f3f4f6;
+  }
+
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+  }
+
+  .section-header h4 {
+    margin: 0;
+    color: #374151;
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+
+  .add-variant-btn {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+  }
+
+  .add-variant-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  }
+
+  .add-variant-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .new-variant {
+    border: 2px dashed #d1d5db;
+    background: #f9fafb;
+    position: relative;
+  }
+
+  .new-variant::before {
+    content: "NUEVA";
+    position: absolute;
+    top: -1px;
+    right: -1px;
+    background: #10b981;
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0 6px 0 6px;
+    letter-spacing: 0.05em;
+  }
+
+  .remove-variant-btn {
+    background: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 0.5rem;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-left: 1rem;
+  }
+
+  .remove-variant-btn:hover {
+    background: #dc2626;
+    transform: scale(1.1);
   }
   
   .images-modal {
@@ -468,6 +583,27 @@
   
   .stock-modal {
     max-width: 95vw;
+  }
+
+  .section-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+
+  .add-variant-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .new-variant .stock-item-header {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .remove-variant-btn {
+    margin-left: 0;
+    align-self: flex-end;
   }
   
   .images-modal {
@@ -736,6 +872,7 @@
   .product-table td {
     padding: 0.5rem 0.25rem;
     font-size: 0.8rem;
+    text-align: center;
   }
   
   .product-name {
@@ -772,6 +909,18 @@
   
   .product-name {
     max-width: 80px;
+    text-align: left; /* Mantener nombre a la izquierda en móvil */
+  }
+  
+  .stock-badge {
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
+    min-width: 50px;
+  }
+  
+  .product-table th,
+  .product-table td {
+    text-align: center;
   }
   
   .edit-form-overlay {

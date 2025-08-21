@@ -15,6 +15,7 @@ import '@/styles/AdminDashboard.css';
 
 export default function AdminDashboard() {
   const [sales, setSales] = useState([]);
+  const [salesSummary, setSalesSummary] = useState({ totalVentas: 0, totalPedidos: 0 });
   const [kpis, setKpis] = useState({});
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -28,7 +29,19 @@ export default function AdminDashboard() {
       console.log('🔄 Cargando datos del dashboard...');
       
       const salesData = await getSales(startDate, endDate);
-      setSales(salesData);
+      
+      // Manejar la nueva estructura de respuesta
+      if (salesData.sales && salesData.summary) {
+        setSales(salesData.sales);
+        setSalesSummary(salesData.summary);
+      } else {
+        // Compatibilidad con estructura antigua
+        setSales(Array.isArray(salesData) ? salesData : []);
+        setSalesSummary({ 
+          totalVentas: 0, 
+          totalPedidos: Array.isArray(salesData) ? salesData.length : 0 
+        });
+      }
 
       const kpisData = await getKpis();
       setKpis(kpisData);
@@ -61,7 +74,7 @@ export default function AdminDashboard() {
             <div className="kpi-container">
               <KPICard 
                 title="Total Ventas" 
-                value={`$${kpis.totalVentas?.toFixed(2) || 0}`}
+                value={`Q${kpis.totalVentas?.toFixed(2) || 0}`}
                 icon="💰"
                 trend="+12.5%"
                 trendUp={true}
@@ -87,6 +100,37 @@ export default function AdminDashboard() {
                 trend="+5.7%"
                 trendUp={false}
               />
+            </div>
+            
+            {/* KPIs de Estados de Pedidos */}
+            <div className="order-status-kpis">
+              <h3 className="section-title">Estados de Pedidos</h3>
+              <div className="kpi-container order-status-grid">
+                <KPICard 
+                  title="Pedidos Pendientes" 
+                  value={kpis.pedidosPendientes || 0}
+                  icon="⏳"
+                  trend="Requieren atención"
+                  trendUp={false}
+                  priority="high"
+                />
+                <KPICard 
+                  title="Contra Entrega - Pendientes de Enviar" 
+                  value={kpis.contraEntregaPendientes || 0}
+                  icon="🚚"
+                  trend="Pendientes de envío"
+                  trendUp={false}
+                  priority="medium"
+                />
+                <KPICard 
+                  title="Transferencia - Pendientes de Validar" 
+                  value={kpis.transferenciaPendientes || 0}
+                  icon="🏦"
+                  trend="Pendientes de validación"
+                  trendUp={false}
+                  priority="medium"
+                />
+              </div>
             </div>
             <div className="dashboard-grid">
               <div className="dashboard-card">
@@ -135,6 +179,44 @@ export default function AdminDashboard() {
                 onDateChange={handleDateChange}
               />
             </div>
+            
+            {/* KPI del rango de fechas seleccionado */}
+            {(startDate || endDate) && (
+              <div className="sales-kpi-section">
+                <h3 className="section-title">Resumen del Período Seleccionado</h3>
+                <div className="kpi-container sales-range-kpis">
+                  <KPICard 
+                    title="Total Ventas del Período" 
+                    value={`Q${salesSummary.totalVentas?.toFixed(2) || '0.00'}`}
+                    icon="💰"
+                    trend={`${salesSummary.totalPedidos || 0} pedidos`}
+                    trendUp={salesSummary.totalVentas > 0}
+                    priority="high"
+                  />
+                  <KPICard 
+                    title="Pedidos del Período" 
+                    value={salesSummary.totalPedidos || 0}
+                    icon="📦"
+                    trend={salesSummary.fechaInicio && salesSummary.fechaFin 
+                      ? `${salesSummary.fechaInicio} - ${salesSummary.fechaFin}` 
+                      : 'Rango personalizado'}
+                    trendUp={salesSummary.totalPedidos > 0}
+                    priority="medium"
+                  />
+                  {salesSummary.totalPedidos > 0 && (
+                    <KPICard 
+                      title="Promedio por Pedido" 
+                      value={`Q${(salesSummary.totalVentas / salesSummary.totalPedidos).toFixed(2)}`}
+                      icon="📊"
+                      trend="Valor promedio"
+                      trendUp={true}
+                      priority="low"
+                    />
+                  )}
+                </div>
+              </div>
+            )}
+            
             <SalesTable sales={sales} />
           </div>
         );

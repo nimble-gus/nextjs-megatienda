@@ -20,7 +20,6 @@ const ProductGrid = ({
   onItemsPerPageChange 
 }) => {
 
-
   // Calcular índices para mostrar información
   const startIndex = (currentPage - 1) * itemsPerPage + 1;
   const endIndex = Math.min(currentPage * itemsPerPage, totalProducts);
@@ -38,48 +37,99 @@ const ProductGrid = ({
     ));
   };
 
+  // Función para obtener la imagen del producto
+  const getProductImage = (product) => {
+    // Priorizar la imagen principal
+    if (product.image) return product.image;
+    if (product.url_imagen) return product.url_imagen;
+    
+    // Si hay imágenes adicionales, usar la primera
+    if (product.imagenes && product.imagenes.length > 0) {
+      return product.imagenes[0].url_imagen;
+    }
+    
+    // Si hay imágenes adicionales en formato diferente
+    if (product.imagenes_adicionales && product.imagenes_adicionales.length > 0) {
+      return product.imagenes_adicionales[0];
+    }
+    
+    // Imagen por defecto usando Picsum
+    return `https://picsum.photos/300/300?random=${product.id || Math.random()}`;
+  };
 
+  // Componente de imagen con manejo de errores
+  const ProductImage = ({ product, width = 250, height = 250, className = "product-image" }) => {
+    const [imageError, setImageError] = useState(false);
+    const [retryCount, setRetryCount] = useState(0);
+    const imageUrl = getProductImage(product);
+
+    const handleImageError = () => {
+      if (retryCount < 2) {
+        // Intentar con una imagen diferente
+        setRetryCount(prev => prev + 1);
+        setImageError(false);
+      } else {
+        setImageError(true);
+      }
+    };
+
+    if (imageError) {
+      return (
+        <div className="product-image-placeholder">
+          <div className="placeholder-content">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="48" height="48">
+              <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+            </svg>
+            <span>Sin imagen</span>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <Image 
+        src={imageUrl} 
+        alt={product.name || product.nombre || 'Producto'}
+        width={width}
+        height={height}
+        className={className}
+        priority={false}
+        onError={handleImageError}
+        onLoad={() => {
+          setImageError(false);
+          setRetryCount(0);
+        }}
+      />
+    );
+  };
 
   // Componente de producto individual
   const ProductCard = ({ product }) => (
     <div className="product-card">
       <Link href={`/product/${product.id}`} className="product-link">
         <div className="product-image-container">
-          {product.image ? (
-            <Image 
-              src={product.image} 
-              alt={product.name}
-              width={250}
-              height={250}
-              className="product-image"
-              priority={false}
-            />
-          ) : (
-            <div className="product-image-placeholder">
-              <span>Sin imagen</span>
-            </div>
-          )}
-                     <div className="product-overlay">
-             <button 
-               className="quick-view-btn"
-               title="Ver Detalles"
-             >
-               <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-                 <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
-               </svg>
-             </button>
-           </div>
+          <ProductImage product={product} />
+          <div className="product-overlay">
+            <button 
+              className="quick-view-btn"
+              title="Ver Detalles"
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+              </svg>
+            </button>
+          </div>
         </div>
         
         <div className="product-info">
-          <div className="product-brand">{product.brand}</div>
-          <h3 className="product-name">{product.name}</h3>
+          <div className="product-brand">{product.categoria || 'Sin categoría'}</div>
+          <h3 className="product-name">{product.name || product.nombre || 'Producto sin nombre'}</h3>
           <div className="product-rating">
-            {renderStars(product.rating)}
+            {renderStars(product.rating || 0)}
           </div>
           <div className="product-price">
-            <span className="current-price">{formatPrice(product.price)}</span>
-            {product.originalPrice > product.price && (
+            <span className="current-price">{formatPrice(product.price || product.precio)}</span>
+            {product.originalPrice && product.originalPrice > (product.price || product.precio) && (
               <span className="original-price">{formatPrice(product.originalPrice)}</span>
             )}
           </div>
@@ -94,20 +144,7 @@ const ProductGrid = ({
       <div className="product-list-image-section">
         <Link href={`/product/${product.id}`} className="product-link">
           <div className="product-image-container">
-            {product.image ? (
-              <Image 
-                src={product.image} 
-                alt={product.name}
-                width={120}
-                height={120}
-                className="product-image"
-                priority={false}
-              />
-            ) : (
-              <div className="product-image-placeholder">
-                <span>Sin imagen</span>
-              </div>
-            )}
+            <ProductImage product={product} width={120} height={120} />
           </div>
         </Link>
       </div>
@@ -115,15 +152,15 @@ const ProductGrid = ({
       <div className="product-list-info-section">
         <Link href={`/product/${product.id}`} className="product-link">
           <div className="product-info">
-            <div className="product-brand">{product.brand}</div>
-            <h3 className="product-name">{product.name}</h3>
+            <div className="product-brand">{product.categoria || 'Sin categoría'}</div>
+            <h3 className="product-name">{product.name || product.nombre || 'Producto sin nombre'}</h3>
             <div className="product-rating">
-              {renderStars(product.rating)}
-              <span className="rating-text">({product.rating}/5)</span>
+              {renderStars(product.rating || 0)}
+              <span className="rating-text">({product.rating || 0}/5)</span>
             </div>
             <div className="product-price">
-              <span className="current-price">{formatPrice(product.price)}</span>
-              {product.originalPrice > product.price && (
+              <span className="current-price">{formatPrice(product.price || product.precio)}</span>
+              {product.originalPrice && product.originalPrice > (product.price || product.precio) && (
                 <span className="original-price">{formatPrice(product.originalPrice)}</span>
               )}
             </div>
@@ -139,7 +176,6 @@ const ProductGrid = ({
             </svg>
             Ver Detalles
           </Link>
-
         </div>
       </div>
     </div>

@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useRouter } from 'next/navigation';
+import { useCategories } from '@/hooks/useHomeData';
 import '../../styles/CategoriesSection.css';
 
 // Iconos modernos mejorados para cada categoría
@@ -67,53 +68,7 @@ const CategoriesSection = ({
   onCategoryClick
 }) => {
   const router = useRouter();
-  const [categoriesData, setCategoriesData] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  // Cargar categorías una sola vez al montar
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadCategories = async () => {
-      // Si ya tenemos categorías de props, usarlas
-      if (categories.length > 0) {
-        if (isMounted) {
-          setCategoriesData(categories);
-          setLoading(false);
-        }
-        return;
-      }
-
-      // Si no, cargar desde la API
-      try {
-        console.log('Loading categories from API...');
-        const response = await fetch('/api/categories');
-        if (!response.ok) {
-          throw new Error('Error al obtener categorías');
-        }
-        const data = await response.json();
-        console.log('Categories loaded:', data);
-        
-        if (isMounted) {
-          setCategoriesData(data.categories || []);
-          setLoading(false);
-        }
-      } catch (error) {
-        console.error('Error loading categories:', error);
-        if (isMounted) {
-          setCategoriesData([]);
-          setLoading(false);
-        }
-      }
-    };
-
-    loadCategories();
-
-    // Cleanup function
-    return () => {
-      isMounted = false;
-    };
-  }, []); // Solo ejecutar una vez
+  const { categories: categoriesData, loading, error } = useCategories();
 
   const handleCategoryClick = (categoryId, categoryName) => {
     if (onCategoryClick) {
@@ -138,7 +93,7 @@ const CategoriesSection = ({
     );
   };
 
-  // Usar categorías de props si están disponibles, sino usar las de la API
+  // Usar categorías de props si están disponibles, sino usar las del hook
   const displayCategories = categories.length > 0 ? categories : categoriesData;
 
   if (loading) {

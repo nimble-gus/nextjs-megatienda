@@ -17,16 +17,24 @@ const OrdersManager = () => {
   // Filtros
   const [statusFilter, setStatusFilter] = useState('all');
   const [paymentFilter, setPaymentFilter] = useState('all');
+  const [searchOrder, setSearchOrder] = useState('');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalOrders, setTotalOrders] = useState(0);
 
   // Estados del formulario
   const [newStatus, setNewStatus] = useState('');
   const [notes, setNotes] = useState('');
+  const [transferVerified, setTransferVerified] = useState(false);
 
   useEffect(() => {
     fetchOrders();
-  }, [statusFilter, paymentFilter, page]);
+  }, [statusFilter, paymentFilter, searchOrder, page]);
+
+  // Resetear página cuando se cambia la búsqueda
+  useEffect(() => {
+    setPage(1);
+  }, [searchOrder]);
 
   const fetchOrders = async () => {
     try {
@@ -36,6 +44,7 @@ const OrdersManager = () => {
       const params = new URLSearchParams({
         status: statusFilter,
         paymentMethod: paymentFilter,
+        search: searchOrder,
         page: page.toString(),
         limit: '20'
       });
@@ -46,6 +55,7 @@ const OrdersManager = () => {
       if (response.ok) {
         setOrders(data.orders);
         setTotalPages(data.pagination.totalPages);
+        setTotalOrders(data.pagination.total);
       } else {
         setError(data.error || 'Error cargando pedidos');
       }
@@ -59,6 +69,32 @@ const OrdersManager = () => {
 
   const handleStatusUpdate = async () => {
     if (!selectedOrder || !newStatus) return;
+
+    // Validación para transferencias bancarias pendientes
+    if (selectedOrder.metodo_pago === 'transferencia' && 
+        selectedOrder.estado === 'pendiente' && 
+        !transferVerified) {
+      alert('⚠️ Debes marcar que has revisado el comprobante de transferencia antes de guardar los cambios.');
+      return;
+    }
+
+    // Validación para cancelación
+    if (newStatus === 'cancelado' && selectedOrder.estado === 'cancelado') {
+      alert('⚠️ Este pedido ya está cancelado.');
+      return;
+    }
+
+    // Confirmación para cancelación
+    if (newStatus === 'cancelado' && selectedOrder.estado !== 'cancelado') {
+      const confirmCancel = confirm(
+        `¿Estás seguro de que quieres cancelar el pedido #${selectedOrder.codigo_orden}?\n\n` +
+        '⚠️ Esta acción regresará automáticamente el stock al inventario.'
+      );
+      
+      if (!confirmCancel) {
+        return;
+      }
+    }
 
     try {
       setUpdating(true);
@@ -90,7 +126,30 @@ const OrdersManager = () => {
         setNewStatus('');
         setNotes('');
         
-        alert('Pedido actualizado exitosamente');
+        // Mostrar mensaje específico si se canceló el pedido
+        if (data.stockUpdated) {
+          let message = data.message;
+          
+          // Agregar detalles de stock si están disponibles
+          if (data.stockUpdates && data.stockUpdates.length > 0) {
+            message += '\n\n📦 Stock regresado:';
+            data.stockUpdates.forEach(update => {
+              message += `\n• ${update.producto} (${update.color}): +${update.cantidad} unidades`;
+            });
+          }
+          
+          // Agregar errores de stock si los hay
+          if (data.stockErrors && data.stockErrors.length > 0) {
+            message += '\n\n⚠️ Errores de stock:';
+            data.stockErrors.forEach(error => {
+              message += `\n• ${error}`;
+            });
+          }
+          
+          alert(message);
+        } else {
+          alert('Pedido actualizado exitosamente');
+        }
       } else {
         alert(data.error || 'Error actualizando pedido');
       }
@@ -106,6 +165,7 @@ const OrdersManager = () => {
     setSelectedOrder(order);
     setNewStatus(order.estado);
     setNotes(order.notas || '');
+    setTransferVerified(false); // Resetear checkbox
     setShowModal(true);
   };
 
@@ -175,21 +235,50 @@ const OrdersManager = () => {
   return (
     <div className="orders-manager">
       <div className="orders-header">
-        <h2>📦 Gestión de Pedidos</h2>
-        <div className="filters">
+        <div className="header-left">
+          <h2>📦 Gestión de Pedidos</h2>
+          <span className="orders-count">
+            {searchOrder && (
+              <span className="search-indicator">
+                🔍 Buscando: "{searchOrder}"
+              </span>
+            )}
+            {totalOrders > 0 && `${totalOrders} pedido${totalOrders !== 1 ? 's' : ''} encontrado${totalOrders !== 1 ? 's' : ''}`}
+          </span>
+        </div>
+                <div className="filters">
+          <div className="search-container">
+            <input
+              type="text"
+              placeholder="🔍 Buscar por número de orden..."
+              value={searchOrder}
+              onChange={(e) => setSearchOrder(e.target.value)}
+              className="search-input"
+            />
+            {searchOrder && (
+              <button
+                onClick={() => setSearchOrder('')}
+                className="clear-search-btn"
+                title="Limpiar búsqueda"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+          
           <select 
             value={statusFilter} 
             onChange={(e) => setStatusFilter(e.target.value)}
             className="filter-select"
           >
-                         <option value="all">Todos los estados</option>
-             <option value="pendiente">Pendiente</option>
-             <option value="pagado">Pagado</option>
-             <option value="validado">Validado</option>
-             <option value="en_preparacion">En Preparación</option>
-             <option value="enviado">Enviado</option>
-             <option value="entregado">Entregado</option>
-             <option value="cancelado">Cancelado</option>
+            <option value="all">Todos los estados</option>
+            <option value="pendiente">Pendiente</option>
+            <option value="pagado">Pagado</option>
+            <option value="validado">Validado</option>
+            <option value="en_preparacion">En Preparación</option>
+            <option value="enviado">Enviado</option>
+            <option value="entregado">Entregado</option>
+            <option value="cancelado">Cancelado</option>
           </select>
           
           <select 
@@ -246,18 +335,22 @@ const OrdersManager = () => {
                   
                                      {order.metodo_pago === 'transferencia' && (
                      <div className="transfer-info">
-                       <p><strong>Comprobante:</strong> {order.comprobante_transferencia || 'No subido'}</p>
-                       {order.comprobante_transferencia && (
-                         <button 
-                           onClick={() => {
-                             setSelectedTransfer(order.comprobante_transferencia);
-                             setShowTransferViewer(true);
-                           }}
-                           className="view-transfer-btn"
-                         >
-                           👁️ Ver Comprobante
-                         </button>
-                       )}
+                       <div className="comprobante-section">
+                         <p><strong>Comprobante:</strong></p>
+                         {order.comprobante_transferencia ? (
+                           <button 
+                             onClick={() => {
+                               setSelectedTransfer(order.comprobante_transferencia);
+                               setShowTransferViewer(true);
+                             }}
+                             className="view-transfer-btn"
+                           >
+                             👁️ Ver Comprobante
+                           </button>
+                         ) : (
+                           <span className="no-comprobante">No subido</span>
+                         )}
+                       </div>
                        {order.fecha_validacion_transferencia && (
                          <p><strong>Validado:</strong> {formatDate(order.fecha_validacion_transferencia)}</p>
                        )}
@@ -301,15 +394,6 @@ const OrdersManager = () => {
                 >
                   ✏️ Editar Estado
                 </button>
-                
-                {order.metodo_pago === 'transferencia' && !order.fecha_validacion_transferencia && (
-                  <button 
-                    onClick={() => openOrderModal(order)}
-                    className="action-btn validate-btn"
-                  >
-                    🔍 Verificar Transferencia
-                  </button>
-                )}
               </div>
             </div>
           ))
@@ -326,6 +410,32 @@ const OrdersManager = () => {
           >
             ← Anterior
           </button>
+          
+          {/* Números de página */}
+          <div className="page-numbers">
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              let pageNumber;
+              if (totalPages <= 5) {
+                pageNumber = i + 1;
+              } else if (page <= 3) {
+                pageNumber = i + 1;
+              } else if (page >= totalPages - 2) {
+                pageNumber = totalPages - 4 + i;
+              } else {
+                pageNumber = page - 2 + i;
+              }
+              
+              return (
+                <button
+                  key={pageNumber}
+                  onClick={() => setPage(pageNumber)}
+                  className={`pagination-btn ${page === pageNumber ? 'active' : ''}`}
+                >
+                  {pageNumber}
+                </button>
+              );
+            })}
+          </div>
           
           <span className="page-info">
             Página {page} de {totalPages}
@@ -383,14 +493,43 @@ const OrdersManager = () => {
                 />
               </div>
               
-                             {selectedOrder.metodo_pago === 'transferencia' && (
-                 <div className="transfer-warning">
-                   <p>⚠️ <strong>Transferencia Bancaria:</strong> Verifica el comprobante antes de cambiar el estado a "Validado"</p>
-                   {selectedOrder.comprobante_transferencia && (
-                     <p>📎 Comprobante: {selectedOrder.comprobante_transferencia}</p>
-                   )}
-                 </div>
-               )}
+                                           {selectedOrder.metodo_pago === 'transferencia' && selectedOrder.estado === 'pendiente' && (
+                <div className="transfer-verification">
+                  <div className="transfer-warning">
+                    <p>⚠️ <strong>Transferencia Bancaria:</strong> Debes verificar el comprobante antes de proceder</p>
+                    {selectedOrder.comprobante_transferencia && (
+                      <div className="transfer-actions">
+                        <p>📎 Comprobante disponible</p>
+                        <button 
+                          type="button"
+                          onClick={() => {
+                            setSelectedTransfer(selectedOrder.comprobante_transferencia);
+                            setShowTransferViewer(true);
+                          }}
+                          className="view-transfer-btn"
+                        >
+                          👁️ Ver Comprobante
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="verification-checkbox">
+                    <label className={`checkbox-label ${transferVerified ? 'checked' : ''}`}>
+                      <input 
+                        type="checkbox"
+                        checked={transferVerified}
+                        onChange={(e) => setTransferVerified(e.target.checked)}
+                        className="verification-checkbox-input"
+                      />
+                      <span className="checkmark"></span>
+                      <span className="checkbox-text">
+                        ✅ He revisado y verificado el comprobante de transferencia
+                      </span>
+                    </label>
+                  </div>
+                </div>
+              )}
             </div>
             
             <div className="modal-footer">
@@ -402,8 +541,13 @@ const OrdersManager = () => {
               </button>
               <button 
                 onClick={handleStatusUpdate}
-                disabled={updating}
+                disabled={updating || (selectedOrder.metodo_pago === 'transferencia' && selectedOrder.estado === 'pendiente' && !transferVerified)}
                 className="save-btn"
+                title={
+                  selectedOrder.metodo_pago === 'transferencia' && selectedOrder.estado === 'pendiente' && !transferVerified 
+                    ? 'Debes verificar el comprobante de transferencia primero'
+                    : ''
+                }
               >
                 {updating ? 'Guardando...' : 'Guardar Cambios'}
               </button>

@@ -4,8 +4,8 @@ import Image from 'next/image';
 import '@/styles/WhatsappButton.css';
 
 const WhatsappButton = () => {
-  const phoneNumber = '+50212345678'; // Reemplaza con tu número real
-  const message = encodeURIComponent('Hola, me interesa obtener más información 👋');
+  const phoneNumber = '+50245053015'; // Reemplaza con tu número real
+  const message = encodeURIComponent('Hola, me interesa obtener información');
 
   return (
     <a

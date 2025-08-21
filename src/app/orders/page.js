@@ -13,6 +13,10 @@ export default function OrdersPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [user, setUser] = useState(null);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [ordersPerPage] = useState(9);
 
   useEffect(() => {
     // Verificar si el usuario está logueado
@@ -57,6 +61,17 @@ export default function OrdersPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const openOrderDetails = (order) => {
+    console.log('🔍 Abriendo detalles del pedido:', order);
+    setSelectedOrder(order);
+    setIsModalOpen(true);
+  };
+
+  const closeOrderDetails = () => {
+    setIsModalOpen(false);
+    setSelectedOrder(null);
   };
 
   const getStatusColor = (status) => {
@@ -106,6 +121,66 @@ export default function OrdersPage() {
 
   const formatPrice = (price) => {
     return `Q${parseFloat(price).toFixed(2)}`;
+  };
+
+  // Funciones de paginación
+  const indexOfLastOrder = currentPage * ordersPerPage;
+  const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
+  const currentOrders = orders.slice(indexOfFirstOrder, indexOfLastOrder);
+  const totalPages = Math.ceil(orders.length / ordersPerPage);
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const getPageNumbers = () => {
+    const pageNumbers = [];
+    const maxVisiblePages = 5;
+    
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pageNumbers.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 4; i++) {
+          pageNumbers.push(i);
+        }
+        pageNumbers.push('...');
+        pageNumbers.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pageNumbers.push(1);
+        pageNumbers.push('...');
+        for (let i = totalPages - 3; i <= totalPages; i++) {
+          pageNumbers.push(i);
+        }
+      } else {
+        pageNumbers.push(1);
+        pageNumbers.push('...');
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          pageNumbers.push(i);
+        }
+        pageNumbers.push('...');
+        pageNumbers.push(totalPages);
+      }
+    }
+    
+    return pageNumbers;
   };
 
   // Mostrar loading
@@ -182,7 +257,7 @@ export default function OrdersPage() {
             </div>
           ) : (
             <div className="orders-list">
-              {orders.map((order) => (
+              {currentOrders.map((order) => (
                 <div key={order.id} className="order-card">
                   <div className="order-header">
                     <div className="order-info">
@@ -239,20 +314,157 @@ export default function OrdersPage() {
                     </div>
 
                     <div className="order-actions">
-                      <Link 
-                        href={`/orders/${order.codigo_orden}`}
+                      <button 
+                        onClick={() => openOrderDetails(order)}
                         className="view-details-btn"
                       >
                         Ver Detalles
-                      </Link>
+                      </button>
                     </div>
                   </div>
                 </div>
               ))}
+              
+              {/* Paginación */}
+              {totalPages > 1 && (
+                <div className="pagination-container">
+                  <div className="pagination-info">
+                    Mostrando {indexOfFirstOrder + 1}-{Math.min(indexOfLastOrder, orders.length)} de {orders.length} pedidos
+                  </div>
+                  <div className="pagination-controls">
+                    <button
+                      className="pagination-btn"
+                      onClick={handlePreviousPage}
+                      disabled={currentPage === 1}
+                    >
+                      ← Anterior
+                    </button>
+                    
+                    {getPageNumbers().map((pageNumber, index) => (
+                      <button
+                        key={index}
+                        className={`pagination-btn ${pageNumber === currentPage ? 'active' : ''} ${pageNumber === '...' ? 'disabled' : ''}`}
+                        onClick={() => pageNumber !== '...' && handlePageChange(pageNumber)}
+                        disabled={pageNumber === '...'}
+                      >
+                        {pageNumber}
+                      </button>
+                    ))}
+                    
+                    <button
+                      className="pagination-btn"
+                      onClick={handleNextPage}
+                      disabled={currentPage === totalPages}
+                    >
+                      Siguiente →
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
       </div>
+
+      {/* Modal de detalles del pedido */}
+      {isModalOpen && selectedOrder && (
+        <div className="order-modal-overlay" onClick={closeOrderDetails}>
+          <div className="order-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Detalles del Pedido #{selectedOrder.codigo_orden}</h2>
+              <button className="modal-close-btn" onClick={closeOrderDetails}>
+                ×
+              </button>
+            </div>
+            
+            <div className="modal-content">
+              {/* Información del pedido */}
+              <div className="order-info-section">
+                <div className="info-grid">
+                  <div className="info-item">
+                    <label>Fecha del Pedido:</label>
+                    <span>{formatDate(selectedOrder.fecha_creacion)}</span>
+                  </div>
+                  <div className="info-item">
+                    <label>Estado:</label>
+                    <span className={`status-badge ${getStatusColor(selectedOrder.estado)}`}>
+                      {getStatusText(selectedOrder.estado)}
+                    </span>
+                  </div>
+                  <div className="info-item">
+                    <label>Método de Pago:</label>
+                    <span>{selectedOrder.metodo_pago === 'contra_entrega' ? 'Contra Entrega' : 'Transferencia'}</span>
+                  </div>
+                  {selectedOrder.notas && (
+                    <div className="info-item full-width">
+                      <label>Notas:</label>
+                      <span>{selectedOrder.notas}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Información del cliente */}
+              <div className="customer-info-section">
+                <h3>Información de Entrega</h3>
+                <div className="customer-details">
+                  <p><strong>Nombre:</strong> {selectedOrder.nombre_cliente || 'No especificado'}</p>
+                  <p><strong>Email:</strong> {selectedOrder.email_cliente || 'No especificado'}</p>
+                  <p><strong>Teléfono:</strong> {selectedOrder.telefono_cliente || 'No especificado'}</p>
+                  <p><strong>Dirección:</strong> {selectedOrder.direccion_cliente || 'No especificada'}</p>
+                  <p><strong>Municipio:</strong> {selectedOrder.municipio_cliente || 'No especificado'}</p>
+                  <p><strong>Código Postal:</strong> {selectedOrder.codigo_postal_cliente || 'No especificado'}</p>
+                  {selectedOrder.nit_cliente && (
+                    <p><strong>NIT:</strong> {selectedOrder.nit_cliente}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Productos del pedido */}
+              <div className="products-section">
+                <h3>Productos</h3>
+                <div className="products-list">
+                  {selectedOrder.detalles?.map((item, index) => (
+                    <div key={index} className="product-item">
+                      <img
+                        src={item.producto?.imagenes?.[0]?.url || '/assets/placeholder.jpg'}
+                        alt={item.producto?.nombre || 'Producto'}
+                        className="product-image"
+                      />
+                      <div className="product-details">
+                        <h4>{item.producto?.nombre || 'Producto no disponible'}</h4>
+                        <p><strong>Cantidad:</strong> {item.cantidad}</p>
+                        <p><strong>Color:</strong> {item.color?.nombre || 'N/A'}</p>
+                        <p><strong>Precio unitario:</strong> {formatPrice(item.precio_unitario)}</p>
+                        <p><strong>Subtotal:</strong> {formatPrice(item.precio_unitario * item.cantidad)}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Resumen financiero */}
+              <div className="financial-summary">
+                <h3>Resumen Financiero</h3>
+                <div className="summary-grid">
+                  <div className="summary-item">
+                    <span>Subtotal:</span>
+                    <span>{formatPrice(selectedOrder.subtotal)}</span>
+                  </div>
+                  <div className="summary-item">
+                    <span>Envío:</span>
+                    <span>{formatPrice(selectedOrder.costo_envio)}</span>
+                  </div>
+                  <div className="summary-item total">
+                    <span>Total:</span>
+                    <span>{formatPrice(selectedOrder.total)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       
       <Footer />
     </div>

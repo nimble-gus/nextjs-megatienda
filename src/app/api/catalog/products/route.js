@@ -43,7 +43,7 @@ export async function GET(request) {
     if (!databaseUrl) {
       console.log('❌ DATABASE_URL no configurada, devolviendo datos de prueba');
       
-      // Datos de prueba con las propiedades correctas para ProductCard
+      // Datos de prueba con URLs de placeholder que funcionan
       const testProducts = [
         {
           id: 1,
@@ -51,8 +51,8 @@ export async function GET(request) {
           name: 'Producto de Prueba 1',
           nombre: 'Producto de Prueba 1',
           descripcion: 'Descripción del producto de prueba 1',
-          image: 'https://via.placeholder.com/300x300/4F46E5/FFFFFF?text=Producto+1',
-          url_imagen: 'https://via.placeholder.com/300x300/4F46E5/FFFFFF?text=Producto+1',
+          image: 'https://picsum.photos/300/300?random=1',
+          url_imagen: 'https://picsum.photos/300/300?random=1',
           categoria: 'Ropa',
           categoria_id: 1,
           featured: false,
@@ -63,7 +63,6 @@ export async function GET(request) {
           price: 29.99,
           precio: 29.99,
           originalPrice: 39.99,
-          brand: 'Marca Test',
           rating: 4.5,
           colores: [
             { id: 1, nombre: 'Negro', codigo_hex: '#000000', available: true },
@@ -77,8 +76,8 @@ export async function GET(request) {
           name: 'Producto de Prueba 2',
           nombre: 'Producto de Prueba 2',
           descripcion: 'Descripción del producto de prueba 2',
-          image: 'https://via.placeholder.com/300x300/10B981/FFFFFF?text=Producto+2',
-          url_imagen: 'https://via.placeholder.com/300x300/10B981/FFFFFF?text=Producto+2',
+          image: 'https://picsum.photos/300/300?random=2',
+          url_imagen: 'https://picsum.photos/300/300?random=2',
           categoria: 'Electrónica',
           categoria_id: 2,
           featured: true,
@@ -89,7 +88,6 @@ export async function GET(request) {
           price: 99.99,
           precio: 99.99,
           originalPrice: 129.99,
-          brand: 'Tech Brand',
           rating: 4.8,
           colores: [
             { id: 3, nombre: 'Azul', codigo_hex: '#0000FF', available: true }
@@ -102,9 +100,9 @@ export async function GET(request) {
           name: 'Producto de Prueba 3',
           nombre: 'Producto de Prueba 3',
           descripcion: 'Descripción del producto de prueba 3',
-          image: 'https://via.placeholder.com/300x300/F59E0B/FFFFFF?text=Producto+3',
-          url_imagen: 'https://via.placeholder.com/300x300/F59E0B/FFFFFF?text=Producto+3',
-          categoria: 'Calzado',
+          image: 'https://picsum.photos/300/300?random=3',
+          url_imagen: 'https://picsum.photos/300/300?random=3',
+          categoria: 'Hogar',
           categoria_id: 3,
           featured: false,
           stock: 15,
@@ -113,28 +111,46 @@ export async function GET(request) {
           maxPrice: 49.99,
           price: 49.99,
           precio: 49.99,
-          originalPrice: 49.99,
-          brand: 'Shoe Brand',
+          originalPrice: 59.99,
           rating: 4.2,
           colores: [
-            { id: 1, nombre: 'Negro', codigo_hex: '#000000', available: true },
-            { id: 4, nombre: 'Rojo', codigo_hex: '#FF0000', available: true }
+            { id: 4, nombre: 'Verde', codigo_hex: '#00FF00', available: true }
           ],
           imagenes_adicionales: []
         }
       ];
-      
-      const totalProducts = testProducts.length;
+
+      // Filtrar por búsqueda si se proporciona
+      let filteredProducts = testProducts;
+      if (search) {
+        filteredProducts = testProducts.filter(product => 
+          product.name.toLowerCase().includes(search.toLowerCase()) ||
+          product.descripcion.toLowerCase().includes(search.toLowerCase()) ||
+          product.categoria.toLowerCase().includes(search.toLowerCase())
+        );
+      }
+
+      // Calcular paginación
+      const totalProducts = filteredProducts.length;
       const totalPages = Math.ceil(totalProducts / limit);
-      
+      const startIndex = (page - 1) * limit;
+      const endIndex = startIndex + limit;
+      const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
+
+      console.log('✅ Datos de prueba devueltos:', {
+        totalProducts,
+        totalPages,
+        currentPage: page,
+        productsReturned: paginatedProducts.length
+      });
+
       return NextResponse.json({
         success: true,
-        products: testProducts,
+        products: paginatedProducts,
         pagination: {
           currentPage: page,
           totalPages,
           totalProducts,
-          itemsPerPage: limit,
           hasNextPage: page < totalPages,
           hasPrevPage: page > 1
         }
@@ -218,9 +234,9 @@ export async function GET(request) {
       if (search) {
         where.AND.push({
           OR: [
-            { nombre: { contains: search, mode: 'insensitive' } },
-            { descripcion: { contains: search, mode: 'insensitive' } },
-            { sku: { contains: search, mode: 'insensitive' } }
+            { nombre: { contains: search } },
+            { descripcion: { contains: search } },
+            { sku: { contains: search } }
           ]
         });
       }
@@ -318,7 +334,6 @@ export async function GET(request) {
           price: minPrice > 0 ? minPrice : null, // Propiedad que espera ProductCard
           precio: minPrice > 0 ? minPrice : null,
           originalPrice: maxPrice > minPrice ? maxPrice : null, // Propiedad que espera ProductCard
-          brand: 'Marca', // Valor por defecto
           rating: 4.5, // Valor por defecto
           colores: availableColors,
           imagenes_adicionales: additionalImages
@@ -382,7 +397,6 @@ export async function GET(request) {
           price: 29.99,
           precio: 29.99,
           originalPrice: 39.99,
-          brand: 'Marca Test',
           rating: 4.5,
           colores: [
             { id: 1, nombre: 'Negro', codigo_hex: '#000000', available: true },

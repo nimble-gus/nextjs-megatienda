@@ -20,6 +20,103 @@ export async function PUT(request, { params }) {
       );
     }
 
+    // Obtener el pedido actual para verificar si está siendo cancelado
+    const currentOrder = await executeWithRetry(async () => {
+      return await prisma.ordenes.findUnique({
+        where: { id: parseInt(id) },
+        include: {
+          detalle: {
+            include: {
+              producto: {
+                select: {
+                  id: true,
+                  nombre: true
+                }
+              },
+              color: {
+                select: {
+                  id: true,
+                  nombre: true
+                }
+              }
+            }
+          }
+        }
+      });
+    });
+
+    if (!currentOrder) {
+      return NextResponse.json(
+        { error: 'Pedido no encontrado' },
+        { status: 404 }
+      );
+    }
+
+    // Verificar si el pedido está siendo cancelado
+    const isBeingCancelled = estado === 'cancelado' && currentOrder.estado !== 'cancelado';
+    
+    // Inicializar variables para stock
+    let stockUpdates = [];
+    let stockErrors = [];
+    
+    if (isBeingCancelled) {
+      console.log(`🔄 Cancelando pedido ${id} - Regresando stock...`);
+      
+      for (const item of currentOrder.detalle) {
+        try {
+          // Validar que la cantidad sea válida
+          if (item.cantidad <= 0) {
+            console.warn(`⚠️ Cantidad inválida para ${item.producto.nombre}: ${item.cantidad}`);
+            continue;
+          }
+
+          // Buscar el stock actual del producto y color
+          const currentStock = await prisma.stock_detalle.findFirst({
+            where: {
+              producto_id: item.producto_id,
+              color_id: item.color_id
+            }
+          });
+
+          if (currentStock) {
+            // Actualizar el stock sumando la cantidad del pedido cancelado
+            const newQuantity = currentStock.cantidad + item.cantidad;
+            
+            await prisma.stock_detalle.update({
+              where: { id: currentStock.id },
+              data: { cantidad: newQuantity }
+            });
+
+            stockUpdates.push({
+              producto: item.producto.nombre,
+              color: item.color.nombre,
+              cantidad: item.cantidad,
+              stockAnterior: currentStock.cantidad,
+              stockNuevo: newQuantity
+            });
+
+            console.log(`✅ Stock actualizado: ${item.producto.nombre} (${item.color.nombre}) +${item.cantidad} unidades (${currentStock.cantidad} → ${newQuantity})`);
+          } else {
+            const errorMsg = `No se encontró stock para: ${item.producto.nombre} (${item.color.nombre})`;
+            console.warn(`⚠️ ${errorMsg}`);
+            stockErrors.push(errorMsg);
+          }
+        } catch (stockError) {
+          const errorMsg = `Error actualizando stock para ${item.producto.nombre}: ${stockError.message}`;
+          console.error(`❌ ${errorMsg}`);
+          stockErrors.push(errorMsg);
+        }
+      }
+
+      console.log(`📊 Stock regresado: ${stockUpdates.length} items actualizados, ${stockErrors.length} errores`);
+      
+      // Si hay errores de stock, agregarlos a la respuesta
+      if (stockErrors.length > 0) {
+        console.warn(`⚠️ Errores durante la actualización de stock:`, stockErrors);
+      }
+    }
+
+    // Actualizar el pedido
     const updatedOrder = await executeWithRetry(async () => {
       const updateData = {};
       
@@ -78,8 +175,13 @@ export async function PUT(request, { params }) {
 
     return NextResponse.json({
       success: true,
-      message: 'Pedido actualizado exitosamente',
-      order: updatedOrder
+      message: isBeingCancelled 
+        ? 'Pedido cancelado exitosamente. Stock regresado al inventario.' 
+        : 'Pedido actualizado exitosamente',
+      order: updatedOrder,
+      stockUpdated: isBeingCancelled,
+      stockUpdates: isBeingCancelled ? stockUpdates : undefined,
+      stockErrors: isBeingCancelled && stockErrors.length > 0 ? stockErrors : undefined
     });
 
   } catch (error) {

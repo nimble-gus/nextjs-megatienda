@@ -4,6 +4,8 @@ export async function getSales(start, end) {
     if (start) params.append('start', start);
     if (end) params.append('end', end);
 
+    console.log('🔄 Obteniendo ventas con filtros:', { start, end });
+
     const res = await fetch(`/api/sales?${params.toString()}`);
     
     if (!res.ok) {
@@ -17,10 +19,20 @@ export async function getSales(start, end) {
       throw new Error(data.error);
     }
     
+    console.log('✅ Datos de ventas obtenidos:', data);
+    
     return data;
   } catch (error) {
     console.error('Error en getSales:', error);
-    return []; // Retornar array vacío en caso de error
+    return { 
+      sales: [], 
+      summary: { 
+        totalVentas: 0, 
+        totalPedidos: 0, 
+        fechaInicio: start, 
+        fechaFin: end 
+      } 
+    };
   }
 }
 
@@ -45,6 +57,25 @@ export async function getKpis() {
     
     console.log('✅ KPIs de ventas obtenidos:', salesData);
     
+    // Obtener KPIs de estados de pedidos
+    let orderStatusKpis = {
+      pedidosPendientes: 0,
+      contraEntregaPendientes: 0,
+      transferenciaPendientes: 0
+    };
+    
+    try {
+      const orderStatusRes = await fetch('/api/sales/order-status-kpis');
+      if (orderStatusRes.ok) {
+        const orderStatusData = await orderStatusRes.json();
+        if (orderStatusData.success) {
+          orderStatusKpis = orderStatusData.data;
+        }
+      }
+    } catch (orderStatusError) {
+      console.warn('⚠️ Error obteniendo KPIs de estados de pedidos (no crítico):', orderStatusError);
+    }
+    
     // Obtener contador de mensajes nuevos (opcional)
     let unreadMessages = 0;
     try {
@@ -61,6 +92,7 @@ export async function getKpis() {
     
     const result = {
       ...salesData,
+      ...orderStatusKpis,
       mensajesNuevos: unreadMessages
     };
     
@@ -73,6 +105,9 @@ export async function getKpis() {
       totalVentas: 0,
       totalPedidos: 0,
       totalClientes: 0,
+      pedidosPendientes: 0,
+      contraEntregaPendientes: 0,
+      transferenciaPendientes: 0,
       mensajesNuevos: 0,
       error: error.message
     };

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { getProducts, deleteProduct } from '@/services/productService';
 import { getCategories } from '@/services/categoryService';
+import { getColors } from '@/services/colorService';
 import { uploadImageToCloudinary } from '@/services/cloudinaryService';
 import '@/styles/ProductList.css';
 
@@ -18,6 +19,9 @@ export default function ProductList() {
   const [editingImages, setEditingImages] = useState(null);
   const [categories, setCategories] = useState([]);
   const [loadingCategories, setLoadingCategories] = useState(false);
+  const [availableColors, setAvailableColors] = useState([]);
+  const [loadingColors, setLoadingColors] = useState(false);
+  const [newVariants, setNewVariants] = useState([]);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadingMainImage, setUploadingMainImage] = useState(false);
   const [dragActive, setDragActive] = useState(false);
@@ -67,6 +71,26 @@ export default function ProductList() {
     }
   };
 
+  const fetchColors = async () => {
+    try {
+      setLoadingColors(true);
+      const colorsData = await getColors();
+      setAvailableColors(colorsData);
+    } catch (err) {
+      console.error('Error fetching colors:', err);
+      // Si falla, usar colores por defecto
+      setAvailableColors([
+        { id: 1, nombre: 'Negro', codigo_hex: '#000000' },
+        { id: 2, nombre: 'Blanco', codigo_hex: '#FFFFFF' },
+        { id: 3, nombre: 'Rojo', codigo_hex: '#FF0000' },
+        { id: 4, nombre: 'Azul', codigo_hex: '#0000FF' },
+        { id: 5, nombre: 'Verde', codigo_hex: '#00FF00' }
+      ]);
+    } finally {
+      setLoadingColors(false);
+    }
+  };
+
   const handleEdit = (product) => {
     setEditingProduct(product);
     setShowEditForm(true);
@@ -81,10 +105,14 @@ export default function ProductList() {
       }
       const stockData = await response.json();
       
+      // Cargar colores disponibles
+      await fetchColors();
+      
       setEditingStock({
         product: product,
         stockItems: stockData
       });
+      setNewVariants([]); // Resetear nuevas variantes
       setShowStockForm(true);
     } catch (err) {
       alert('Error al cargar el stock del producto');
@@ -173,6 +201,30 @@ export default function ProductList() {
   const handleCancelStockEdit = () => {
     setShowStockForm(false);
     setEditingStock(null);
+    setNewVariants([]);
+  };
+
+  const addNewVariant = () => {
+    const newVariant = {
+      id: `new_${Date.now()}`,
+      colorId: '',
+      cantidad: 0,
+      precio: 0,
+      isNew: true
+    };
+    setNewVariants([...newVariants, newVariant]);
+  };
+
+  const removeNewVariant = (variantId) => {
+    setNewVariants(newVariants.filter(variant => variant.id !== variantId));
+  };
+
+  const updateNewVariant = (variantId, field, value) => {
+    setNewVariants(newVariants.map(variant => 
+      variant.id === variantId 
+        ? { ...variant, [field]: value }
+        : variant
+    ));
   };
 
   const handleCancelImagesEdit = () => {
@@ -186,8 +238,9 @@ export default function ProductList() {
     try {
       const formData = new FormData(e.target);
       const stockUpdates = [];
+      const newStockItems = [];
       
-      // Recopilar todos los cambios de stock
+      // Recopilar todos los cambios de stock existente
       editingStock.stockItems.forEach(item => {
         const cantidad = parseInt(formData.get(`stock_${item.id}`));
         const precio = parseFloat(formData.get(`precio_${item.id}`));
@@ -201,7 +254,27 @@ export default function ProductList() {
         }
       });
 
-      if (stockUpdates.length === 0) {
+      // Recopilar nuevas variantes
+      newVariants.forEach(variant => {
+        const colorId = parseInt(formData.get(`color_${variant.id}`));
+        const cantidad = parseInt(formData.get(`stock_${variant.id}`));
+        const precio = parseFloat(formData.get(`precio_${variant.id}`));
+        
+        if (colorId && cantidad >= 0 && precio >= 0) {
+          // Verificar que no exista ya esa variante de color
+          const existsColor = editingStock.stockItems.some(item => item.color.id === colorId);
+          if (!existsColor) {
+            newStockItems.push({
+              producto_id: editingStock.product.id,
+              color_id: colorId,
+              cantidad: cantidad,
+              precio: precio
+            });
+          }
+        }
+      });
+
+      if (stockUpdates.length === 0 && newStockItems.length === 0) {
         alert('No hay cambios para guardar');
         return;
       }
@@ -211,19 +284,24 @@ export default function ProductList() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ stockUpdates }),
+        body: JSON.stringify({ 
+          stockUpdates,
+          newStockItems
+        }),
       });
 
       if (!response.ok) {
-        throw new Error('Error al actualizar el stock');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al actualizar el stock');
       }
 
       await fetchProducts(); // Recargar la lista
       setShowStockForm(false);
       setEditingStock(null);
+      setNewVariants([]);
       alert('Stock actualizado exitosamente');
     } catch (err) {
-      alert('Error al actualizar el stock');
+      alert(`Error al actualizar el stock: ${err.message}`);
       console.error('Error updating stock:', err);
     }
   };
@@ -565,43 +643,126 @@ export default function ProductList() {
               <button className="close-btn" onClick={handleCancelStockEdit}>×</button>
             </div>
             <form onSubmit={handleStockSubmit} className="edit-form">
-              <div className="stock-items">
-                {editingStock.stockItems.map((item) => (
-                  <div key={item.id} className="stock-item">
-                    <div className="stock-item-header">
-                      <div 
-                        className="color-swatch" 
-                        style={{ backgroundColor: item.color.codigo_hex }}
-                      ></div>
-                      <span className="color-name">{item.color.nombre}</span>
-                    </div>
-                    <div className="stock-item-fields">
-                      <div className="form-group">
-                        <label htmlFor={`stock_${item.id}`}>Cantidad</label>
-                        <input
-                          type="number"
-                          id={`stock_${item.id}`}
-                          name={`stock_${item.id}`}
-                          min="0"
-                          defaultValue={item.cantidad}
-                          required
-                        />
+              <div className="stock-section">
+                <h4>Variantes Existentes</h4>
+                <div className="stock-items">
+                  {editingStock.stockItems.map((item) => (
+                    <div key={item.id} className="stock-item">
+                      <div className="stock-item-header">
+                        <div 
+                          className="color-swatch" 
+                          style={{ backgroundColor: item.color.codigo_hex }}
+                        ></div>
+                        <span className="color-name">{item.color.nombre}</span>
                       </div>
-                      <div className="form-group">
-                        <label htmlFor={`precio_${item.id}`}>Precio (Q)</label>
-                        <input
-                          type="number"
-                          id={`precio_${item.id}`}
-                          name={`precio_${item.id}`}
-                          step="0.01"
-                          min="0"
-                          defaultValue={item.precio}
-                          required
-                        />
+                      <div className="stock-item-fields">
+                        <div className="form-group">
+                          <label htmlFor={`stock_${item.id}`}>Cantidad</label>
+                          <input
+                            type="number"
+                            id={`stock_${item.id}`}
+                            name={`stock_${item.id}`}
+                            min="0"
+                            defaultValue={item.cantidad}
+                            required
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label htmlFor={`precio_${item.id}`}>Precio (Q)</label>
+                          <input
+                            type="number"
+                            id={`precio_${item.id}`}
+                            name={`precio_${item.id}`}
+                            step="0.01"
+                            min="0"
+                            defaultValue={item.precio}
+                            required
+                          />
+                        </div>
                       </div>
                     </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Nuevas Variantes */}
+              <div className="new-variants-section">
+                <div className="section-header">
+                  <h4>Agregar Nuevas Variantes</h4>
+                  <button 
+                    type="button" 
+                    className="add-variant-btn"
+                    onClick={addNewVariant}
+                    disabled={loadingColors}
+                  >
+                    ➕ Agregar Variante
+                  </button>
+                </div>
+                
+                {newVariants.length > 0 && (
+                  <div className="stock-items">
+                    {newVariants.map((variant) => (
+                      <div key={variant.id} className="stock-item new-variant">
+                        <div className="stock-item-header">
+                          <div className="form-group">
+                            <label htmlFor={`color_${variant.id}`}>Color</label>
+                            <select
+                              id={`color_${variant.id}`}
+                              name={`color_${variant.id}`}
+                              value={variant.colorId}
+                              onChange={(e) => updateNewVariant(variant.id, 'colorId', e.target.value)}
+                              required
+                            >
+                              <option value="">Seleccionar color</option>
+                              {availableColors
+                                .filter(color => !editingStock.stockItems.some(item => item.color.id === color.id))
+                                .map((color) => (
+                                  <option key={color.id} value={color.id}>
+                                    {color.nombre}
+                                  </option>
+                                ))}
+                            </select>
+                          </div>
+                          <button
+                            type="button"
+                            className="remove-variant-btn"
+                            onClick={() => removeNewVariant(variant.id)}
+                            title="Eliminar variante"
+                          >
+                            ❌
+                          </button>
+                        </div>
+                        <div className="stock-item-fields">
+                          <div className="form-group">
+                            <label htmlFor={`stock_${variant.id}`}>Cantidad</label>
+                            <input
+                              type="number"
+                              id={`stock_${variant.id}`}
+                              name={`stock_${variant.id}`}
+                              min="0"
+                              value={variant.cantidad}
+                              onChange={(e) => updateNewVariant(variant.id, 'cantidad', parseInt(e.target.value) || 0)}
+                              required
+                            />
+                          </div>
+                          <div className="form-group">
+                            <label htmlFor={`precio_${variant.id}`}>Precio (Q)</label>
+                            <input
+                              type="number"
+                              id={`precio_${variant.id}`}
+                              name={`precio_${variant.id}`}
+                              step="0.01"
+                              min="0"
+                              value={variant.precio}
+                              onChange={(e) => updateNewVariant(variant.id, 'precio', parseFloat(e.target.value) || 0)}
+                              required
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
               </div>
               
               <div className="edit-form-actions">
@@ -737,7 +898,7 @@ export default function ProductList() {
                   </td>
                   <td>
                     <span className={`stock-badge ${product.stock > 0 ? 'in-stock' : 'out-of-stock'}`}>
-                      {product.stock > 0 ? 'En Stock' : 'Sin Stock'}
+                      {product.stock > 0 ? `📦 ${product.stock} unidades` : '❌ Sin Stock'}
                     </span>
                   </td>
                   <td className="product-actions">

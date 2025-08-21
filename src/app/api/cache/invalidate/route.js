@@ -1,43 +1,46 @@
 import { NextResponse } from 'next/server';
-import { 
-  invalidateProductRelatedCache, 
-  invalidateFilterCache,
-  invalidateAllCache,
-  getCacheStats 
-} from '@/lib/redis';
+import { clearAllCache, getCacheStats } from '@/lib/home-cache';
 
 export async function POST(request) {
   try {
     const { type } = await request.json();
     
-    console.log(`🔄 Invalidando caché tipo: ${type}`);
+    console.log('🔄 Invalidando caché:', type);
     
     switch (type) {
-      case 'products':
-        await invalidateProductRelatedCache();
+      case 'all':
+        clearAllCache();
+        break;
+      case 'categories':
+        // Importar dinámicamente para evitar problemas de circular dependency
+        const { CategoriesCache } = await import('@/lib/home-cache');
+        CategoriesCache.invalidate();
         break;
       case 'filters':
-        await invalidateFilterCache();
+        const { FiltersCache } = await import('@/lib/home-cache');
+        FiltersCache.invalidate();
         break;
-      case 'all':
-        await invalidateAllCache();
+      case 'featured_products':
+        const { FeaturedProductsCache } = await import('@/lib/home-cache');
+        FeaturedProductsCache.invalidate();
         break;
       default:
         return NextResponse.json(
-          { error: 'Tipo de invalidación no válido' },
+          { error: 'Tipo de caché no válido' },
           { status: 400 }
         );
     }
     
-    const stats = await getCacheStats();
+    const stats = getCacheStats();
+    
     return NextResponse.json({
       success: true,
-      message: `Caché ${type} invalidado exitosamente`,
+      message: `Caché ${type} invalidado correctamente`,
       stats
     });
     
   } catch (error) {
-    console.error('Error invalidando caché:', error);
+    console.error('❌ Error invalidando caché:', error);
     return NextResponse.json(
       { error: 'Error interno del servidor' },
       { status: 500 }
@@ -47,7 +50,7 @@ export async function POST(request) {
 
 export async function GET() {
   try {
-    const stats = await getCacheStats();
+    const stats = getCacheStats();
     
     return NextResponse.json({
       success: true,
@@ -55,7 +58,7 @@ export async function GET() {
     });
     
   } catch (error) {
-    console.error('Error obteniendo estadísticas del caché:', error);
+    console.error('❌ Error obteniendo estadísticas de caché:', error);
     return NextResponse.json(
       { error: 'Error interno del servidor' },
       { status: 500 }

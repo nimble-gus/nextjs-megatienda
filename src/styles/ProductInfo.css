@@ -232,42 +232,66 @@
 .quantity-controls {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 8px;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 12px;
+  padding: 8px;
+  background: var(--bg-light);
+  border-radius: 10px;
+  border: 1px solid var(--border-light);
 }
 
 .quantity-btn {
-  width: 36px;
-  height: 36px;
-  border: 1px solid var(--border-light);
+  width: 40px;
+  height: 40px;
+  border: 2px solid var(--primary-blue);
   background: var(--bg-white);
-  border-radius: 6px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--primary-blue);
   cursor: pointer;
-  transition: var(--transition);
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .quantity-btn:hover:not(:disabled) {
   background: var(--primary-blue);
   color: white;
   border-color: var(--primary-blue);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 .quantity-btn:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
+  border-color: var(--border-light);
+  color: var(--text-muted);
+  box-shadow: none;
+}
+
+/* Ocultar tooltips nativos del navegador */
+.quantity-btn[disabled],
+.add-to-cart-btn[disabled],
+.buy-now-btn[disabled],
+.color-option[disabled] {
+  pointer-events: none;
 }
 
 .quantity-display {
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 20px;
+  font-weight: 700;
   color: var(--text-dark);
-  min-width: 40px;
+  min-width: 50px;
   text-align: center;
+  padding: 8px 12px;
+  background: var(--bg-white);
+  border-radius: 6px;
+  border: 1px solid var(--border-light);
 }
 
 .stock-info {
@@ -444,6 +468,11 @@
   font-size: 12px;
   color: var(--text-muted);
   font-weight: 500;
+}
+
+/* Ocultar tooltips nativos del navegador */
+button[disabled] {
+  pointer-events: none;
 }
 
 /* Responsive Design */

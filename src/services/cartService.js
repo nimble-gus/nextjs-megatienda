@@ -1,17 +1,18 @@
 // Servicio para operaciones del carrito
 
+// Función simple para hacer fetch con cookies
+async function fetchWithCredentials(url, options = {}) {
+  return await fetch(url, {
+    ...options,
+    credentials: 'include' // Incluir cookies automáticamente
+  });
+}
+
 // Agregar producto al carrito
 export async function addToCart(productData) {
-  const token = localStorage.getItem('token');
-  
-  if (!token) {
-    throw new Error('No hay token de autenticación');
-  }
-  
-  const response = await fetch('/api/cart/add', {
+  const response = await fetchWithCredentials('/api/cart/add', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
     },
     body: JSON.stringify(productData)
@@ -38,11 +39,8 @@ export async function addToCart(productData) {
 
 // Obtener carrito del usuario
 export async function getCart(userId) {
-  const token = localStorage.getItem('token');
-  
-  const response = await fetch(`/api/cart/${userId}`, {
+  const response = await fetchWithCredentials(`/api/cart/${userId}`, {
     headers: {
-      'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
     }
   });
@@ -56,12 +54,9 @@ export async function getCart(userId) {
 
 // Actualizar cantidad de un item
 export async function updateCartItem(itemId, quantity) {
-  const token = localStorage.getItem('token');
-  
-  const response = await fetch(`/api/cart/items/${itemId}`, {
+  const response = await fetchWithCredentials(`/api/cart/items/${itemId}`, {
     method: 'PATCH',
     headers: {
-      'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({ cantidad: quantity })
@@ -77,12 +72,9 @@ export async function updateCartItem(itemId, quantity) {
 
 // Eliminar item del carrito
 export async function removeCartItem(itemId) {
-  const token = localStorage.getItem('token');
-  
-  const response = await fetch(`/api/cart/items/${itemId}`, {
+  const response = await fetchWithCredentials(`/api/cart/items/${itemId}`, {
     method: 'DELETE',
     headers: {
-      'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
     }
   });
@@ -96,12 +88,9 @@ export async function removeCartItem(itemId) {
 
 // Limpiar carrito
 export async function clearCart(userId) {
-  const token = localStorage.getItem('token');
-  
-  const response = await fetch(`/api/cart/${userId}`, {
+  const response = await fetchWithCredentials(`/api/cart/${userId}`, {
     method: 'DELETE',
     headers: {
-      'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
     }
   });
