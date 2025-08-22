@@ -9,7 +9,7 @@ import HeroSection from '@/components/Home/HeroSection';
 import CategoriesSection from '@/components/Home/CategoriesSection';
 import FeaturedProducts from '@/components/Home/FeaturedProducts';
 import PromoBanners from '@/components/Home/PromoBanners';
-import CacheMonitor from '@/components/debug/CacheMonitor';
+
 import { preloadHomeData } from '@/lib/home-cache';
 
 import '@/styles/HomePage.css';
@@ -94,9 +94,6 @@ export default function Home() {
 
       {/* Footer */}
       <Footer />
-      
-      {/* Monitor de caché para desarrollo */}
-      <CacheMonitor />
     </div>
   );
 }

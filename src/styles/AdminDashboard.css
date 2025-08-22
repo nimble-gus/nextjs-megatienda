@@ -18,6 +18,8 @@
   height: 100vh;
   z-index: 1000;
   box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);
+  overflow-y: auto; /* Permite scroll si el contenido es muy largo */
+  overflow-x: hidden; /* Previene scroll horizontal */
 }
 
 .admin-sidebar.closed {
@@ -137,6 +139,8 @@
   flex: 1;
   margin-left: 280px;
   transition: margin-left 0.3s ease;
+  min-width: 0; /* Permite que el contenido se ajuste */
+  overflow-x: hidden; /* Previene desbordamiento horizontal */
 }
 
 .admin-main.sidebar-closed {
@@ -148,12 +152,15 @@
   border-bottom: 1px solid #e5e7eb;
   padding: 1rem 2rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  min-width: 0; /* Permite que el header se ajuste */
 }
 
 .header-content {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 .header-content h1 {
@@ -161,11 +168,56 @@
   font-weight: 700;
   color: #1f2937;
   margin: 0;
+  min-width: 0;
+  flex-shrink: 1;
 }
 
 .header-actions {
   display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-shrink: 0;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
   gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.user-info:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.user-avatar {
+  font-size: 1.25rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.user-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1e293b;
+  line-height: 1.2;
+}
+
+.user-role {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 500;
+  text-transform: capitalize;
 }
 
 .btn-secondary {
@@ -177,6 +229,11 @@
   cursor: pointer;
   transition: all 0.3s ease;
   font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  height: 48px;
 }
 
 .btn-secondary:hover {
@@ -184,8 +241,37 @@
   color: #374151;
 }
 
+.btn-logout {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: white;
+  padding: 0.75rem;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.125rem;
+  min-width: 48px;
+  height: 48px;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+}
+
+.btn-logout:hover {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.3);
+}
+
+.btn-logout:active {
+  transform: translateY(0);
+}
+
 .admin-content {
   padding: 2rem;
+  min-width: 0;
+  overflow-x: auto; /* Permite scroll horizontal si es necesario */
 }
 
 /* ===== DASHBOARD CONTENT ===== */
@@ -200,6 +286,7 @@
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 1.5rem;
   overflow: visible;
+  min-width: 0;
 }
 
 /* ===== SECCIÓN DE ESTADOS DE PEDIDOS ===== */
@@ -446,6 +533,30 @@
 }
 
 /* ===== RESPONSIVE DESIGN ===== */
+
+/* Media query específica para cuando el sidebar está expandido en pantallas medianas */
+@media (min-width: 1025px) and (max-width: 1400px) {
+  .admin-main {
+    margin-left: 280px;
+  }
+  
+  .admin-header {
+    padding: 1rem 1.5rem;
+  }
+  
+  .admin-content {
+    padding: 1.5rem;
+  }
+  
+  .header-content h1 {
+    font-size: 1.5rem;
+  }
+  
+  .kpi-container {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+}
 @media (max-width: 1024px) {
   .admin-sidebar {
     width: 80px;
@@ -474,6 +585,18 @@
   .products-content.with-form .product-form,
   .products-content.with-form .product-list-container {
     grid-column: 1;
+  }
+  
+  .header-content h1 {
+    font-size: 1.5rem;
+  }
+  
+  .admin-header {
+    padding: 1rem 1.5rem;
+  }
+  
+  .admin-content {
+    padding: 1.5rem;
   }
 }
 
@@ -517,6 +640,26 @@
     align-items: flex-start;
   }
   
+  .header-content h1 {
+    font-size: 1.25rem;
+  }
+  
+  .user-info {
+    display: none;
+  }
+  
+  .header-actions {
+    gap: 0.5rem;
+  }
+  
+  .admin-header {
+    padding: 1rem;
+  }
+  
+  .admin-content {
+    padding: 0.75rem;
+  }
+  
   .sales-range-kpis {
     grid-template-columns: 1fr;
   }
@@ -557,6 +700,23 @@
   .admin-sidebar.closed .sidebar-toggle {
     right: 0.75rem;
   }
+  
+  .header-content h1 {
+    font-size: 1.125rem;
+  }
+  
+  .kpi-container {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .content-header {
+    padding: 1rem;
+  }
+  
+  .content-header h2 {
+    font-size: 1.25rem;
+  }
 }
 
 /* ===== ANIMATIONS ===== */
@@ -578,6 +738,25 @@
   animation: fadeInUp 0.5s ease-out;
 }
 
+/* ===== ADMIN LOADING ===== */
+.admin-loading {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.loading-content {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  padding: 3rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  min-width: 300px;
+}
+
 /* ===== SCROLLBAR STYLING ===== */
 .admin-content::-webkit-scrollbar {
   width: 8px;
@@ -594,4 +773,58 @@
 
 .admin-content::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
+}
+
+/* ===== TABLE RESPONSIVE ===== */
+.admin-table-container {
+  overflow-x: auto;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e5e7eb;
+}
+
+.admin-table {
+  width: 100%;
+  min-width: 600px; /* Ancho mínimo para evitar que se comprima demasiado */
+  border-collapse: collapse;
+  background: white;
+}
+
+.admin-table th,
+.admin-table td {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.admin-table th {
+  background: #f8fafc;
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.admin-table td {
+  color: #1f2937;
+  font-size: 0.875rem;
+}
+
+.admin-table tr:hover {
+  background: #f9fafb;
+}
+
+/* Responsive para tablas */
+@media (max-width: 768px) {
+  .admin-table-container {
+    margin: 0 -0.75rem;
+    border-radius: 0;
+  }
+  
+  .admin-table th,
+  .admin-table td {
+    padding: 0.75rem 0.5rem;
+    font-size: 0.8rem;
+  }
 }

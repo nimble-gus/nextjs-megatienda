@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { getSales, getKpis } from '@/services/salesService';
+import { useAuth } from '@/hooks/useAuth';
 import KPICard from './KPICard';
 import SalesTable from './SalesTable';
 import DashboardHeader from './DashboardHeader';
@@ -14,6 +15,7 @@ import OrdersManager from './OrdersManager';
 import '@/styles/AdminDashboard.css';
 
 export default function AdminDashboard() {
+  const { user, logout } = useAuth();
   const [sales, setSales] = useState([]);
   const [salesSummary, setSalesSummary] = useState({ totalVentas: 0, totalPedidos: 0 });
   const [kpis, setKpis] = useState({});
@@ -21,7 +23,7 @@ export default function AdminDashboard() {
   const [endDate, setEndDate] = useState('');
   const [showProductForm, setShowProductForm] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [refreshProducts, setRefreshProducts] = useState(0);
 
   const fetchData = async () => {
@@ -303,11 +305,22 @@ export default function AdminDashboard() {
           <div className="header-content">
             <h1>{getPageTitle(activeTab)}</h1>
             <div className="header-actions">
-              <button className="btn-secondary">
+              <div className="user-info">
+                <span className="user-avatar">👨‍💼</span>
+                <div className="user-details">
+                  <span className="user-name">{user?.nombre || 'Admin'}</span>
+                  <span className="user-role">{user?.role || 'Administrador'}</span>
+                </div>
+              </div>
+              <button className="btn-secondary" title="Notificaciones">
                 <span>🔔</span>
               </button>
-              <button className="btn-secondary">
-                <span>👤</span>
+              <button 
+                className="btn-logout" 
+                onClick={logout}
+                title="Cerrar sesión"
+              >
+                <span>🚪</span>
               </button>
             </div>
           </div>

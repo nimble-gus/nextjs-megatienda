@@ -1,0 +1,21 @@
+{
+  "functions": {
+    "src/app/api/**/*.js": {
+      "maxDuration": 30
+    }
+  },
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=60, s-maxage=300"
+        }
+      ]
+    }
+  ],
+  "env": {
+    "PRISMA_CLIENT_ENGINE_TYPE": "dataproxy"
+  }
+}
