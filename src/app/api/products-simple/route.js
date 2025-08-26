@@ -3,8 +3,6 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET() {
   try {
-    console.log('=== API /api/products-simple iniciada ===');
-    
     // Obtener productos sin filtros
     const products = await prisma.productos.findMany({
       include: {
@@ -20,9 +18,6 @@ export async function GET() {
       },
       take: 5
     });
-    
-    console.log('Productos obtenidos:', products.length);
-    
     // Formatear productos
     const formattedProducts = products.map(product => {
       const hasStock = product.stock.length > 0 && product.stock.some(item => item.cantidad > 0);

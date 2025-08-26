@@ -31,7 +31,6 @@ export async function GET(request) {
         };
         tokenValid = true;
       } catch (error) {
-        console.log('Access token inválido o expirado');
       }
     }
 
@@ -86,7 +85,6 @@ export async function GET(request) {
           return response;
         }
       } catch (error) {
-        console.log('Refresh token inválido o expirado');
       }
     }
 
@@ -114,3 +112,4 @@ export async function GET(request) {
     );
   }
 }
+

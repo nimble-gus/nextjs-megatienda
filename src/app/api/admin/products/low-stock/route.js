@@ -1,12 +1,8 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
 
 export async function GET() {
   try {
-    console.log('=== API /api/admin/products/low-stock iniciada ===');
-    
     // Obtener productos con stock total menor a 10 unidades
     const products = await prisma.productos.findMany({
       include: {
@@ -33,9 +29,6 @@ export async function GET() {
       })
       .filter(product => product.totalStock < 10) // Incluir productos con stock bajo Y agotados
       .sort((a, b) => a.totalStock - b.totalStock); // Ordenar por stock más bajo primero
-
-    console.log(`Productos con stock bajo encontrados: ${lowStockProducts.length}`);
-
     // Formatear productos para el frontend
     const formattedProducts = lowStockProducts.map(product => ({
       id: product.id,
@@ -78,7 +71,5 @@ export async function GET() {
       },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }

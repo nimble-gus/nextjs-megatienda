@@ -22,9 +22,6 @@ export async function POST(req) {
         { status: 400 }
       );
     }
-
-    console.log('🔄 Actualizando contraseña de admin...');
-
     // Buscar admin por email o el primer admin
     let adminUser;
     if (adminEmail) {
@@ -42,8 +39,6 @@ export async function POST(req) {
 
     if (!adminUser) {
       // Crear nuevo admin si no existe
-      console.log('👤 Creando nuevo usuario admin...');
-      
       const defaultEmail = adminEmail || 'admin@megatienda.com';
       const hashedPassword = await bcrypt.hash(newPassword, 10);
 
@@ -85,9 +80,6 @@ export async function POST(req) {
       where: { id: adminUser.id },
       data: { password: hashedNewPassword }
     });
-
-    console.log('✅ Contraseña actualizada exitosamente');
-
     return NextResponse.json({
       success: true,
       message: 'Contraseña actualizada exitosamente',
@@ -106,3 +98,8 @@ export async function POST(req) {
     );
   }
 }
+
+
+
+
+

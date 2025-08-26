@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import '../../styles/LoginModal.css';
 
 const LoginModal = ({ onClose, onLoginSuccess }) => {
@@ -111,10 +111,6 @@ const LoginModal = ({ onClose, onLoginSuccess }) => {
             const submitData = isRegister 
                 ? { nombre: formData.nombre, correo: formData.correo, contraseña: formData.contraseña }
                 : { correo: formData.correo, contraseña: formData.contraseña };
-
-            console.log('Enviando datos a:', url);
-            console.log('Datos:', submitData);
-
             const res = await fetch(url, {
                 method: 'POST',
                 headers: { 
@@ -122,10 +118,6 @@ const LoginModal = ({ onClose, onLoginSuccess }) => {
                 },
                 body: JSON.stringify(submitData),
             });
-
-            console.log('Response status:', res.status);
-            console.log('Response headers:', res.headers);
-
             // Verificar si la respuesta es JSON
             const contentType = res.headers.get('content-type');
             if (!contentType || !contentType.includes('application/json')) {
@@ -133,8 +125,6 @@ const LoginModal = ({ onClose, onLoginSuccess }) => {
             }
 
             const data = await res.json();
-            console.log('Response data:', data);
-            
             if (res.ok) {
                 // Animación de éxito
                 setModalVisible(false);

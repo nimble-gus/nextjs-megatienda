@@ -4,8 +4,6 @@ import { executeWithRetry } from '@/lib/db-utils';
 
 export async function GET() {
   try {
-    console.log('=== API /api/featured-products iniciada ===');
-    
     // Obtener productos destacados (solo los que tienen featured = 1) usando retry
     const featuredProducts = await executeWithRetry(async () => {
       return await prisma.productos.findMany({
@@ -30,9 +28,6 @@ export async function GET() {
         take: 4 // Limitar a 4 productos destacados
       });
     });
-    
-    console.log('Productos destacados obtenidos:', featuredProducts.length);
-    
     // Mezclar aleatoriamente los productos en JavaScript
     const shuffledProducts = featuredProducts.sort(() => Math.random() - 0.5);
     
@@ -77,9 +72,6 @@ export async function GET() {
         }))
       };
     });
-    
-    console.log('Productos formateados:', formattedProducts.length);
-    
     return NextResponse.json({
       success: true,
       products: formattedProducts,

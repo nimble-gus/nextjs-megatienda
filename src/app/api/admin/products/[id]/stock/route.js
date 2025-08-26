@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
 
 // GET - Obtener stock detallado de un producto
 export async function GET(request, { params }) {
@@ -40,11 +38,6 @@ export async function PUT(request, { params }) {
   try {
     const { id } = params;
     const { stockUpdates, newStockItems } = await request.json();
-    
-    console.log('📦 Actualizando stock para producto:', id);
-    console.log('📝 Stock updates:', stockUpdates);
-    console.log('➕ New stock items:', newStockItems);
-    
     const operations = [];
     
     // Actualizar items de stock existentes
@@ -107,9 +100,6 @@ export async function PUT(request, { params }) {
     }
     
     await Promise.all(operations);
-    
-    console.log('✅ Stock actualizado exitosamente');
-    
     return NextResponse.json({ 
       success: true, 
       message: 'Stock actualizado exitosamente',

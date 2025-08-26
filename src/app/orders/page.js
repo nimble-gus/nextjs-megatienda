@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import '@/styles/OrdersPage.css';
@@ -64,7 +65,6 @@ export default function OrdersPage() {
   };
 
   const openOrderDetails = (order) => {
-    console.log('🔍 Abriendo detalles del pedido:', order);
     setSelectedOrder(order);
     setIsModalOpen(true);
   };
@@ -276,9 +276,11 @@ export default function OrdersPage() {
                   <div className="order-items">
                     {order.detalles?.map((item, index) => (
                       <div key={index} className="order-item">
-                        <img
+                        <Image
                           src={item.producto?.imagenes?.[0]?.url || '/assets/placeholder.jpg'}
                           alt={item.producto?.nombre || 'Producto'}
+                          width={60}
+                          height={60}
                           className="item-image"
                         />
                         <div className="item-details">
@@ -426,9 +428,11 @@ export default function OrdersPage() {
                 <div className="products-list">
                   {selectedOrder.detalles?.map((item, index) => (
                     <div key={index} className="product-item">
-                      <img
+                      <Image
                         src={item.producto?.imagenes?.[0]?.url || '/assets/placeholder.jpg'}
                         alt={item.producto?.nombre || 'Producto'}
+                        width={80}
+                        height={80}
                         className="product-image"
                       />
                       <div className="product-details">

@@ -6,9 +6,6 @@ export async function PUT(request, { params }) {
   try {
     const { id } = await params;
     const body = await request.json();
-    
-    console.log(`📦 Actualizando pedido ${id}:`, body);
-    
     const { estado, notas, validado_por } = body;
     
     // Validar estado
@@ -60,8 +57,6 @@ export async function PUT(request, { params }) {
     let stockErrors = [];
     
     if (isBeingCancelled) {
-      console.log(`🔄 Cancelando pedido ${id} - Regresando stock...`);
-      
       for (const item of currentOrder.detalle) {
         try {
           // Validar que la cantidad sea válida
@@ -107,9 +102,6 @@ export async function PUT(request, { params }) {
           stockErrors.push(errorMsg);
         }
       }
-
-      console.log(`📊 Stock regresado: ${stockUpdates.length} items actualizados, ${stockErrors.length} errores`);
-      
       // Si hay errores de stock, agregarlos a la respuesta
       if (stockErrors.length > 0) {
         console.warn(`⚠️ Errores durante la actualización de stock:`, stockErrors);
@@ -170,9 +162,6 @@ export async function PUT(request, { params }) {
         }
       });
     });
-
-    console.log(`✅ Pedido ${id} actualizado exitosamente`);
-
     return NextResponse.json({
       success: true,
       message: isBeingCancelled 
@@ -196,9 +185,6 @@ export async function PUT(request, { params }) {
 export async function GET(request, { params }) {
   try {
     const { id } = await params;
-    
-    console.log(`📦 Obteniendo pedido ${id}...`);
-    
     const order = await executeWithRetry(async () => {
       return await prisma.ordenes.findUnique({
         where: { id: parseInt(id) },
@@ -242,9 +228,6 @@ export async function GET(request, { params }) {
         { status: 404 }
       );
     }
-
-    console.log(`✅ Pedido ${id} obtenido exitosamente`);
-
     return NextResponse.json({
       success: true,
       order: order

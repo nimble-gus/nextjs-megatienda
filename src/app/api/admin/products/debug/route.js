@@ -1,13 +1,10 @@
 import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
 
 export async function GET() {
   try {
-    console.log('=== DEBUG API /api/admin/products/debug ===');
-    
     // Verificar variables de entorno
     const databaseUrl = process.env.DATABASE_URL;
-    console.log('DATABASE_URL configurada:', databaseUrl ? 'Sí' : 'No');
-    
     if (!databaseUrl) {
       return NextResponse.json({
         error: 'DATABASE_URL no está configurada',
@@ -16,31 +13,11 @@ export async function GET() {
       }, { status: 500 });
     }
     
-    // Intentar importar Prisma
-    let PrismaClient;
-    try {
-      const prismaModule = await import('@prisma/client');
-      PrismaClient = prismaModule.PrismaClient;
-      console.log('✅ Prisma Client importado correctamente');
-    } catch (prismaError) {
-      console.error('❌ Error importando Prisma Client:', prismaError);
-      return NextResponse.json({
-        error: 'Error con Prisma Client',
-        details: prismaError.message,
-        solution: 'Ejecuta: npx prisma generate'
-      }, { status: 500 });
-    }
-    
-    // Intentar conectar a la base de datos
-    const prisma = new PrismaClient();
+    // Intentar conectar a la base de datos usando la instancia centralizada
     try {
       await prisma.$connect();
-      console.log('✅ Conexión a la base de datos exitosa');
-      
       // Verificar si la tabla productos existe
       const productCount = await prisma.productos.count();
-      console.log(`📊 Productos en la tabla: ${productCount}`);
-      
       await prisma.$disconnect();
       
       return NextResponse.json({
@@ -74,7 +51,4 @@ export async function GET() {
     }, { status: 500 });
   }
 }
-
-
-
 

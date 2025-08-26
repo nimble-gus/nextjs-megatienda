@@ -1,14 +1,21 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { executeWithRetry } from '@/lib/db-utils';
+import { SalesCache } from '@/lib/redis';
 
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
     const start = searchParams.get('start');
     const end = searchParams.get('end');
-
-    console.log('📅 Filtros de fecha recibidos:', { start, end });
+    
+    // Crear filtros para el cache
+    const filters = { start, end };
+    
+    // Verificar caché Redis primero
+    const cachedSales = await SalesCache.get(filters);
+    if (cachedSales) {
+      return NextResponse.json(cachedSales);
+    }
 
     let where = {};
     if (start || end) {
@@ -23,20 +30,16 @@ export async function GET(req) {
         const endDate = new Date(end + 'T23:59:59.999Z');
         where.fecha.lte = endDate;
       }
-      
-      console.log('🔍 Filtro de fecha aplicado:', where.fecha);
     }
 
-    const sales = await executeWithRetry(async () => {
-      return await prisma.ordenes.findMany({
-        where,
-        include: {
-          usuario: {
-            select: { nombre: true }
-          }
-        },
-        orderBy: { fecha: 'desc' }
-      });
+    const sales = await prisma.ordenes.findMany({
+      where,
+      include: {
+        usuario: {
+          select: { nombre: true }
+        }
+      },
+      orderBy: { fecha: 'desc' }
     });
 
     const formattedSales = sales.map(s => ({
@@ -48,10 +51,8 @@ export async function GET(req) {
 
     // Calcular el total de ventas del rango
     const totalVentasRango = formattedSales.reduce((sum, sale) => sum + sale.total, 0);
-    
-    console.log(`📊 Ventas encontradas: ${formattedSales.length}, Total: Q${totalVentasRango.toFixed(2)}`);
 
-    return NextResponse.json({
+    const responseData = {
       sales: formattedSales,
       summary: {
         totalVentas: totalVentasRango,
@@ -59,7 +60,12 @@ export async function GET(req) {
         fechaInicio: start,
         fechaFin: end
       }
-    });
+    };
+
+    // Almacenar en caché Redis para futuras consultas
+    await SalesCache.set(filters, responseData);
+
+    return NextResponse.json(responseData);
   } catch (error) {
     console.error('Error obteniendo ventas:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });

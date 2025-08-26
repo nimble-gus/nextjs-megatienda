@@ -11,7 +11,7 @@ export default function AdminProtected({ children }) {
 
   useEffect(() => {
     if (!loading && (!isAuthenticated || !isAdmin)) {
-      console.log('🔒 Acceso denegado, redirigiendo a login');
+
       setTimeout(() => {
         router.push('/admin/login');
       }, 100);

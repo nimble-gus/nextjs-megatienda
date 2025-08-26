@@ -28,8 +28,7 @@ export default function AdminDashboard() {
 
   const fetchData = async () => {
     try {
-      console.log('🔄 Cargando datos del dashboard...');
-      
+
       const salesData = await getSales(startDate, endDate);
       
       // Manejar la nueva estructura de respuesta
@@ -47,8 +46,7 @@ export default function AdminDashboard() {
 
       const kpisData = await getKpis();
       setKpis(kpisData);
-      
-      console.log('✅ Datos del dashboard cargados');
+
     } catch (error) {
       console.error('❌ Error cargando datos del dashboard:', error);
       // Los servicios ya manejan los errores y retornan valores por defecto
@@ -333,7 +331,6 @@ export default function AdminDashboard() {
     </div>
   );
 }
-
 function getPageTitle(tab) {
   switch (tab) {
     case 'dashboard': return 'Dashboard';
@@ -345,3 +342,4 @@ function getPageTitle(tab) {
     default: return 'Admin Panel';
   }
 }
+

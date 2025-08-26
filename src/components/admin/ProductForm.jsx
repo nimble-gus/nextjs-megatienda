@@ -36,11 +36,6 @@ export default function ProductForm({ onProductAdded }) {
         
         setCategorias(Array.isArray(categoriesData) ? categoriesData : []);
         setColores(Array.isArray(colorsData) ? colorsData : []);
-        
-        console.log('Datos cargados:', {
-          categorias: categoriesData,
-          colores: colorsData
-        });
       } catch (error) {
         console.error('Error cargando datos:', error);
         setError('Error al cargar categorías y colores');

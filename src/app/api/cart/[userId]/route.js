@@ -5,9 +5,6 @@ import { prisma } from '@/lib/prisma';
 export async function GET(request, { params }) {
   try {
     const { userId } = await params;
-    
-    console.log('Obteniendo carrito para usuario:', userId);
-
     const cartItems = await prisma.carrito.findMany({
       where: {
         usuario_id: parseInt(userId)
@@ -25,9 +22,6 @@ export async function GET(request, { params }) {
         id: 'asc'
       }
     });
-
-    console.log('Items del carrito encontrados:', cartItems.length);
-
     // Formatear los items para el frontend
     const formattedItems = cartItems.map(item => {
       // Buscar el stock correspondiente al color
@@ -78,17 +72,11 @@ export async function GET(request, { params }) {
 export async function DELETE(request, { params }) {
   try {
     const { userId } = await params;
-    
-    console.log('Limpiando carrito para usuario:', userId);
-
     await prisma.carrito.deleteMany({
       where: {
         usuario_id: parseInt(userId)
       }
     });
-
-    console.log('Carrito limpiado exitosamente');
-
     return NextResponse.json({
       success: true,
       message: 'Carrito limpiado exitosamente'

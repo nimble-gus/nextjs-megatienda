@@ -147,7 +147,6 @@ export default function ProductList() {
 
     try {
       const result = await deleteProduct(productId);
-      console.log('Producto eliminado:', result);
       await fetchProducts(); // Recargar la lista
       alert('Producto eliminado exitosamente');
     } catch (err) {
@@ -168,9 +167,6 @@ export default function ProductList() {
         featured: formData.get('featured') === 'on',
         url_imagen: editingProduct.url_imagen || '' // Usar el valor del estado
       };
-
-      console.log('Enviando datos del producto:', productData);
-
       const response = await fetch(`/api/admin/products/${editingProduct.id}`, {
         method: 'PUT',
         headers: {

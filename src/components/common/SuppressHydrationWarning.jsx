@@ -1,7 +1,5 @@
 'use client';
 
-import React from 'react';
-
 // Componente wrapper para suprimir warnings de hidratación
 const SuppressHydrationWarning = ({ children, ...props }) => {
   return (

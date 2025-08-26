@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Topbar from '@/components/layout/Topbar';
 import Header from '@/components/layout/Header';

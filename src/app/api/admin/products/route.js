@@ -2,20 +2,15 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { executeWithRetry } from '@/lib/db-utils';
 import { invalidateProductRelatedCache } from '@/lib/redis';
+import { SalesCache, KPICache } from '@/lib/redis';
 
 export async function GET() {
   try {
-    console.log('=== Iniciando GET /api/admin/products ===');
-    
     // Usar executeWithRetry para manejar reconexiones automáticas
     const productCount = await executeWithRetry(async () => {
       return await prisma.productos.count();
     });
-    
-    console.log(`📊 Total de productos en BD: ${productCount}`);
-    
     if (productCount === 0) {
-      console.log('📭 No hay productos en la base de datos');
       return NextResponse.json([]);
     }
     
@@ -35,9 +30,6 @@ export async function GET() {
         }
       });
     });
-
-    console.log(`✅ Productos encontrados: ${products.length}`);
-
     // Formatear los productos para el admin
     const formattedProducts = products.map(product => {
       const hasStock = product.stock.length > 0 && product.stock.some(item => item.cantidad > 0);
@@ -67,14 +59,8 @@ export async function GET() {
       };
 
       // Debug: Log para verificar la imagen del producto en admin
-      console.log(`Admin - Producto ${product.id} - ${product.nombre}:`, {
-        url_imagen: product.url_imagen
-      });
-
       return formattedProduct;
     });
-
-    console.log('✅ Productos formateados exitosamente');
     return NextResponse.json(formattedProducts);
     
   } catch (error) {
@@ -96,10 +82,6 @@ export async function GET() {
 export async function POST(request) {
   try {
     const productData = await request.json();
-    
-    console.log('=== Iniciando POST /api/admin/products ===');
-    console.log('Datos del producto:', productData);
-    
     // Crear el producto usando executeWithRetry
     const newProduct = await executeWithRetry(async () => {
       return await prisma.productos.create({
@@ -107,10 +89,12 @@ export async function POST(request) {
       });
     });
     
-    console.log('✅ Producto creado exitosamente:', newProduct.id);
-    
-    // Invalidar caché de productos
-    await invalidateProductRelatedCache();
+    // Invalidar caché de productos y relacionados
+    await Promise.all([
+      invalidateProductRelatedCache(),
+      SalesCache.invalidate(),
+      KPICache.invalidate()
+    ]);
     
     return NextResponse.json({
       success: true,

@@ -14,16 +14,12 @@ export async function POST(req) {
         { status: 400 }
       );
     }
-
-    console.log('🔐 Procesando login para:', correo);
-
     // Buscar usuario por correo
     const user = await prisma.usuarios.findUnique({
       where: { correo },
     });
 
     if (!user) {
-      console.log('❌ Usuario no encontrado:', correo);
       return NextResponse.json(
         { error: 'Usuario no encontrado' },
         { status: 400 }
@@ -33,15 +29,11 @@ export async function POST(req) {
     // Verificar contraseña
     const validPassword = await bcrypt.compare(contraseña, user.password);
     if (!validPassword) {
-      console.log('❌ Contraseña incorrecta para:', correo);
       return NextResponse.json(
         { error: 'Contraseña incorrecta' },
         { status: 400 }
       );
     }
-
-    console.log('✅ Credenciales válidas para:', correo);
-
     // Crear sesión con access y refresh tokens
     const session = await sessionManager.createSession({
       id: user.id,
@@ -49,9 +41,6 @@ export async function POST(req) {
       correo: user.correo,
       rol: user.rol
     });
-
-    console.log('🎉 Sesión creada exitosamente para:', correo);
-
     // Crear respuesta con cookies seguras
     const response = NextResponse.json({
       success: true,

@@ -6,17 +6,11 @@ import { MultimediaCache } from '@/lib/redis';
 // GET - Obtener banners promocionales activos para el frontend
 export async function GET() {
   try {
-    console.log('=== API /api/multimedia/promo iniciada ===');
-    
     // Verificar caché Redis primero
     const cachedPromoBanners = await MultimediaCache.getPromoBanners();
     if (cachedPromoBanners) {
-      console.log('✅ Promo banners obtenidos del caché Redis');
       return NextResponse.json(cachedPromoBanners);
     }
-    
-    console.log('🔄 Promo banners no encontrados en caché, consultando base de datos...');
-    
     const promoBanners = await executeWithRetry(async () => {
       return await prisma.promo_banners.findMany({
         where: {
@@ -27,9 +21,6 @@ export async function GET() {
         }
       });
     });
-
-    console.log(`✅ Promo banners encontrados: ${promoBanners.length}`);
-    
     const responseData = {
       success: true,
       data: promoBanners

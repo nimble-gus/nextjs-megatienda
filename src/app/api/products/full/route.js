@@ -1,23 +1,12 @@
 import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
 
 export async function POST(req) {
   try {
-    console.log('=== API /api/products/full iniciada ===');
-    
     const { sku, nombre, descripcion, url_imagen, categoria_id, stock, imagenes_adicionales } = await req.json();
-    
-    console.log('Datos recibidos:', {
-      sku,
-      nombre,
-      categoria_id,
-      stockCount: stock?.length || 0,
-      imagenesCount: imagenes_adicionales?.length || 0
-    });
-
     // Verificar si DATABASE_URL está configurada
     const databaseUrl = process.env.DATABASE_URL;
     if (!databaseUrl) {
-      console.log('❌ DATABASE_URL no configurada');
       return NextResponse.json({ 
         error: 'Base de datos no configurada',
         message: 'Necesitas configurar DATABASE_URL en el archivo .env'
@@ -25,16 +14,7 @@ export async function POST(req) {
     }
     
     // Si DATABASE_URL está configurada, intentar usar Prisma
-    console.log('✅ DATABASE_URL configurada, intentando conectar a la base de datos');
-    
     try {
-      const { PrismaClient } = await import('@prisma/client');
-      const prisma = new PrismaClient();
-      
-      // Verificar conexión
-      await prisma.$connect();
-      console.log('✅ Conexión a la base de datos exitosa');
-      
       // Crear el producto principal
       const producto = await prisma.productos.create({
         data: {
@@ -52,9 +32,6 @@ export async function POST(req) {
           }
         }
       });
-
-      console.log(`✅ Producto creado con ID: ${producto.id}`);
-
       // Si hay imágenes adicionales, guardarlas en la tabla imagenes_producto
       if (imagenes_adicionales && imagenes_adicionales.length > 0) {
         await prisma.imagenes_producto.createMany({
@@ -63,7 +40,6 @@ export async function POST(req) {
             url_imagen: url
           }))
         });
-        console.log(`✅ ${imagenes_adicionales.length} imágenes adicionales guardadas`);
       }
 
       await prisma.$disconnect();

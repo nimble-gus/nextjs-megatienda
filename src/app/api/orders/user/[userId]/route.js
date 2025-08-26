@@ -14,20 +14,14 @@ export async function GET(request, { params }) {
     }
 
     const orders = await executeWithRetry(async () => {
-      console.log('🔍 Buscando pedidos para usuario:', userId);
-      
       // Primero, verificar si el usuario existe
       const userExists = await prisma.usuarios.findUnique({
         where: { id: parseInt(userId) }
       });
       
       if (!userExists) {
-        console.log('❌ Usuario no encontrado:', userId);
         return [];
       }
-      
-      console.log('✅ Usuario encontrado:', userExists.nombre);
-      
       // Buscar pedidos del usuario
       const orders = await prisma.ordenes.findMany({
         where: {
@@ -49,8 +43,6 @@ export async function GET(request, { params }) {
           fecha: 'desc'
         }
       });
-      
-      console.log('📦 Pedidos encontrados:', orders.length);
       return orders;
     });
 

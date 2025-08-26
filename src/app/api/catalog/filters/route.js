@@ -7,22 +7,14 @@ import 'dotenv/config';
 
 export async function GET() {
   try {
-    console.log('=== API /api/catalog/filters iniciada ===');
-    
          // Verificar caché Redis primero
      const cachedFilters = await FilterCache.get();
      if (cachedFilters) {
-       console.log('✅ Filtros obtenidos del caché Redis');
        return NextResponse.json(cachedFilters);
      }
-    
-    console.log('🔄 Filtros no encontrados en caché, consultando base de datos...');
-    
     // Verificar si DATABASE_URL está configurada
     const databaseUrl = process.env.DATABASE_URL;
     if (!databaseUrl) {
-      console.log('❌ DATABASE_URL no configurada, devolviendo filtros de prueba');
-      
       // Datos de prueba para filtros
       return NextResponse.json({
         categories: [
@@ -45,18 +37,11 @@ export async function GET() {
     }
     
     // Si DATABASE_URL está configurada, intentar usar Prisma
-    console.log('✅ DATABASE_URL configurada, intentando conectar a la base de datos');
-    
     try {
       const { prisma } = await import('@/lib/prisma');
       const { executeWithRetry, checkDatabaseHealth } = await import('@/lib/db-utils');
-      
-      console.log('✅ Intentando conectar a la base de datos...');
-      
       // Verificar salud de la conexión
       const health = await checkDatabaseHealth();
-      console.log('🔍 Estado de la conexión:', health.message);
-      
              // Obtener todas las categorías con cola de consultas
        const categories = await queueQuery(async () => {
          return await executeWithRetry(async () => {
@@ -125,9 +110,6 @@ export async function GET() {
         hex: color.codigo_hex,
         productCount: color._count.stock
       }));
-
-      console.log('✅ Filtros obtenidos exitosamente');
-      
       const responseData = {
         categories: formattedCategories,
         colors: formattedColors,
@@ -139,8 +121,6 @@ export async function GET() {
       
              // Almacenar en caché Redis para futuras consultas
        await FilterCache.set(responseData);
-       console.log('✅ Filtros almacenados en caché Redis');
-      
       return NextResponse.json(responseData);
       
     } catch (dbError) {

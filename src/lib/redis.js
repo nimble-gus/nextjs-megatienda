@@ -10,12 +10,9 @@ try {
       url: process.env.UPSTASH_REDIS_REST_URL,
       token: process.env.UPSTASH_REDIS_REST_TOKEN,
     });
-    console.log('✅ Redis configurado correctamente');
   } else {
-    console.log('⚠️ Redis no configurado, usando fallback');
   }
 } catch (error) {
-  console.log('⚠️ Error configurando Redis, usando fallback:', error.message);
 }
 
 // Configuración de TTL (Time To Live) en segundos
@@ -66,7 +63,6 @@ export class ProductCache {
       if (!redis) return;
       const key = generateCacheKey('products', filters);
       await redis.setex(key, TTL_CONFIG.PRODUCTS, serialize(data));
-      console.log('✅ Productos almacenados en Redis');
     } catch (error) {
       console.error('❌ Error almacenando caché de productos:', error);
     }
@@ -77,7 +73,6 @@ export class ProductCache {
       const keys = await redis.keys('megatienda:products:*');
       if (keys.length > 0) {
         await redis.del(...keys);
-        console.log('🔄 Caché de productos invalidado en Redis');
       }
     } catch (error) {
       console.error('❌ Error invalidando caché de productos:', error);
@@ -104,7 +99,6 @@ export class FilterCache {
       if (!redis) return;
       const key = 'megatienda:filters:all';
       await redis.setex(key, TTL_CONFIG.FILTERS, serialize(data));
-      console.log('✅ Filtros almacenados en Redis');
     } catch (error) {
       console.error('❌ Error almacenando caché de filtros:', error);
     }
@@ -116,7 +110,6 @@ export class FilterCache {
       const keys = await redis.keys('megatienda:filters:*');
       if (keys.length > 0) {
         await redis.del(...keys);
-        console.log('🔄 Caché de filtros invalidado en Redis');
       }
     } catch (error) {
       console.error('❌ Error invalidando caché de filtros:', error);
@@ -143,7 +136,6 @@ export class CategoryCache {
       if (!redis) return;
       const key = 'megatienda:categories:all';
       await redis.setex(key, TTL_CONFIG.CATEGORIES, serialize(data));
-      console.log('✅ Categorías almacenadas en Redis');
     } catch (error) {
       console.error('❌ Error almacenando caché de categorías:', error);
     }
@@ -155,7 +147,6 @@ export class CategoryCache {
       const keys = await redis.keys('megatienda:categories:*');
       if (keys.length > 0) {
         await redis.del(...keys);
-        console.log('🔄 Caché de categorías invalidado en Redis');
       }
     } catch (error) {
       console.error('❌ Error invalidando caché de categorías:', error);
@@ -182,7 +173,6 @@ export class ColorCache {
       if (!redis) return;
       const key = 'megatienda:colors:all';
       await redis.setex(key, TTL_CONFIG.COLORS, serialize(data));
-      console.log('✅ Colores almacenados en Redis');
     } catch (error) {
       console.error('❌ Error almacenando caché de colores:', error);
     }
@@ -194,7 +184,6 @@ export class ColorCache {
       const keys = await redis.keys('megatienda:colors:*');
       if (keys.length > 0) {
         await redis.del(...keys);
-        console.log('🔄 Caché de colores invalidado en Redis');
       }
     } catch (error) {
       console.error('❌ Error invalidando caché de colores:', error);
@@ -221,7 +210,6 @@ export class MultimediaCache {
       if (!redis) return;
       const key = 'megatienda:hero:images';
       await redis.setex(key, TTL_CONFIG.HERO_IMAGES, serialize(data));
-      console.log('✅ Hero images almacenadas en Redis');
     } catch (error) {
       console.error('❌ Error almacenando caché de hero images:', error);
     }
@@ -244,7 +232,6 @@ export class MultimediaCache {
       if (!redis) return;
       const key = 'megatienda:promo:banners';
       await redis.setex(key, TTL_CONFIG.PROMO_BANNERS, serialize(data));
-      console.log('✅ Promo banners almacenados en Redis');
     } catch (error) {
       console.error('❌ Error almacenando caché de promo banners:', error);
     }
@@ -258,10 +245,83 @@ export class MultimediaCache {
       const allKeys = [...keys, ...promoKeys];
       if (allKeys.length > 0) {
         await redis.del(...allKeys);
-        console.log('🔄 Caché multimedia invalidado en Redis');
       }
     } catch (error) {
       console.error('❌ Error invalidando caché multimedia:', error);
+    }
+  }
+}
+
+// Clase para manejar el caché de KPIs
+export class KPICache {
+  static async get() {
+    try {
+      if (!redis) return null;
+      const key = 'megatienda:kpis:sales';
+      const cached = await redis.get(key);
+      return cached ? deserialize(cached) : null;
+    } catch (error) {
+      console.error('❌ Error obteniendo caché de KPIs:', error);
+      return null;
+    }
+  }
+
+  static async set(data) {
+    try {
+      if (!redis) return;
+      const key = 'megatienda:kpis:sales';
+      await redis.setex(key, 300, serialize(data)); // 5 minutos TTL
+    } catch (error) {
+      console.error('❌ Error almacenando caché de KPIs:', error);
+    }
+  }
+
+  static async invalidate() {
+    try {
+      if (!redis) return;
+      const keys = await redis.keys('megatienda:kpis:*');
+      if (keys.length > 0) {
+        await redis.del(...keys);
+      }
+    } catch (error) {
+      console.error('❌ Error invalidando caché de KPIs:', error);
+    }
+  }
+}
+
+// Clase para manejar el caché de ventas
+export class SalesCache {
+  static async get(filters = {}) {
+    try {
+      if (!redis) return null;
+      const key = generateCacheKey('sales', filters);
+      const cached = await redis.get(key);
+      return cached ? deserialize(cached) : null;
+    } catch (error) {
+      console.error('❌ Error obteniendo caché de ventas:', error);
+      return null;
+    }
+  }
+
+  static async set(filters = {}, data) {
+    try {
+      if (!redis) return;
+      const key = generateCacheKey('sales', filters);
+      await redis.setex(key, 180, serialize(data)); // 3 minutos TTL
+    } catch (error) {
+      console.error('❌ Error almacenando caché de ventas:', error);
+    }
+  }
+
+  static async invalidate() {
+    try {
+      if (!redis) return;
+      const keys = await redis.keys('megatienda:sales:*');
+      if (keys.length > 0) {
+        await redis.del(...keys);
+      }
+    } catch (error) {
+      console.error('❌ Error invalidando caché de ventas:', error);
     }
   }
 }
@@ -272,7 +332,6 @@ export const invalidateProductRelatedCache = async () => {
     ProductCache.invalidate(),
     FilterCache.invalidate()
   ]);
-  console.log('🔄 Caché relacionado con productos invalidado');
 };
 
 export const invalidateFilterCache = async () => {
@@ -281,7 +340,6 @@ export const invalidateFilterCache = async () => {
     CategoryCache.invalidate(),
     ColorCache.invalidate()
   ]);
-  console.log('🔄 Caché de filtros invalidado');
 };
 
 export const invalidateAllCache = async () => {
@@ -290,7 +348,6 @@ export const invalidateAllCache = async () => {
     const keys = await redis.keys('megatienda:*');
     if (keys.length > 0) {
       await redis.del(...keys);
-      console.log('🔄 Todo el caché invalidado en Redis');
     }
   } catch (error) {
     console.error('❌ Error invalidando todo el caché:', error);

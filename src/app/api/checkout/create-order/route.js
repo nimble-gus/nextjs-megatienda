@@ -1,13 +1,9 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { uploadToCloudinary } from '@/services/cloudinaryService';
-
-const prisma = new PrismaClient();
 
 export async function POST(request) {
   try {
-    console.log('🚀 Iniciando procesamiento de orden...');
-
     // Verificar si es FormData (archivo de transferencia) o JSON normal
     const contentType = request.headers.get('content-type');
     let body;
@@ -19,13 +15,11 @@ export async function POST(request) {
       const orderDataString = formData.get('orderData');
       body = JSON.parse(orderDataString);
       comprobanteFile = formData.get('comprobante_transferencia');
-      
-      console.log('📥 Datos recibidos (FormData):', JSON.stringify(body, null, 2));
-      console.log('📁 Archivo de comprobante:', comprobanteFile ? comprobanteFile.name : 'No hay archivo');
+
     } else {
       // Es JSON normal
       body = await request.json();
-      console.log('📥 Datos recibidos (JSON):', JSON.stringify(body, null, 2));
+
     }
     
     const {
@@ -54,16 +48,8 @@ export async function POST(request) {
     } = body;
 
     // Debug: Log validation checks
-    console.log('🔍 Validaciones:');
-    console.log('- Productos:', productos ? productos.length : 'undefined');
-    console.log('- Nombre cliente:', nombre_cliente);
-    console.log('- Email cliente:', email_cliente);
-    console.log('- Teléfono cliente:', telefono_cliente);
-    console.log('- Usuario ID:', usuario_id);
-
     // Validaciones básicas
     if (!productos || productos.length === 0) {
-      console.log('❌ Error: No hay productos en la orden');
       return NextResponse.json(
         { error: 'No hay productos en la orden' },
         { status: 400 }
@@ -71,10 +57,6 @@ export async function POST(request) {
     }
 
     if (!nombre_cliente || !email_cliente || !telefono_cliente) {
-      console.log('❌ Error: Faltan datos del cliente');
-      console.log('- nombre_cliente:', nombre_cliente);
-      console.log('- email_cliente:', email_cliente);
-      console.log('- telefono_cliente:', telefono_cliente);
       return NextResponse.json(
         { error: 'Faltan datos del cliente requeridos' },
         { status: 400 }
@@ -83,32 +65,24 @@ export async function POST(request) {
 
     // Función para procesar el pedido
     const processOrder = async (orderData) => {
-      console.log('🔧 Iniciando processOrder...');
       const { body } = orderData;
       
       // Subir archivo de comprobante a Cloudinary si existe
       let comprobanteUrl = null;
       if (comprobanteFile) {
         try {
-          console.log('☁️ Subiendo comprobante a Cloudinary...');
-          console.log('📁 Archivo a subir:', comprobanteFile.name, 'Tamaño:', comprobanteFile.size);
           const uploadResult = await uploadToCloudinary(comprobanteFile, 'comprobantes-transferencia');
           comprobanteUrl = uploadResult.secure_url;
-          console.log('✅ Comprobante subido a Cloudinary:', comprobanteUrl);
         } catch (uploadError) {
           console.error('❌ Error subiendo comprobante a Cloudinary:', uploadError);
           console.error('❌ Stack trace:', uploadError.stack);
           throw new Error('Error al subir el comprobante de transferencia');
         }
       } else {
-        console.log('ℹ️ No hay archivo de comprobante para subir');
       }
       
       // Generar código de orden único
       const codigo_orden = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-
-      console.log('✅ Creando orden con código:', codigo_orden);
-
       // Crear la orden principal
       const orden = await prisma.ordenes.create({
       data: {
@@ -131,34 +105,15 @@ export async function POST(request) {
         comprobante_transferencia: comprobanteUrl
       }
     });
-
-    console.log('✅ Orden creada:', orden.id);
-
       // Crear los detalles de la orden
       const detallesOrden = [];
       
       for (const producto of productos) {
-      console.log('🔍 Procesando producto:', JSON.stringify(producto, null, 2));
-      console.log('🔍 Estructura del producto:');
-      console.log('- producto_id:', producto.producto_id);
-      console.log('- id:', producto.id);
-      console.log('- color_id:', producto.color_id);
-      console.log('- color.id:', producto.color?.id);
-      console.log('- cantidad:', producto.cantidad);
-      console.log('- precio:', producto.precio);
-      console.log('- nombre:', producto.nombre);
-      
+
       // Verificar que el producto existe y tiene stock
       const productoId = producto.producto_id || producto.producto?.id || producto.id;
       const colorId = producto.color_id || producto.color?.id;
       const cantidad = producto.cantidad;
-      
-      console.log('🔍 Buscando stock con:', {
-        producto_id: productoId,
-        color_id: colorId,
-        cantidad: cantidad
-      });
-      
       const stockItem = await prisma.stock_detalle.findFirst({
         where: {
           producto_id: productoId,
@@ -168,11 +123,7 @@ export async function POST(request) {
           }
         }
       });
-      
-      console.log('🔍 Resultado de búsqueda de stock:', stockItem);
-
       if (!stockItem) {
-        console.log('❌ No hay stock para producto:', producto);
         // Rollback: eliminar la orden si no hay stock
         await prisma.ordenes.delete({
           where: { id: orden.id }
@@ -205,18 +156,14 @@ export async function POST(request) {
       });
 
       detallesOrden.push(detalle);
-      console.log('✅ Detalle creado:', detalle.id);
     }
 
       // Si es un usuario registrado, limpiar el carrito
       if (usuario_id) {
-        console.log('🧹 Limpiando carrito para usuario:', usuario_id);
         const deletedItems = await prisma.carrito.deleteMany({
           where: { usuario_id }
         });
-        console.log('✅ Carrito limpiado para usuario:', usuario_id, '- Items eliminados:', deletedItems.count);
       } else {
-        console.log('ℹ️ No se limpia carrito - usuario no registrado');
       }
 
       // Obtener la orden completa con detalles
@@ -231,9 +178,6 @@ export async function POST(request) {
           }
         }
       });
-
-      console.log('✅ Orden procesada exitosamente:', orden.codigo_orden);
-
       return {
         success: true,
         orden: ordenCompleta,

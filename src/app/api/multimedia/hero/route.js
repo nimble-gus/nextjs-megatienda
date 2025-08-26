@@ -6,17 +6,11 @@ import { MultimediaCache } from '@/lib/redis';
 // GET - Obtener imágenes de Hero activas para el frontend
 export async function GET() {
   try {
-    console.log('=== API /api/multimedia/hero iniciada ===');
-    
     // Verificar caché Redis primero
     const cachedHeroImages = await MultimediaCache.getHeroImages();
     if (cachedHeroImages) {
-      console.log('✅ Hero images obtenidas del caché Redis');
       return NextResponse.json(cachedHeroImages);
     }
-    
-    console.log('🔄 Hero images no encontradas en caché, consultando base de datos...');
-    
     const heroImages = await executeWithRetry(async () => {
       return await prisma.hero_images.findMany({
         where: {
@@ -27,9 +21,6 @@ export async function GET() {
         }
       });
     });
-
-    console.log(`✅ Hero images encontradas: ${heroImages.length}`);
-    
     const responseData = {
       success: true,
       data: heroImages

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import '@/styles/CheckoutPage.css';
@@ -88,14 +89,7 @@ export default function CheckoutPage() {
             },
             stockId: colorItem.id // Usar el color ID como stockId
           };
-          
-          console.log('🔍 Producto cargado para checkout:', {
-            nombre: productoConCantidad.nombre,
-            url_imagen: productoConCantidad.url_imagen,
-            mainImage: producto.mainImage,
-            imagenes: producto.images
-          });
-          
+
           setProductos([productoConCantidad]);
         } else {
           setError('Color no disponible');
@@ -145,10 +139,6 @@ export default function CheckoutPage() {
       const carrito = await response.json();
       
       if (response.ok && carrito.items && carrito.items.length > 0) {
-        console.log('🔍 Productos del carrito cargados:', carrito.items.map(item => ({
-          nombre: item.producto.nombre,
-          url_imagen: item.producto.url_imagen
-        })));
         setProductos(carrito.items);
       } else {
         setError('Carrito vacío. Agrega productos al carrito o usa "Comprar Ahora"');
@@ -311,9 +301,6 @@ export default function CheckoutPage() {
         comprobante_transferencia: comprobanteTransferencia ? comprobanteTransferencia.name : null
       };
 
-      // Debug: Log what we're sending
-      console.log('📤 Enviando datos a la API:', JSON.stringify(orderData, null, 2));
-
       // Preparar los datos para enviar
       let requestData;
       let headers = {};
@@ -354,8 +341,6 @@ export default function CheckoutPage() {
 
       if (response.ok) {
         // Orden creada exitosamente
-        console.log('✅ Orden creada, actualizando contador del carrito...');
-        
         // Disparar evento para actualizar el contador del carrito en el header
         window.dispatchEvent(new CustomEvent('cartUpdated'));
         
@@ -607,7 +592,7 @@ export default function CheckoutPage() {
                          )}
                          {total <= 2499 && (
                            <div className="form-help-text">
-                             💡 Puede usar "CF" para Cliente Final o proporcionar un NIT
+                             💡 Puede usar &quot;CF&quot; para Cliente Final o proporcionar un NIT
                            </div>
                          )}
                        </div>
@@ -639,8 +624,6 @@ export default function CheckoutPage() {
                         />
                       </div>
                     </div>
-
-
 
                                          {/* Opciones de envío */}
                      <div className="form-group full-width">
@@ -698,9 +681,6 @@ export default function CheckoutPage() {
                           />
                           <div className="payment-content">
                             <div className="payment-label">Pago contra entrega</div>
-                            <div className="payment-description">
-                              Paga en efectivo cuando recibas tu pedido. Solo disponible para envíos locales.
-                            </div>
                           </div>
                         </div>
                         
@@ -718,9 +698,6 @@ export default function CheckoutPage() {
                           />
                           <div className="payment-content">
                             <div className="payment-label">Pago con transferencia</div>
-                            <div className="payment-description">
-                              Realiza una transferencia bancaria. Deberás subir el comprobante para validar tu orden.
-                            </div>
                           </div>
                         </div>
                       </div>
@@ -793,12 +770,13 @@ export default function CheckoutPage() {
                   <div className="order-items">
                     {productos.map((producto, index) => (
                       <div key={index} className="order-item">
-                                                                         <img
+                        <Image
                           src={producto.url_imagen || producto.producto?.url_imagen || producto.imagenes?.[0]?.url || 'https://res.cloudinary.com/demo/image/upload/v1/samples/ecommerce/accessories-bag'}
-                          alt={producto.nombre || producto.producto?.nombre}
+                          alt={producto.nombre || producto.producto?.nombre || 'Producto'}
+                          width={80}
+                          height={80}
                           className="item-image"
                           onError={(e) => {
-                            console.log('❌ Error cargando imagen:', e.target.src);
                             e.target.src = 'https://res.cloudinary.com/demo/image/upload/v1/samples/ecommerce/accessories-bag';
                           }}
                         />

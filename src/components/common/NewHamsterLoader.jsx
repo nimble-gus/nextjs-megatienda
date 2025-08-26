@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import '@/styles/NewHamsterLoader.css';
 
 const NewHamsterLoader = ({ size = 'medium', message = 'Cargando...' }) => {
@@ -38,3 +37,8 @@ const NewHamsterLoader = ({ size = 'medium', message = 'Cargando...' }) => {
 };
 
 export default NewHamsterLoader;
+
+
+
+
+

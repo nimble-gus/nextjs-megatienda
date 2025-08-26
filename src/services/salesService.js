@@ -3,9 +3,6 @@ export async function getSales(start, end) {
     const params = new URLSearchParams();
     if (start) params.append('start', start);
     if (end) params.append('end', end);
-
-    console.log('🔄 Obteniendo ventas con filtros:', { start, end });
-
     const res = await fetch(`/api/sales?${params.toString()}`);
     
     if (!res.ok) {
@@ -18,9 +15,6 @@ export async function getSales(start, end) {
     if (data.error) {
       throw new Error(data.error);
     }
-    
-    console.log('✅ Datos de ventas obtenidos:', data);
-    
     return data;
   } catch (error) {
     console.error('Error en getSales:', error);
@@ -38,8 +32,6 @@ export async function getSales(start, end) {
 
 export async function getKpis() {
   try {
-    console.log('🔄 Obteniendo KPIs...');
-    
     // Obtener KPIs de ventas
     const salesRes = await fetch('/api/sales/kpis');
     
@@ -54,9 +46,6 @@ export async function getKpis() {
       console.error('Error en datos de KPIs:', salesData.error);
       throw new Error(salesData.error);
     }
-    
-    console.log('✅ KPIs de ventas obtenidos:', salesData);
-    
     // Obtener KPIs de estados de pedidos
     let orderStatusKpis = {
       pedidosPendientes: 0,
@@ -95,8 +84,6 @@ export async function getKpis() {
       ...orderStatusKpis,
       mensajesNuevos: unreadMessages
     };
-    
-    console.log('📊 KPIs finales:', result);
     return result;
     
   } catch (error) {

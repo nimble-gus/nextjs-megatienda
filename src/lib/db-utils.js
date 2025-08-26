@@ -35,9 +35,6 @@ export async function executeWithRetry(operation, maxRetries = RETRY_CONFIG.maxR
       if (!isConnectionError || attempt === maxRetries) {
         throw error;
       }
-      
-      console.log(`🔄 Reintento ${attempt}/${maxRetries} después de error de conexión:`, error.message);
-      
       // Esperar antes del siguiente intento (backoff exponencial)
       const delay = Math.min(RETRY_CONFIG.baseDelay * Math.pow(2, attempt - 1), RETRY_CONFIG.maxDelay);
       await new Promise(resolve => setTimeout(resolve, delay));
@@ -45,9 +42,7 @@ export async function executeWithRetry(operation, maxRetries = RETRY_CONFIG.maxR
       // Intentar reconectar
       try {
         await forceReconnect();
-        console.log('✅ Reconexión exitosa');
       } catch (reconnectError) {
-        console.log('⚠️ Error en reconexión:', reconnectError.message);
       }
     }
   }
@@ -65,16 +60,12 @@ export async function ensureConnection() {
     if (error.message.includes('Engine is not yet connected') || 
         error.message.includes('Can\'t reach database server') ||
         error.message.includes('Response from the Engine was empty')) {
-      console.log('🔌 Reconectando...');
       await forceReconnect();
       
       // Verificar nuevamente después de reconectar
       try {
         await prisma.$queryRaw`SELECT 1 as health_check`;
       } catch (retryError) {
-        console.log('❌ Error de base de datos:', retryError.message);
-        console.log('🔍 Tipo de error:', retryError.constructor.name);
-        console.log('🔍 Código de error:', retryError.code);
         throw retryError;
       }
     } else {
@@ -95,10 +86,8 @@ export async function forceReconnect() {
     for (let attempt = 1; attempt <= 3; attempt++) {
       try {
         await prisma.$connect();
-        console.log('✅ Reconexión forzada exitosa');
         return;
       } catch (connectError) {
-        console.log(`⚠️ Intento ${attempt}/3 de reconexión falló:`, connectError.message);
         if (attempt < 3) {
           await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
         } else {
@@ -107,7 +96,6 @@ export async function forceReconnect() {
       }
     }
   } catch (error) {
-    console.log('❌ Error en reconexión forzada:', error.message);
     throw error;
   }
 }
@@ -130,20 +118,13 @@ export async function checkDatabaseHealth() {
 export async function cleanupConnections() {
   try {
     await prisma.$disconnect();
-    console.log('✅ Conexiones limpiadas');
   } catch (error) {
-    console.log('⚠️ Error limpiando conexiones:', error.message);
   }
 }
 
 // Función para manejar errores de Prisma de manera más robusta
 export async function handlePrismaError(error, context = '') {
-  console.log(`❌ Error de base de datos:`, error.message);
-  console.log(`🔍 Tipo de error:`, error.constructor.name);
-  console.log(`🔍 Código de error:`, error.code);
-  
   if (context) {
-    console.log(`🔍 Contexto:`, context);
   }
   
   // Si es un error de conexión, intentar reconectar

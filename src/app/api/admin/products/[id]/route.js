@@ -1,14 +1,10 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
 
 // GET - Obtener un producto específico
 export async function GET(request, { params }) {
   try {
     const { id } = params;
-    console.log(`=== GET /api/admin/products/${id} ===`);
-    
     const product = await prisma.productos.findUnique({
       where: { id: parseInt(id) },
       include: {
@@ -22,7 +18,6 @@ export async function GET(request, { params }) {
     });
 
     if (!product) {
-      console.log(`Producto con ID ${id} no encontrado`);
       return NextResponse.json(
         { error: 'Producto no encontrado' },
         { status: 404 }
@@ -41,8 +36,6 @@ export async function GET(request, { params }) {
       stock: product.stock.reduce((total, item) => total + item.cantidad, 0),
       precio: product.stock.length > 0 ? Math.min(...product.stock.map(s => s.precio)) : null
     };
-
-    console.log(`Producto ${id} obtenido exitosamente`);
     return NextResponse.json(formattedProduct);
   } catch (error) {
     console.error(`=== ERROR EN GET /api/admin/products/${params?.id} ===`);
@@ -61,9 +54,6 @@ export async function PUT(request, { params }) {
   try {
     const { id } = params;
     const body = await request.json();
-    console.log(`=== PUT /api/admin/products/${id} ===`);
-    console.log('Datos recibidos:', body);
-    
     // Buscar la categoría por nombre
     let categoriaId = null;
     if (body.categoria) {
@@ -88,8 +78,6 @@ export async function PUT(request, { params }) {
         categoria: true
       }
     });
-
-    console.log(`Producto ${id} actualizado exitosamente`);
     return NextResponse.json(updatedProduct);
   } catch (error) {
     console.error(`=== ERROR EN PUT /api/admin/products/${params?.id} ===`);
@@ -107,15 +95,12 @@ export async function PUT(request, { params }) {
 export async function DELETE(request, { params }) {
   try {
     const { id } = params;
-    console.log(`=== DELETE /api/admin/products/${id} ===`);
-    
     // Verificar que el producto existe
     const product = await prisma.productos.findUnique({
       where: { id: parseInt(id) }
     });
     
     if (!product) {
-      console.log(`Producto con ID ${id} no encontrado`);
       return NextResponse.json(
         { error: 'Producto no encontrado' },
         { status: 404 }
@@ -123,44 +108,30 @@ export async function DELETE(request, { params }) {
     }
     
     // Eliminar registros relacionados en el orden correcto
-    console.log('Eliminando registros relacionados...');
-    
     // 1. Eliminar detalles de órdenes (orden_detalle)
     const deletedOrderDetails = await prisma.orden_detalle.deleteMany({
       where: { producto_id: parseInt(id) }
     });
-    console.log(`Eliminados ${deletedOrderDetails.count} detalles de órdenes`);
-    
     // 2. Eliminar stock
     const deletedStock = await prisma.stock_detalle.deleteMany({
       where: { producto_id: parseInt(id) }
     });
-    console.log(`Eliminados ${deletedStock.count} registros de stock`);
-    
     // 3. Eliminar imágenes del producto
     const deletedImages = await prisma.imagenes_producto.deleteMany({
       where: { producto_id: parseInt(id) }
     });
-    console.log(`Eliminadas ${deletedImages.count} imágenes`);
-    
     // 4. Eliminar del carrito
     const deletedCart = await prisma.carrito.deleteMany({
       where: { producto_id: parseInt(id) }
     });
-    console.log(`Eliminados ${deletedCart.count} items del carrito`);
-    
     // 5. Eliminar productos destacados
     const deletedFeatured = await prisma.productos_destacados.deleteMany({
       where: { producto_id: parseInt(id) }
     });
-    console.log(`Eliminados ${deletedFeatured.count} productos destacados`);
-    
     // 6. Finalmente eliminar el producto
     await prisma.productos.delete({
       where: { id: parseInt(id) }
     });
-
-    console.log(`Producto ${id} eliminado exitosamente`);
     return NextResponse.json({ 
       message: 'Producto eliminado exitosamente',
       deleted: {

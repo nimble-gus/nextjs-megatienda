@@ -17,15 +17,6 @@ export const uploadToCloudinary = async (file, folder = 'megatienda') => {
   
   // Usar endpoint automático para mejor compatibilidad
   const endpoint = isPdf ? 'auto' : 'image';
-
-  console.log('Subiendo archivo a Cloudinary...', {
-    cloudName,
-    uploadPreset: process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET,
-    folder,
-    endpoint,
-    fileType: isPdf ? 'PDF' : 'Imagen'
-  });
-  
   const res = await fetch(
     `https://api.cloudinary.com/v1_1/${cloudName}/${endpoint}/upload`,
     {
@@ -41,8 +32,6 @@ export const uploadToCloudinary = async (file, folder = 'megatienda') => {
   }
 
   const data = await res.json();
-  console.log('Archivo subido exitosamente:', data.secure_url);
-  
   return {
     secure_url: data.secure_url,
     public_id: data.public_id

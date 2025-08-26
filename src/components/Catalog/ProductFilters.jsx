@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { getCatalogFilters } from '@/services/catalogService';
 import '@/styles/ProductFilters.css';
 
@@ -102,10 +102,6 @@ const ProductFilters = ({ filters, onFilterChange }) => {
       handlePriceChange([priceRange[0], newMax]);
     }
   };
-
-
-
-
 
   // Función para manejar el cambio de rango completo con debounce
   const handleRangeChange = (type, value) => {

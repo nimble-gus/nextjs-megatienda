@@ -5,9 +5,6 @@ export async function PATCH(request, { params }) {
   try {
     const { id } = params;
     const { featured } = await request.json();
-    
-    console.log(`=== Actualizando producto ${id} featured: ${featured} ===`);
-    
     // Validar que el producto existe
     const existingProduct = await prisma.productos.findUnique({
       where: { id: parseInt(id) }
@@ -25,9 +22,6 @@ export async function PATCH(request, { params }) {
       where: { id: parseInt(id) },
       data: { featured: featured }
     });
-    
-    console.log(`Producto ${id} actualizado. Featured: ${updatedProduct.featured}`);
-    
     return NextResponse.json({
       success: true,
       product: {

@@ -7,8 +7,6 @@ import 'dotenv/config';
 
 export async function GET(request) {
   try {
-    console.log('=== API /api/catalog/products iniciada ===');
-    
     const { searchParams } = new URL(request.url);
     
     // Parámetros de paginación
@@ -22,27 +20,12 @@ export async function GET(request) {
     const category = searchParams.get('category');
     const colors = searchParams.getAll('colors');
     const search = searchParams.get('search');
-    
-    console.log('Parámetros recibidos:', {
-      page,
-      limit,
-      sortBy,
-      minPrice,
-      maxPrice,
-      category,
-      colors,
-      search
-    });
-    
     // Verificar si DATABASE_URL está configurada
     const databaseUrl = process.env.DATABASE_URL;
-    console.log('🔍 DATABASE_URL detectada:', databaseUrl ? 'SÍ' : 'NO');
     console.log('🔍 DATABASE_URL valor:', databaseUrl ? databaseUrl.substring(0, 50) + '...' : 'undefined');
     console.log('🔍 Todas las variables de entorno:', Object.keys(process.env).filter(key => key.includes('DATABASE')));
     
     if (!databaseUrl) {
-      console.log('❌ DATABASE_URL no configurada, devolviendo datos de prueba');
-      
       // Datos de prueba con URLs de placeholder que funcionan
       const testProducts = [
         {
@@ -136,14 +119,6 @@ export async function GET(request) {
       const startIndex = (page - 1) * limit;
       const endIndex = startIndex + limit;
       const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
-
-      console.log('✅ Datos de prueba devueltos:', {
-        totalProducts,
-        totalPages,
-        currentPage: page,
-        productsReturned: paginatedProducts.length
-      });
-
       return NextResponse.json({
         success: true,
         products: paginatedProducts,
@@ -158,8 +133,6 @@ export async function GET(request) {
     }
     
          // Si DATABASE_URL está configurada, intentar usar Prisma
-     console.log('✅ DATABASE_URL configurada, intentando conectar a la base de datos');
-     
      // Verificar caché primero
      const cacheKey = {
        page,
@@ -174,22 +147,13 @@ export async function GET(request) {
      
            const cachedData = await ProductCache.get(cacheKey);
       if (cachedData) {
-        console.log('✅ Datos obtenidos del caché Redis');
         return NextResponse.json(cachedData);
       }
-     
-     console.log('🔄 Datos no encontrados en caché, consultando base de datos...');
-     
      try {
         const { prisma } = await import('@/lib/prisma');
         const { executeWithRetry, checkDatabaseHealth } = await import('@/lib/db-utils');
-        
-        console.log('✅ Intentando conectar a la base de datos...');
-        
         // Verificar salud de la conexión
         const health = await checkDatabaseHealth();
-        console.log('🔍 Estado de la conexión:', health.message);
-      
       // Calcular offset para paginación
       const offset = (page - 1) * limit;
       
@@ -281,9 +245,6 @@ export async function GET(request) {
               take: limit
             });
           });
-      
-      console.log(`✅ Productos encontrados: ${products.length}`);
-      
                                                        // Contar total de productos para paginación optimizado
          const totalProducts = await executeWithRetry(async () => {
            return await prisma.productos.count({ where });
@@ -340,11 +301,6 @@ export async function GET(request) {
         };
         
         // Debug: Log para verificar la imagen del producto
-        console.log(`Producto ${product.id} - ${product.nombre}:`, {
-          url_imagen: product.url_imagen,
-          image: formattedProduct.image
-        });
-        
         return formattedProduct;
       });
       
@@ -365,8 +321,6 @@ export async function GET(request) {
        
                // Almacenar en caché Redis para futuras consultas
         await ProductCache.set(cacheKey, responseData);
-        console.log('✅ Datos almacenados en caché Redis');
-       
        return NextResponse.json(responseData);
       
          } catch (dbError) {
@@ -376,7 +330,6 @@ export async function GET(request) {
        
        // Si es un error de conexión, devolver datos de prueba
        if (dbError.code === 'P1001' || dbError.message.includes('Can\'t reach database server')) {
-         console.log('🔄 Devolviendo datos de prueba debido a error de conexión');
        }
       const testProducts = [
         {

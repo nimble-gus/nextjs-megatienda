@@ -6,12 +6,8 @@ import { prisma } from '@/lib/prisma';
 export async function POST(req) {
   try {
     const { nombre, correo, contraseña } = await req.json();
-
-    console.log('📝 Procesando registro para:', correo);
-
     // Validar datos básicos
     if (!nombre || !correo || !contraseña) {
-      console.log('❌ Campos faltantes en registro');
       return NextResponse.json(
         { error: 'Todos los campos son obligatorios' },
         { status: 400 }
@@ -41,29 +37,19 @@ export async function POST(req) {
         { status: 400 }
       );
     }
-
-    console.log('🔍 Verificando si el usuario ya existe...');
-
     // Verificar usuario existente
     const existingUser = await prisma.usuarios.findUnique({
       where: { correo },
     });
     
     if (existingUser) {
-      console.log('❌ Usuario ya existe:', correo);
       return NextResponse.json(
         { error: 'El correo ya está registrado' },
         { status: 400 }
       );
     }
-
-    console.log('🔐 Encriptando contraseña...');
-
     // Encriptar contraseña
     const hashedPassword = await bcrypt.hash(contraseña, 10);
-
-    console.log('👤 Creando nuevo usuario...');
-
     // Crear usuario
     const newUser = await prisma.usuarios.create({
       data: {
@@ -73,9 +59,6 @@ export async function POST(req) {
         rol: 'cliente',
       },
     });
-
-    console.log('✅ Usuario creado con ID:', newUser.id);
-
     // Crear sesión automáticamente después del registro
     const session = await sessionManager.createSession({
       id: newUser.id,
@@ -83,9 +66,6 @@ export async function POST(req) {
       correo: newUser.correo,
       rol: newUser.rol
     });
-
-    console.log('🎉 Registro exitoso para:', correo);
-
     // Respuesta con tokens
     return NextResponse.json({
       success: true,

@@ -2,8 +2,6 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
-    console.log('=== TEST API /api/admin/products/test ===');
-    
     // Datos de prueba
     const testProducts = [
       {
@@ -27,8 +25,6 @@ export async function GET() {
         precio: 99.99
       }
     ];
-
-    console.log('Devolviendo productos de prueba');
     return NextResponse.json(testProducts);
     
   } catch (error) {
@@ -39,6 +35,7 @@ export async function GET() {
     );
   }
 }
+
 
 
 

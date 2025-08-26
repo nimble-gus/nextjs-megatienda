@@ -3,8 +3,6 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET() {
   try {
-    console.log('🔄 Obteniendo KPIs de estados de pedidos...');
-
     // Contar pedidos pendientes (estado = 'pendiente')
     const pedidosPendientes = await prisma.ordenes.count({
       where: {
@@ -33,9 +31,6 @@ export async function GET() {
       contraEntregaPendientes,
       transferenciaPendientes
     };
-
-    console.log('✅ KPIs de estados de pedidos obtenidos:', kpis);
-
     return NextResponse.json({
       success: true,
       data: kpis

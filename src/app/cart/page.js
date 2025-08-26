@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Topbar from '@/components/layout/Topbar';
 import Header from '@/components/layout/Header';
@@ -154,7 +154,6 @@ export default function CartPage() {
 
   const handleCheckout = () => {
     // Redirigir a la página de checkout
-    console.log('Procediendo al checkout...');
     router.push('/checkout');
   };
 

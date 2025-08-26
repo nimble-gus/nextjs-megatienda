@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import NewHamsterLoader from '../common/NewHamsterLoader';
@@ -23,7 +23,7 @@ const AdminLogin = () => {
   // Verificar si el usuario ya está autenticado
   useEffect(() => {
     if (isAuthenticated && isAdmin) {
-      console.log('✅ Usuario autenticado, redirigiendo al dashboard');
+
       window.location.href = '/admin';
     }
   }, [isAuthenticated, isAdmin]);
@@ -99,7 +99,7 @@ const AdminLogin = () => {
       const result = await login(formData.email, formData.password);
 
       if (result.success) {
-        console.log('✅ Login exitoso:', result.user.nombre);
+
         setAttempts(0);
         // Redirección inmediata después del login exitoso
         window.location.href = '/admin';
@@ -227,7 +227,6 @@ const AdminLogin = () => {
             )}
           </button>
         </form>
-
 
       </div>
     </div>

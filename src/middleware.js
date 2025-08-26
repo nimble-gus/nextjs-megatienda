@@ -22,7 +22,7 @@ export async function middleware(request) {
       const refreshToken = request.cookies.get('refreshToken')?.value;
 
       if (!accessToken && !refreshToken) {
-        console.log('🔒 No hay tokens, redirigiendo a login');
+
         return NextResponse.redirect(new URL('/admin/login', request.url));
       }
 
@@ -38,7 +38,7 @@ export async function middleware(request) {
             user = payload;
           }
         } catch (error) {
-          console.log('Access token inválido, intentando refresh token');
+
         }
       }
 
@@ -88,17 +88,17 @@ export async function middleware(request) {
             return response;
           }
         } catch (error) {
-          console.log('Refresh token inválido');
+
         }
       }
 
       if (!isAuthenticated) {
-        console.log('🔒 Usuario no autenticado o sin permisos de admin');
+
         return NextResponse.redirect(new URL('/admin/login', request.url));
       }
 
       // Usuario autenticado, continuar
-      console.log('✅ Usuario autenticado:', user.nombre);
+
       return NextResponse.next();
 
     } catch (error) {
@@ -144,12 +144,12 @@ export async function middleware(request) {
         }
 
         if (isAuthenticated) {
-          console.log('✅ Usuario ya autenticado, redirigiendo al dashboard');
+
           return NextResponse.redirect(new URL('/admin', request.url));
         }
       }
     } catch (error) {
-      console.log('Error verificando autenticación en login');
+
     }
   }
 

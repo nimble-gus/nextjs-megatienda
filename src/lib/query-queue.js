@@ -52,7 +52,6 @@ class QueryQueue {
       const result = await queryFn();
       resolve(result);
     } catch (error) {
-      console.log('❌ Error en consulta de cola:', error.message);
       reject(error);
     } finally {
       this.activeQueries--;

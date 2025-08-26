@@ -26,8 +26,6 @@ class OrderQueue {
       };
 
       this.queue.push(orderItem);
-      console.log(`📦 Pedido agregado a la cola. Posición: ${this.queue.length}`);
-      
       // Iniciar procesamiento si no está activo
       this.processQueue();
     });
@@ -40,8 +38,6 @@ class OrderQueue {
     }
 
     this.processing = true;
-    console.log(`🔄 Iniciando procesamiento de cola. Pedidos en cola: ${this.queue.length}`);
-
     while (this.queue.length > 0 && this.processingOrders.size < this.maxConcurrent) {
       const orderItem = this.queue.shift();
       if (orderItem) {
@@ -59,8 +55,6 @@ class OrderQueue {
     this.processingOrders.add(orderItem.id);
 
     try {
-      console.log(`⚡ Procesando pedido ${orderItem.id}...`);
-      
       // Simular un pequeño delay para evitar saturación
       await new Promise(resolve => setTimeout(resolve, 100));
       
@@ -71,8 +65,6 @@ class OrderQueue {
       this.updateStats(processingTime, true);
       
       orderItem.status = 'completed';
-      console.log(`✅ Pedido ${orderItem.id} procesado exitosamente en ${processingTime}ms`);
-      
       orderItem.resolve(result);
       
     } catch (error) {
@@ -128,18 +120,15 @@ class OrderQueue {
       item.reject(new Error('Cola limpiada por administrador'));
     });
     this.queue = [];
-    console.log('🧹 Cola de pedidos limpiada');
   }
 
   // Pausar procesamiento
   pause() {
     this.processing = false;
-    console.log('⏸️ Procesamiento de cola pausado');
   }
 
   // Reanudar procesamiento
   resume() {
-    console.log('▶️ Reanudando procesamiento de cola');
     this.processQueue();
   }
 }

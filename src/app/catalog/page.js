@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Topbar from '@/components/layout/Topbar';
 import Header from '@/components/layout/Header';
@@ -51,7 +51,6 @@ export default function CatalogPage() {
         }));
         
         setFiltersLoaded(true);
-        console.log('Filtros iniciales cargados:', filtersData);
       } catch (error) {
         console.error('Error cargando filtros iniciales:', error);
         setFiltersLoaded(true); // Continuar sin filtros si hay error
@@ -69,7 +68,6 @@ export default function CatalogPage() {
         ...prev,
         categories: [categoryId]
       }));
-      console.log('Category filter applied from URL:', categoryId);
     }
   }, [categoryFromUrl]);
 
@@ -77,7 +75,6 @@ export default function CatalogPage() {
   useEffect(() => {
     if (searchFromUrl) {
       setSearchQuery(searchFromUrl);
-      console.log('Search query applied from URL:', searchFromUrl);
     }
   }, [searchFromUrl]);
 
@@ -101,8 +98,6 @@ export default function CatalogPage() {
           category: filters.categories.length > 0 ? filters.categories[0] : null,
           search: searchQuery // Agregar el término de búsqueda
         };
-        
-        console.log('Cargando productos con filtros:', apiFilters);
         const response = await getProducts(apiFilters);
         
         setProducts(response.products);
@@ -169,7 +164,7 @@ export default function CatalogPage() {
             {/* Mostrar término de búsqueda si existe */}
             {searchQuery && (
               <div className="search-results-header">
-                <h2>Resultados de búsqueda para: "{searchQuery}"</h2>
+                <h2>Resultados de búsqueda para: &quot;{searchQuery}&quot;</h2>
                 <p>{totalProducts} producto{totalProducts !== 1 ? 's' : ''} encontrado{totalProducts !== 1 ? 's' : ''}</p>
               </div>
             )}

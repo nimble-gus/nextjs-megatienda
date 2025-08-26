@@ -76,11 +76,6 @@ const CategoriesSection = ({
     } else {
       // Navegar al catálogo con filtro de categoría
       const catalogUrl = `/catalog?category=${categoryId}`;
-      console.log(`Navigating to catalog:`, {
-        categoryId,
-        categoryName,
-        url: catalogUrl
-      });
       router.push(catalogUrl);
     }
   };

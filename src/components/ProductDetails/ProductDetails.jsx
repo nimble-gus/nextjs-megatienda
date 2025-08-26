@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import ProductGallery from './ProductGallery';
@@ -28,22 +28,19 @@ const ProductDetails = ({ product }) => {
       try {
         const user = localStorage.getItem('user');
         const token = localStorage.getItem('token');
-        
-        console.log('🔍 Verificando autenticación:', { user: !!user, token: !!token });
-        
+
                  if (user) {
            const userData = JSON.parse(user);
-           console.log('🔍 Datos del usuario:', userData);
-           
+
            if (userData && (userData.id || userData.usuario_id)) {
-             console.log('✅ Usuario autenticado detectado');
+
              setIsLoggedIn(true);
            } else {
-             console.log('❌ Datos de usuario inválidos');
+
              setIsLoggedIn(false);
            }
          } else {
-           console.log('❌ No hay usuario en localStorage');
+
            setIsLoggedIn(false);
          }
       } catch (error) {
@@ -60,20 +57,20 @@ const ProductDetails = ({ product }) => {
          // Escuchar cambios en localStorage para detectar login/logout
      const handleStorageChange = (e) => {
        if (e.key === 'user') {
-         console.log('🔄 Cambio detectado en autenticación, actualizando estado...');
+
          checkAuthStatus();
        }
      };
 
     // Escuchar eventos personalizados de login/logout
     const handleLoginSuccess = () => {
-      console.log('🔄 Login exitoso detectado, actualizando estado...');
+
       // Pequeño delay para asegurar que localStorage se haya actualizado
       setTimeout(checkAuthStatus, 100);
     };
 
     const handleLogout = () => {
-      console.log('🔄 Logout detectado, actualizando estado...');
+
       setIsLoggedIn(false);
       setIsLoading(false);
     };
@@ -138,7 +135,6 @@ const ProductDetails = ({ product }) => {
         cantidad: quantity
       };
 
-      console.log('Enviando datos al carrito:', productData);
       const result = await addToCart(productData);
       
       // Mostrar mensaje de éxito

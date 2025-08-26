@@ -14,7 +14,6 @@ import { preloadHomeData } from '@/lib/home-cache';
 
 import '@/styles/HomePage.css';
 
-
 export default function Home() {
   // Precargar datos de la página Home para optimizar rendimiento
   useEffect(() => {
@@ -47,8 +46,6 @@ export default function Home() {
       return () => observer.disconnect();
     }
   }, []);
-
-  
 
   return (
     <div className="page-layout">
@@ -88,7 +85,6 @@ export default function Home() {
         <section className="featured-products-section">
           <FeaturedProducts />
         </section>
-
 
       </main>
 

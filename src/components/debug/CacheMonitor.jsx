@@ -1,7 +1,7 @@
 // Componente de debug para monitorear el caché de la página Home
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { getCacheStats } from '@/lib/home-cache';
 
 const CacheMonitor = () => {
@@ -43,7 +43,6 @@ const CacheMonitor = () => {
       const data = await response.json();
       if (data.success) {
         setStats(data.stats);
-        console.log(`✅ Caché ${type} invalidado`);
       }
     } catch (error) {
       console.error('Error invalidating cache:', error);

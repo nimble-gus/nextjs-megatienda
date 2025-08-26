@@ -1,5 +1,5 @@
 'use client';
-import React from 'react';
+
 import '@/styles/ProductInfo.css';
 
 const ProductInfo = ({ 
@@ -16,8 +16,7 @@ const ProductInfo = ({
   isLoggedIn = false,
   isLoading = false
 }) => {
-  // Debug: Log para verificar el estado de autenticación
-  console.log('🔍 ProductInfo - Estado de autenticación:', { isLoggedIn, isLoading });
+
   return (
     <div className="product-info">
       {/* Categoría */}

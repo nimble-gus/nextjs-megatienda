@@ -191,7 +191,6 @@ class SessionManager {
     try {
       // Aquí podrías implementar una blacklist de tokens
       // Por ahora, simplemente retornamos éxito
-      console.log(`Sesión invalidada para usuario ${userId}`);
       return true;
     } catch (error) {
       console.error('Error invalidando sesión:', error);

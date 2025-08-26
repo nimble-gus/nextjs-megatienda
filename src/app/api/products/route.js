@@ -3,8 +3,6 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET(request) {
   try {
-    console.log('=== API /api/products iniciada ===');
-    
     const { searchParams } = new URL(request.url);
     
     // Parámetros de consulta
@@ -21,16 +19,6 @@ export async function GET(request) {
     const colors = searchParams.get('colors')?.split(',');
     const sortBy = searchParams.get('sortBy') || 'default';
     const search = searchParams.get('search');
-
-    console.log('Parámetros recibidos:', {
-      page, limit, category, minPriceParam, maxPriceParam, minPrice, maxPrice, colors, sortBy, search
-    });
-    console.log('Colors array:', colors);
-    console.log('Colors length:', colors?.length);
-    console.log('Colors[0]:', colors?.[0]);
-
-
-
     // Calcular offset para paginación
     const offset = (page - 1) * limit;
 
@@ -88,7 +76,6 @@ export async function GET(request) {
           AND: stockFilters
         }
       };
-      console.log('Filtros de stock aplicados:', stockFilters);
     }
 
     // Filtro por búsqueda
@@ -135,11 +122,7 @@ export async function GET(request) {
         orderBy.id = 'desc';
     }
 
-    console.log('Query where construido:', JSON.stringify(where, null, 2));
-    console.log('Query orderBy construido:', JSON.stringify(orderBy, null, 2));
-    
     // Obtener productos con relaciones
-    console.log('Ejecutando consulta Prisma...');
     const products = await prisma.productos.findMany({
       where,
       include: {
@@ -157,20 +140,11 @@ export async function GET(request) {
       skip: offset,
       take: limit
     });
-    
-    console.log('Productos obtenidos:', products.length);
-    console.log('Primer producto (ejemplo):', JSON.stringify(products[0], null, 2));
-
-
 
     // Contar total de productos para paginación
-    console.log('Contando total de productos...');
     const totalProducts = await prisma.productos.count({ where });
     const totalPages = Math.ceil(totalProducts / limit);
-    console.log('Total productos:', totalProducts, 'Total páginas:', totalPages);
-
     // Formatear productos para el frontend
-    console.log('Formateando productos...');
     const formattedProducts = products.map((product, index) => {
       try {
         // Manejar productos sin stock
@@ -215,21 +189,13 @@ export async function GET(request) {
             priceFormatted: `Q${stockItem.precio.toFixed(2)}`
           }))
         };
-        
-        if (index === 0) {
-          console.log('Producto formateado (ejemplo):', JSON.stringify(formattedProduct, null, 2));
-        }
-        
+
         return formattedProduct;
       } catch (error) {
         console.error(`Error formateando producto ${product.id}:`, error);
         throw error;
       }
     });
-    
-    console.log('Productos formateados:', formattedProducts.length);
-
-    console.log('Enviando respuesta...');
     const response = {
       products: formattedProducts,
       pagination: {
@@ -240,8 +206,7 @@ export async function GET(request) {
         hasPrevPage: page > 1
       }
     };
-    
-    console.log('Respuesta final:', JSON.stringify(response, null, 2));
+
     return NextResponse.json(response);
 
   } catch (error) {

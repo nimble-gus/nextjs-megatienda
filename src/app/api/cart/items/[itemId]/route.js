@@ -6,9 +6,6 @@ export async function PATCH(request, { params }) {
   try {
     const { itemId } = params;
     const { cantidad } = await request.json();
-    
-    console.log('Actualizando item del carrito:', itemId, 'cantidad:', cantidad);
-
     if (!cantidad || cantidad < 1) {
       return NextResponse.json(
         { error: 'La cantidad debe ser mayor a 0' },
@@ -72,9 +69,6 @@ export async function PATCH(request, { params }) {
         color: true
       }
     });
-
-    console.log('Item actualizado exitosamente');
-
     // Buscar el stock correspondiente al color
     const updatedStockItem = updatedItem.producto.stock.find(stock => stock.color_id === updatedItem.color_id);
     const precio = updatedStockItem ? updatedStockItem.precio : 0;
@@ -122,17 +116,11 @@ export async function PATCH(request, { params }) {
 export async function DELETE(request, { params }) {
   try {
     const { itemId } = params;
-    
-    console.log('Eliminando item del carrito:', itemId);
-
     await prisma.carrito.delete({
       where: {
         id: parseInt(itemId)
       }
     });
-
-    console.log('Item eliminado exitosamente');
-
     return NextResponse.json({
       success: true,
       message: 'Item eliminado exitosamente'

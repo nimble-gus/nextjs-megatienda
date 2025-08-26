@@ -4,8 +4,6 @@ import { executeWithRetry } from '@/lib/db-utils';
 
 export async function GET(request) {
   try {
-    console.log('📦 Obteniendo pedidos para admin...');
-    
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
     const paymentMethod = searchParams.get('paymentMethod');
@@ -124,9 +122,6 @@ export async function GET(request) {
       // Notas
       notas: order.notas
     }));
-
-    console.log(`✅ ${formattedOrders.length} pedidos obtenidos`);
-
     return NextResponse.json({
       success: true,
       orders: formattedOrders,

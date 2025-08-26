@@ -1,5 +1,5 @@
 'use client';
-import React from 'react';
+
 import Image from 'next/image';
 import '@/styles/CartItems.css';
 
@@ -10,13 +10,6 @@ const CartItems = ({ items, onUpdateQuantity, onRemoveItem, onClearCart }) => {
 
   const handleQuantityChange = (itemId, newQuantity, stockDisponible) => {
     // Debug: mostrar información de validación
-    console.log('Validando cantidad:', {
-      itemId,
-      newQuantity,
-      stockDisponible,
-      isValid: newQuantity >= 1 && newQuantity <= stockDisponible
-    });
-    
     // Validación optimizada en el frontend
     if (newQuantity < 1) {
       alert('La cantidad mínima es 1.');

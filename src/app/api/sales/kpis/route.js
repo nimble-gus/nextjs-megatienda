@@ -1,48 +1,33 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { executeWithRetry } from '@/lib/db-utils';
+import { KPICache } from '@/lib/redis';
 
 export async function GET() {
   try {
-    console.log('📊 Iniciando consulta de KPIs...');
-    
-    // Ejecutar consultas por separado para mejor debugging
-    const [totalVentas, totalPedidos, totalClientes] = await executeWithRetry(async () => {
-      console.log('🔍 Ejecutando consultas de KPIs...');
-      
-      try {
-        // Consulta de ventas totales - simplificada
-        console.log('🔍 Consultando ventas totales...');
-        const ventas = await prisma.ordenes.aggregate({ 
-          _sum: { total: true }
-        });
-        console.log('✅ Ventas obtenidas:', ventas);
-        
-        // Consulta de pedidos totales
-        console.log('🔍 Consultando pedidos totales...');
-        const pedidos = await prisma.ordenes.count();
-        console.log('✅ Pedidos obtenidos:', pedidos);
-        
-        // Consulta de clientes registrados
-        console.log('🔍 Consultando clientes totales...');
-        const clientes = await prisma.usuarios.count();
-        console.log('✅ Clientes obtenidos:', clientes);
-        
-        return [ventas, pedidos, clientes];
-      } catch (dbError) {
-        console.error('❌ Error en consultas de base de datos:', dbError);
-        throw dbError;
-      }
-    });
+    // Verificar caché Redis primero
+    const cachedKPIs = await KPICache.get();
+    if (cachedKPIs) {
+      return NextResponse.json(cachedKPIs);
+    }
 
-    const response = {
-      totalVentas: totalVentas._sum.total || 0,
-      totalPedidos,
-      totalClientes
+    // Consultas simples y directas
+    const pedidos = await prisma.ordenes.count();
+    const clientes = await prisma.usuarios.count();
+    
+    // Para ventas totales, usar una consulta más simple
+    const ventasResult = await prisma.$queryRaw`SELECT COALESCE(SUM(total), 0) as total FROM ordenes`;
+    const totalVentas = parseFloat(ventasResult[0].total) || 0;
+
+    const responseData = {
+      totalVentas: totalVentas,
+      totalPedidos: pedidos,
+      totalClientes: clientes
     };
 
-    console.log('📊 KPIs finales:', response);
-    return NextResponse.json(response);
+    // Almacenar en caché Redis para futuras consultas
+    await KPICache.set(responseData);
+    
+    return NextResponse.json(responseData);
     
   } catch (error) {
     console.error('❌ Error obteniendo KPIs:', error);

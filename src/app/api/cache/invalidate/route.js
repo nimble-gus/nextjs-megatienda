@@ -4,9 +4,6 @@ import { clearAllCache, getCacheStats } from '@/lib/home-cache';
 export async function POST(request) {
   try {
     const { type } = await request.json();
-    
-    console.log('🔄 Invalidando caché:', type);
-    
     switch (type) {
       case 'all':
         clearAllCache();

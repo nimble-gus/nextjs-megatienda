@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { uploadToCloudinary } from '@/services/cloudinaryService';
 import '../../styles/MultimediaManager.css';
 

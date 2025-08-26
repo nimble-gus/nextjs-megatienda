@@ -55,7 +55,6 @@ const fetchWithRetry = async (url, options = {}, maxRetries = 3) => {
       
       return await response.json();
     } catch (error) {
-      console.log(`🔄 Intento ${i + 1}/${maxRetries} falló para ${url}:`, error.message);
       if (i === maxRetries - 1) throw error;
       // Backoff exponencial
       await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, i)));
@@ -73,13 +72,11 @@ export class CategoriesCache {
     
     // Verificar caché en memoria
     if (memoryCache.has(key) && isCacheValid(key)) {
-      console.log('📦 Categorías obtenidas del caché en memoria');
       return memoryCache.get(key);
     }
     
     // Si hay una petición en curso, esperar
     if (memoryCache.has(`${key}:loading`)) {
-      console.log('⏳ Esperando petición de categorías en curso...');
       return new Promise((resolve) => {
         const checkCache = () => {
           if (memoryCache.has(key) && isCacheValid(key)) {
@@ -96,8 +93,6 @@ export class CategoriesCache {
     memoryCache.set(`${key}:loading`, true);
     
     try {
-      console.log('🔄 Cargando categorías desde API...');
-      
       const data = await queryQueue.add(async () => {
         return await fetchWithRetry('/api/categories');
       });
@@ -108,8 +103,6 @@ export class CategoriesCache {
       memoryCache.set(key, categories);
       cacheTimestamps.set(key, Date.now());
       memoryCache.delete(`${key}:loading`);
-      
-      console.log('✅ Categorías cargadas y almacenadas en caché');
       return categories;
       
     } catch (error) {
@@ -125,7 +118,6 @@ export class CategoriesCache {
       memoryCache.delete(key);
       cacheTimestamps.delete(key);
     });
-    console.log('🔄 Caché de categorías invalidado');
   }
 }
 
@@ -139,13 +131,11 @@ export class FiltersCache {
     
     // Verificar caché en memoria
     if (memoryCache.has(key) && isCacheValid(key)) {
-      console.log('📦 Filtros obtenidos del caché en memoria');
       return memoryCache.get(key);
     }
     
     // Si hay una petición en curso, esperar
     if (memoryCache.has(`${key}:loading`)) {
-      console.log('⏳ Esperando petición de filtros en curso...');
       return new Promise((resolve) => {
         const checkCache = () => {
           if (memoryCache.has(key) && isCacheValid(key)) {
@@ -162,8 +152,6 @@ export class FiltersCache {
     memoryCache.set(`${key}:loading`, true);
     
     try {
-      console.log('🔄 Cargando filtros desde API...');
-      
       const data = await queryQueue.add(async () => {
         return await fetchWithRetry('/api/catalog/filters');
       });
@@ -172,8 +160,6 @@ export class FiltersCache {
       memoryCache.set(key, data);
       cacheTimestamps.set(key, Date.now());
       memoryCache.delete(`${key}:loading`);
-      
-      console.log('✅ Filtros cargados y almacenados en caché');
       return data;
       
     } catch (error) {
@@ -189,7 +175,6 @@ export class FiltersCache {
       memoryCache.delete(key);
       cacheTimestamps.delete(key);
     });
-    console.log('🔄 Caché de filtros invalidado');
   }
 }
 
@@ -203,13 +188,11 @@ export class FeaturedProductsCache {
     
     // Verificar caché en memoria
     if (memoryCache.has(key) && isCacheValid(key)) {
-      console.log('📦 Productos destacados obtenidos del caché en memoria');
       return memoryCache.get(key);
     }
     
     // Si hay una petición en curso, esperar
     if (memoryCache.has(`${key}:loading`)) {
-      console.log('⏳ Esperando petición de productos destacados en curso...');
       return new Promise((resolve) => {
         const checkCache = () => {
           if (memoryCache.has(key) && isCacheValid(key)) {
@@ -226,8 +209,6 @@ export class FeaturedProductsCache {
     memoryCache.set(`${key}:loading`, true);
     
     try {
-      console.log('🔄 Cargando productos destacados desde API...');
-      
       const data = await queryQueue.add(async () => {
         return await fetchWithRetry('/api/featured-products');
       });
@@ -238,8 +219,6 @@ export class FeaturedProductsCache {
       memoryCache.set(key, products);
       cacheTimestamps.set(key, Date.now());
       memoryCache.delete(`${key}:loading`);
-      
-      console.log('✅ Productos destacados cargados y almacenados en caché');
       return products;
       
     } catch (error) {
@@ -255,15 +234,12 @@ export class FeaturedProductsCache {
       memoryCache.delete(key);
       cacheTimestamps.delete(key);
     });
-    console.log('🔄 Caché de productos destacados invalidado');
   }
 }
 
 // Función para precargar todos los datos de la página Home
 export const preloadHomeData = async () => {
   try {
-    console.log('🚀 Precargando datos de la página Home...');
-    
     const promises = [
       CategoriesCache.get().catch(() => []),
       FiltersCache.get().catch(() => ({})),
@@ -271,13 +247,6 @@ export const preloadHomeData = async () => {
     ];
     
     const [categories, filters, featuredProducts] = await Promise.allSettled(promises);
-    
-    console.log('✅ Datos de Home precargados:', {
-      categories: categories.status === 'fulfilled' ? categories.value.length : 0,
-      filters: filters.status === 'fulfilled' ? 'loaded' : 'error',
-      featuredProducts: featuredProducts.status === 'fulfilled' ? featuredProducts.value.length : 0
-    });
-    
     return {
       categories: categories.status === 'fulfilled' ? categories.value : [],
       filters: filters.status === 'fulfilled' ? filters.value : {},
@@ -298,7 +267,6 @@ export const preloadHomeData = async () => {
 export const clearAllCache = () => {
   memoryCache.clear();
   cacheTimestamps.clear();
-  console.log('🧹 Todo el caché de Home limpiado');
 };
 
 // Función para obtener estadísticas del caché

@@ -6,12 +6,8 @@ import jwt from 'jsonwebtoken';
 export async function POST(request) {
   try {
     // Verificar autenticación desde cookies
-    console.log('🔍 API CART - Verificando cookies...');
     const accessToken = request.cookies.get('accessToken')?.value;
-    console.log('🍪 API CART - Access token encontrado:', !!accessToken);
-    
     if (!accessToken) {
-      console.log('❌ API CART - No hay token de acceso');
       return NextResponse.json(
         { error: 'Token de autenticación requerido' },
         { status: 401 }
@@ -22,9 +18,7 @@ export async function POST(request) {
     
     try {
       decoded = jwt.verify(accessToken, process.env.JWT_SECRET || 'your-secret-key');
-      console.log('✅ API CART - Token válido para usuario:', decoded.id);
     } catch (error) {
-      console.log('❌ API CART - Error verificando token:', error.message);
       return NextResponse.json(
         { error: 'Token inválido o expirado' },
         { status: 401 }
@@ -32,14 +26,6 @@ export async function POST(request) {
     }
 
     const { usuario_id, producto_id, color_id, cantidad } = await request.json();
-    
-    console.log('Agregando al carrito:', {
-      usuario_id,
-      producto_id,
-      color_id,
-      cantidad
-    });
-
     // Validar que el usuario del token coincida con el usuario_id enviado
     if (decoded.id !== parseInt(usuario_id)) {
       return NextResponse.json(
@@ -123,8 +109,6 @@ export async function POST(request) {
           color: true
         }
       });
-
-      console.log('Item actualizado en carrito:', cartItem.id);
     } else {
       // Crear nuevo item en el carrito
       cartItem = await prisma.carrito.create({
@@ -143,8 +127,6 @@ export async function POST(request) {
           color: true
         }
       });
-
-      console.log('Nuevo item agregado al carrito:', cartItem.id);
     }
 
     // Formatear la respuesta

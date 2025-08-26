@@ -1,28 +1,28 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { executeWithRetry } from '@/lib/db-utils';
+import { CategoryCache } from '@/lib/redis';
 
 export async function GET() {
   try {
-    console.log('=== API /api/categories iniciada ===');
-    
-    // Obtener categorías con conteo de productos usando retry
-    const categories = await executeWithRetry(async () => {
-      return await prisma.categorias.findMany({
-        include: {
-          _count: {
-            select: {
-              productos: true
-            }
+    // Verificar caché Redis primero
+    const cachedCategories = await CategoryCache.get();
+    if (cachedCategories) {
+      return NextResponse.json(cachedCategories);
+    }
+
+    // Obtener categorías con conteo de productos
+    const categories = await prisma.categorias.findMany({
+      include: {
+        _count: {
+          select: {
+            productos: true
           }
-        },
-        orderBy: {
-          nombre: 'asc'
         }
-      });
+      },
+      orderBy: {
+        nombre: 'asc'
+      }
     });
-    
-    console.log('Categorías obtenidas:', categories.length);
     
     // Formatear categorías para el frontend
     const formattedCategories = categories.map(category => ({
@@ -31,14 +31,17 @@ export async function GET() {
       productos: category._count.productos,
       descripcion: `Explora nuestra selección de ${category.nombre.toLowerCase()}`
     }));
-    
-    console.log('Categorías formateadas:', formattedCategories);
-    
-    return NextResponse.json({
+
+    const responseData = {
       success: true,
       categories: formattedCategories,
       total: categories.length
-    });
+    };
+    
+    // Almacenar en caché Redis para futuras consultas
+    await CategoryCache.set(responseData);
+    
+    return NextResponse.json(responseData);
     
   } catch (error) {
     console.error('=== ERROR EN API /api/categories ===');

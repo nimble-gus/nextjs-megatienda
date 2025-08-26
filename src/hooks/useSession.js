@@ -43,6 +43,21 @@ export const useSession = () => {
     localStorage.removeItem('user');
   };
 
+  // Función para logout
+  const logout = useCallback(() => {
+    clearTokens();
+    setUser(null);
+    setIsAuthenticated(false);
+    
+    if (refreshTimeoutRef.current) {
+      clearTimeout(refreshTimeoutRef.current);
+      refreshTimeoutRef.current = null;
+    }
+    
+    // Redirigir al home
+    router.push('/');
+  }, [router]);
+
   // Función para refrescar tokens
   const refreshTokens = useCallback(async () => {
     if (refreshInProgressRef.current) return;
@@ -72,9 +87,7 @@ export const useSession = () => {
       saveTokens(data.accessToken, data.refreshToken, data.user);
       setUser(data.user);
       setIsAuthenticated(true);
-      
-      console.log('✅ Tokens refrescados exitosamente');
-      
+
       // Programar próximo refresh
       scheduleTokenRefresh(data.accessToken);
       
@@ -84,7 +97,7 @@ export const useSession = () => {
     } finally {
       refreshInProgressRef.current = false;
     }
-  }, []);
+  }, [logout, scheduleTokenRefresh]);
 
   // Función para programar refresh automático
   const scheduleTokenRefresh = useCallback((accessToken) => {
@@ -103,8 +116,7 @@ export const useSession = () => {
       refreshTimeoutRef.current = setTimeout(() => {
         refreshTokens();
       }, refreshTime);
-      
-      console.log(`🕐 Próximo refresh programado en ${Math.floor(refreshTime / 1000)} segundos`);
+
     } catch (error) {
       console.error('Error programando refresh:', error);
     }
@@ -215,21 +227,6 @@ export const useSession = () => {
       setIsLoading(false);
     }
   }, [scheduleTokenRefresh]);
-
-  // Función para logout
-  const logout = useCallback(() => {
-    clearTokens();
-    setUser(null);
-    setIsAuthenticated(false);
-    
-    if (refreshTimeoutRef.current) {
-      clearTimeout(refreshTimeoutRef.current);
-      refreshTimeoutRef.current = null;
-    }
-    
-    // Redirigir al home
-    router.push('/');
-  }, [router]);
 
   // Función para verificar sesión al cargar
   const checkSession = useCallback(async () => {

@@ -4,16 +4,11 @@ import { executeWithRetry } from '@/lib/db-utils';
 
 export async function GET() {
   try {
-    console.log('🔍 Verificando estado de la base de datos...');
-    
     // Intentar una consulta simple para verificar la conexión
     const result = await executeWithRetry(async () => {
       const testQuery = await prisma.$queryRaw`SELECT 1 as test`;
       return testQuery;
     });
-    
-    console.log('✅ Conexión a la base de datos exitosa');
-    
     return NextResponse.json({
       success: true,
       status: 'connected',

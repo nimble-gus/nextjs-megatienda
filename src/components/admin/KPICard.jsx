@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import '@/styles/KPICard.css';
 
 const KPICard = ({ title, value, icon, trend, trendUp, error, loading, priority }) => {

@@ -12,16 +12,9 @@ export async function POST(req) {
         { status: 400 }
       );
     }
-
-    console.log('🔄 Procesando refresh de token...');
-
     // Verificar y refrescar tokens
     const result = await sessionManager.refreshTokens(refreshToken);
-
-    console.log('✅ Tokens refrescados exitosamente');
-
     // Crear respuesta y establecer nuevos tokens como cookies HttpOnly
-    console.log('🍪 Estableciendo nuevas cookies...');
     const response = NextResponse.json({
       success: true,
       user: result.user,
@@ -44,8 +37,6 @@ export async function POST(req) {
       maxAge: 7 * 24 * 60 * 60, // 7 días
       path: '/'
     });
-
-    console.log('🍪 Cookies establecidas correctamente');
     return response;
 
   } catch (error) {

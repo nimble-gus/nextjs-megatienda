@@ -130,6 +130,10 @@
   align-items: flex-start;
   position: relative;
   z-index: 1;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 /* Secciones de columnas */
@@ -140,6 +144,7 @@
   width: 100%;
   flex: 1;
   overflow: visible;
+  max-width: 100%;
 }
 
 .order-summary-section {
@@ -158,6 +163,8 @@
   border: 1px solid var(--border-color);
   overflow: hidden;
   transition: var(--transition-smooth);
+  width: 100%;
+  max-width: 100%;
 }
 
 .checkout-card:hover {
@@ -179,6 +186,9 @@
 
 .card-body {
   padding: 30px;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 /* Formulario de billing details */
@@ -186,6 +196,9 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .form-row {
@@ -203,6 +216,8 @@
 .form-group.full-width {
   grid-column: 1 / -1;
   overflow: visible;
+  width: 100%;
+  max-width: 100%;
 }
 
 .form-label {
@@ -341,6 +356,7 @@
   flex-direction: column;
   gap: 12px;
   margin: 20px 0;
+  width: 100%;
 }
 
 .shipping-option {
@@ -354,6 +370,9 @@
   transition: var(--transition-smooth);
   position: relative;
   overflow: hidden;
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
 }
 
 .shipping-option::before {
@@ -423,6 +442,10 @@
   transition: var(--transition-smooth);
   position: relative;
   z-index: 3;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .shipping-option:hover .shipping-label {
@@ -436,6 +459,7 @@
   transition: var(--transition-smooth);
   position: relative;
   z-index: 3;
+  flex-shrink: 0;
 }
 
 .shipping-option:hover .shipping-price {
@@ -453,18 +477,19 @@
 
 .payment-method {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 16px;
-  padding: 24px 28px;
+  padding: 20px 24px;
   border: 2px solid var(--border-color);
   border-radius: var(--border-radius-small);
   cursor: pointer;
   transition: var(--transition-smooth);
   position: relative;
-  overflow: visible;
-  min-height: 100px;
+  overflow: hidden;
+  min-height: 60px;
   width: 100%;
   background: white;
+  box-sizing: border-box;
 }
 
 .payment-method::before {
@@ -539,20 +564,20 @@
 .payment-content {
   flex: 1;
   min-width: 0;
-  overflow: visible;
+  overflow: hidden;
   position: relative;
   z-index: 3;
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  align-items: center;
   padding-right: 60px;
+  width: 100%;
+  max-width: calc(100% - 60px);
 }
 
 .payment-label {
   font-size: 1.1rem;
   font-weight: 700;
   color: #333;
-  margin-bottom: 4px;
   transition: var(--transition-smooth);
   word-wrap: break-word;
   overflow-wrap: break-word;
@@ -568,7 +593,7 @@
 
 .payment-description {
   font-size: 0.9rem;
-  color: #666;
+  color: #333;
   line-height: 1.5;
   background: var(--background-light);
   padding: 16px 18px;
@@ -579,10 +604,16 @@
   word-wrap: break-word;
   overflow-wrap: break-word;
   white-space: normal;
-  overflow: visible;
+  overflow: hidden;
   position: relative;
   z-index: 3;
   font-weight: 400;
+  max-width: 100%;
+  box-sizing: border-box;
+  display: block;
+  text-align: left;
+  width: 100%;
+  text-overflow: ellipsis;
 }
 
 .payment-method:hover .payment-description {
@@ -1024,18 +1055,24 @@
   }
   
   .payment-method {
-    padding: 20px 22px;
-    min-height: 90px;
+    padding: 18px 20px;
+    min-height: 60px;
     gap: 12px;
   }
   
   .payment-description {
     padding: 14px 16px;
     font-size: 0.85rem;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+    width: 100%;
   }
   
   .payment-content {
     padding-right: 50px;
+    width: 100%;
+    max-width: calc(100% - 50px);
   }
   
   .shipping-option.selected::after,
@@ -1088,18 +1125,24 @@
   }
   
   .payment-method {
-    padding: 18px 20px;
-    min-height: 80px;
+    padding: 16px 18px;
+    min-height: 50px;
     gap: 10px;
   }
   
   .payment-description {
     padding: 12px 14px;
     font-size: 0.8rem;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+    width: 100%;
   }
   
   .payment-content {
     padding-right: 40px;
+    width: 100%;
+    max-width: calc(100% - 40px);
   }
   
   .shipping-option.selected::after,

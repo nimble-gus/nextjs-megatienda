@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import '@/styles/CheckoutPage.css';
@@ -244,9 +245,11 @@ export default function CheckoutConfirmationPage() {
                   <div className="order-items">
                     {orden?.detalle?.map((item, index) => (
                       <div key={index} className="order-item">
-                        <img
+                        <Image
                           src={item.producto?.url_imagen || 'https://res.cloudinary.com/demo/image/upload/v1/samples/ecommerce/accessories-bag'}
-                          alt={item.producto?.nombre}
+                          alt={item.producto?.nombre || 'Producto'}
+                          width={80}
+                          height={80}
                           className="item-image"
                           onError={(e) => {
                             e.target.src = 'https://res.cloudinary.com/demo/image/upload/v1/samples/ecommerce/accessories-bag';

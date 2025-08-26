@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
 
 export async function GET(request, { params }) {
   try {
@@ -13,9 +11,6 @@ export async function GET(request, { params }) {
         { status: 400 }
       );
     }
-
-    console.log('🔍 Buscando orden con código:', codigo);
-
     // Buscar la orden por código
     const orden = await prisma.ordenes.findUnique({
       where: { codigo_orden: codigo },
@@ -30,15 +25,11 @@ export async function GET(request, { params }) {
     });
 
     if (!orden) {
-      console.log('❌ Orden no encontrada:', codigo);
       return NextResponse.json(
         { error: 'Orden no encontrada' },
         { status: 404 }
       );
     }
-
-    console.log('✅ Orden encontrada:', orden.id);
-
     return NextResponse.json({
       success: true,
       orden: orden
