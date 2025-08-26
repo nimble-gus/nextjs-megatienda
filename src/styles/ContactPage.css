@@ -1,6 +1,36 @@
 /* ContactPage.css - Estilos simplificados para solo el formulario de contacto */
 
 /* ===== LAYOUT PRINCIPAL ===== */
+/* Sticky Wrapper: Agrupa Topbar + Header - Mismo que HomePage */
+.sticky-wrapper {
+  position: sticky;
+  position: -webkit-sticky; /* Compatibilidad Safari */
+  top: 0;
+  z-index: 1000; /* Aumentar z-index */
+  background-color: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  /* Asegurar que tenga contenido para que sticky funcione */
+  min-height: auto;
+}
+
+/* Sección del Topbar */
+.topbar-section {
+  width: 100%;
+  position: relative;
+  z-index: 102;
+  background-color: #ffffff;
+}
+
+/* Sección del Header */
+.header-section {
+  width: 100%;
+  position: relative;
+  z-index: 101;
+  background-color: #ffffff;
+  transition: all 0.3s ease;
+}
+
 .contact-main {
   width: 100%;
   min-height: calc(100vh - 200px);

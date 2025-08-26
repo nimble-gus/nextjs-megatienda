@@ -25,9 +25,10 @@ export async function GET(request) {
     return NextResponse.json({
       isAuthenticated: true,
       user: {
-        id: payload.userId,
-        email: payload.email,
-        role: payload.role
+        id: payload.id,
+        nombre: payload.nombre,
+        correo: payload.correo,
+        rol: payload.rol
       },
       message: 'Token válido'
     });

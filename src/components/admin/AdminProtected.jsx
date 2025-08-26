@@ -2,35 +2,47 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 import NewHamsterLoader from '../common/NewHamsterLoader';
+import '@/styles/AdminProtected.css';
 
 export default function AdminProtected({ children }) {
-  const { user, loading, isAuthenticated, isAdmin } = useAuth();
+  const { user, isLoading, isAuthenticated, isAdmin } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && (!isAuthenticated || !isAdmin)) {
-
-      setTimeout(() => {
+    if (!isLoading) {
+      // Si no está autenticado, redirigir a login
+      if (!isAuthenticated) {
+        console.log('🔒 Usuario no autenticado, redirigiendo a login...');
         router.push('/admin/login');
-      }, 100);
+        return;
+      }
+
+      // Si está autenticado pero no es admin, redirigir a login
+      if (!isAdmin()) {
+        console.log('🚫 Usuario no es admin, redirigiendo a login...');
+        router.push('/admin/login');
+        return;
+      }
+
+      console.log('✅ Usuario admin autenticado, acceso permitido');
     }
-  }, [loading, isAuthenticated, isAdmin, router]);
+  }, [isLoading, isAuthenticated, isAdmin, router]);
 
   // Mostrar loading mientras verifica autenticación
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="admin-loading">
         <div className="loading-content">
-          <NewHamsterLoader size="medium" message="Verificando autenticación..." />
+          <NewHamsterLoader size="medium" message="Verificando permisos..." />
         </div>
       </div>
     );
   }
 
   // Si no está autenticado o no es admin, mostrar loading para evitar parpadeo
-  if (!isAuthenticated || !isAdmin) {
+  if (!isAuthenticated || !isAdmin()) {
     return (
       <div className="admin-loading">
         <div className="loading-content">
@@ -40,6 +52,6 @@ export default function AdminProtected({ children }) {
     );
   }
 
-  // Si está autenticado y es admin, mostrar contenido
-  return children;
+  // Usuario autenticado y es admin, mostrar contenido
+  return <>{children}</>;
 }

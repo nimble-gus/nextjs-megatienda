@@ -22,23 +22,24 @@ export async function middleware(request) {
       const refreshToken = request.cookies.get('refreshToken')?.value;
 
       if (!accessToken && !refreshToken) {
-
+        console.log('🔒 No hay tokens, redirigiendo a login');
         return NextResponse.redirect(new URL('/admin/login', request.url));
       }
 
       let isAuthenticated = false;
-      let user = null;
+      let isAdmin = false;
 
       // Verificar access token
       if (accessToken) {
         try {
           const { payload } = await jwtVerify(accessToken, JWT_SECRET);
-          if (payload.role === 'admin') {
+          if (payload.rol === 'admin') {
             isAuthenticated = true;
-            user = payload;
+            isAdmin = true;
+            console.log('✅ Access token válido para admin');
           }
         } catch (error) {
-
+          console.log('❌ Access token inválido o expirado');
         }
       }
 
@@ -50,25 +51,20 @@ export async function middleware(request) {
           // Verificar en la base de datos que el usuario existe y es admin
           const { prisma } = await import('@/lib/prisma');
           const dbUser = await prisma.usuarios.findUnique({
-            where: { id: payload.userId }
+            where: { id: payload.id }
           });
 
           if (dbUser && dbUser.rol === 'admin') {
             isAuthenticated = true;
-            user = {
-              userId: dbUser.id,
-              email: dbUser.correo,
-              role: dbUser.rol,
-              nombre: dbUser.nombre
-            };
+            isAdmin = true;
 
             // Generar nuevo access token
             const { SignJWT } = await import('jose');
             const newAccessToken = await new SignJWT({
-              userId: dbUser.id,
-              email: dbUser.correo,
-              role: dbUser.rol,
-              nombre: dbUser.nombre
+              id: dbUser.id,
+              nombre: dbUser.nombre,
+              correo: dbUser.correo,
+              rol: dbUser.rol
             })
               .setProtectedHeader({ alg: 'HS256' })
               .setIssuedAt()
@@ -85,20 +81,21 @@ export async function middleware(request) {
               path: '/'
             });
 
+            console.log('🔄 Refresh token válido, nuevo access token generado');
             return response;
           }
         } catch (error) {
-
+          console.log('❌ Refresh token inválido o error en verificación');
         }
       }
 
-      if (!isAuthenticated) {
-
+      if (!isAuthenticated || !isAdmin) {
+        console.log('🚫 Usuario no autenticado o no es admin, redirigiendo a login');
         return NextResponse.redirect(new URL('/admin/login', request.url));
       }
 
-      // Usuario autenticado, continuar
-
+      // Usuario autenticado y es admin, continuar
+      console.log('✅ Usuario admin autenticado, acceso permitido');
       return NextResponse.next();
 
     } catch (error) {
@@ -107,7 +104,7 @@ export async function middleware(request) {
     }
   }
 
-  // Si está en login y ya está autenticado, redirigir al dashboard
+  // Si está en login y ya está autenticado como admin, redirigir al dashboard
   if (isAuthRoute) {
     try {
       const accessToken = request.cookies.get('accessToken')?.value;
@@ -115,12 +112,14 @@ export async function middleware(request) {
 
       if (accessToken || refreshToken) {
         let isAuthenticated = false;
+        let isAdmin = false;
 
         if (accessToken) {
           try {
             const { payload } = await jwtVerify(accessToken, JWT_SECRET);
-            if (payload.role === 'admin') {
+            if (payload.rol === 'admin') {
               isAuthenticated = true;
+              isAdmin = true;
             }
           } catch (error) {
             // Token inválido, continuar con refresh token
@@ -132,24 +131,25 @@ export async function middleware(request) {
             const { payload } = await jwtVerify(refreshToken, JWT_SECRET);
             const { prisma } = await import('@/lib/prisma');
             const dbUser = await prisma.usuarios.findUnique({
-              where: { id: payload.userId }
+              where: { id: payload.id }
             });
 
             if (dbUser && dbUser.rol === 'admin') {
               isAuthenticated = true;
+              isAdmin = true;
             }
           } catch (error) {
             // Refresh token inválido
           }
         }
 
-        if (isAuthenticated) {
-
+        if (isAuthenticated && isAdmin) {
+          console.log('🔄 Usuario admin ya autenticado, redirigiendo al dashboard');
           return NextResponse.redirect(new URL('/admin', request.url));
         }
       }
     } catch (error) {
-
+      console.error('❌ Error verificando autenticación en login:', error);
     }
   }
 

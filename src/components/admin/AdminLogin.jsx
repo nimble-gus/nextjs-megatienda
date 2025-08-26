@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 import NewHamsterLoader from '../common/NewHamsterLoader';
 import '@/styles/AdminLogin.css';
 
@@ -17,16 +17,17 @@ const AdminLogin = () => {
   const [attempts, setAttempts] = useState(0);
   const [isLocked, setIsLocked] = useState(false);
   const [lockoutTime, setLockoutTime] = useState(0);
+  
   const router = useRouter();
-  const { login, isAuthenticated, isAdmin } = useAuth();
+  const { login, isAuthenticated, isAdmin, isLoading } = useAuth();
 
-  // Verificar si el usuario ya está autenticado
+  // Verificar si el usuario ya está autenticado como admin
   useEffect(() => {
-    if (isAuthenticated && isAdmin) {
-
-      window.location.href = '/admin';
+    if (!isLoading && isAuthenticated && isAdmin()) {
+      console.log('🔄 Usuario admin autenticado, redirigiendo...');
+      router.push('/admin');
     }
-  }, [isAuthenticated, isAdmin]);
+  }, [isLoading, isAuthenticated, isAdmin, router]);
 
   // Manejar bloqueo por intentos fallidos
   useEffect(() => {
@@ -99,23 +100,17 @@ const AdminLogin = () => {
       const result = await login(formData.email, formData.password);
 
       if (result.success) {
-
+        console.log('✅ Login exitoso, redirigiendo al admin...');
         setAttempts(0);
-        // Redirección inmediata después del login exitoso
-        window.location.href = '/admin';
+        router.push('/admin');
       } else {
         setAttempts(prev => prev + 1);
         setError(result.error || 'Error en el login');
-        
-        // Mostrar advertencia de bloqueo
-        if (attempts >= 3) {
-          setError(`${result.error} (${5 - attempts} intentos restantes antes del bloqueo)`);
-        }
       }
-
     } catch (error) {
       console.error('❌ Error en login:', error);
-      setError('Error de conexión. Verifica tu conexión a internet.');
+      setAttempts(prev => prev + 1);
+      setError('Error de conexión. Intenta de nuevo.');
     } finally {
       setLoading(false);
     }
@@ -125,44 +120,42 @@ const AdminLogin = () => {
     setShowPassword(!showPassword);
   };
 
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  const formatLockoutTime = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
+
+  // Mostrar loading mientras verifica autenticación
+  if (isLoading) {
+    return (
+      <div className="admin-login-loading">
+        <div className="loading-content">
+          <NewHamsterLoader size="medium" message="Verificando autenticación..." />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="admin-login-container">
       <div className="admin-login-card">
+        {/* Header */}
         <div className="login-header">
-          <div className="logo-section">
-            <div className="admin-logo">
-              <span className="admin-icon">👨‍💼</span>
-            </div>
-            <h1>Admin Dashboard</h1>
-            <p>Acceso exclusivo para administradores</p>
+          <div className="admin-icon">
+            <span>👨‍💼</span>
           </div>
+          <h1 className="login-title">Admin Dashboard</h1>
+          <p className="login-subtitle">Acceso exclusivo para administradores</p>
         </div>
 
+        {/* Formulario */}
         <form onSubmit={handleSubmit} className="login-form">
-          {error && (
-            <div className={`error-message ${isLocked ? 'locked' : ''}`}>
-              <span className="error-icon">
-                {isLocked ? '🔒' : '⚠️'}
-              </span>
-              {error}
-            </div>
-          )}
-
-          {isLocked && (
-            <div className="lockout-warning">
-              <span className="lockout-icon">⏰</span>
-              Tiempo restante: {formatTime(lockoutTime)}
-            </div>
-          )}
-
+          {/* Campo Email */}
           <div className="form-group">
-            <label htmlFor="email">Correo Electrónico</label>
+            <label htmlFor="email" className="form-label">
+              Correo Electrónico
+            </label>
             <div className="input-container">
               <span className="input-icon">📧</span>
               <input
@@ -172,16 +165,18 @@ const AdminLogin = () => {
                 value={formData.email}
                 onChange={handleInputChange}
                 placeholder="admin@megatienda.com"
-                required
-                disabled={loading || isLocked}
                 className="form-input"
+                disabled={loading || isLocked}
                 autoComplete="email"
               />
             </div>
           </div>
 
+          {/* Campo Password */}
           <div className="form-group">
-            <label htmlFor="password">Contraseña</label>
+            <label htmlFor="password" className="form-label">
+              Contraseña
+            </label>
             <div className="input-container">
               <span className="input-icon">🔒</span>
               <input
@@ -191,9 +186,8 @@ const AdminLogin = () => {
                 value={formData.password}
                 onChange={handleInputChange}
                 placeholder="••••••••"
-                required
-                disabled={loading || isLocked}
                 className="form-input"
+                disabled={loading || isLocked}
                 autoComplete="current-password"
               />
               <button
@@ -207,27 +201,55 @@ const AdminLogin = () => {
             </div>
           </div>
 
+          {/* Mensaje de Error */}
+          {error && (
+            <div className="error-message">
+              <span className="error-icon">⚠️</span>
+              <span>{error}</span>
+            </div>
+          )}
+
+          {/* Bloqueo por intentos */}
+          {isLocked && (
+            <div className="lockout-message">
+              <span className="lockout-icon">🔒</span>
+              <span>Cuenta bloqueada por múltiples intentos fallidos</span>
+              <span className="lockout-timer">
+                Tiempo restante: {formatLockoutTime(lockoutTime)}
+              </span>
+            </div>
+          )}
+
+          {/* Botón de Login */}
           <button
             type="submit"
+            className={`login-button ${loading || isLocked ? 'disabled' : ''}`}
             disabled={loading || isLocked}
-            className={`login-button ${isLocked ? 'locked' : ''}`}
           >
             {loading ? (
-              <NewHamsterLoader size="small" message="Iniciando sesión..." />
-            ) : isLocked ? (
               <>
-                <span className="button-icon">🔒</span>
-                Cuenta Bloqueada
+                <NewHamsterLoader size="small" />
+                <span>Iniciando sesión...</span>
               </>
             ) : (
               <>
-                <span className="button-icon">🚀</span>
-                Iniciar Sesión
+                <span>🚀</span>
+                <span>Iniciar Sesión</span>
               </>
             )}
           </button>
         </form>
 
+        {/* Footer */}
+        <div className="login-footer">
+          <p className="footer-text">
+            Solo personal autorizado puede acceder al panel de administración
+          </p>
+          <div className="security-info">
+            <span className="security-icon">🔐</span>
+            <span>Conexión segura</span>
+          </div>
+        </div>
       </div>
     </div>
   );

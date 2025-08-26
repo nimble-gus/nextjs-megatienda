@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { getSales, getKpis } from '@/services/salesService';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
+
 import KPICard from './KPICard';
 import SalesTable from './SalesTable';
 import DashboardHeader from './DashboardHeader';
@@ -306,15 +307,15 @@ export default function AdminDashboard() {
               <div className="user-info">
                 <span className="user-avatar">👨‍💼</span>
                 <div className="user-details">
-                  <span className="user-name">{user?.nombre || 'Admin'}</span>
-                  <span className="user-role">{user?.role || 'Administrador'}</span>
+                                                <span className="user-name">{user?.nombre || 'Admin'}</span>
+                <span className="user-role">{user?.rol === 'admin' ? 'Administrador' : 'Usuario'}</span>
                 </div>
               </div>
               <button className="btn-secondary" title="Notificaciones">
                 <span>🔔</span>
               </button>
-              <button 
-                className="btn-logout" 
+                            <button 
+                className="btn-logout"
                 onClick={logout}
                 title="Cerrar sesión"
               >
