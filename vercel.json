@@ -37,7 +37,7 @@
     }
   ],
   "env": {
-    "PRISMA_CLIENT_ENGINE_TYPE": "dataproxy"
+    "PRISMA_CLIENT_ENGINE_TYPE": "binary"
   },
   "buildCommand": "npm run build",
   "outputDirectory": ".next",
