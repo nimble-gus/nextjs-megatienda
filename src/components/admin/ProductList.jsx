@@ -147,7 +147,13 @@ export default function ProductList() {
 
     try {
       const result = await deleteProduct(productId);
-      await fetchProducts(); // Recargar la lista
+      
+      // Actualizar el estado local inmediatamente
+      setProducts(prevProducts => prevProducts.filter(product => product.id !== productId));
+      
+      // También recargar desde el servidor para asegurar sincronización
+      await fetchProducts();
+      
       alert('Producto eliminado exitosamente');
     } catch (err) {
       console.error('Error deleting product:', err);
@@ -487,7 +493,16 @@ export default function ProductList() {
     <div className="product-list-container">
       <div className="product-list-header">
         <h3>Productos Existentes</h3>
-        <span className="product-count">{products.length} productos</span>
+        <div className="header-actions">
+          <button 
+            onClick={fetchProducts} 
+            className="refresh-btn"
+            title="Refrescar lista de productos"
+          >
+            🔄 Refrescar
+          </button>
+          <span className="product-count">{products.length} productos</span>
+        </div>
       </div>
 
       {showEditForm && editingProduct && (

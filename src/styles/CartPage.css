@@ -150,70 +150,200 @@
   background: #0056b3;
 }
 
-/* Responsive Design */
+/* Responsive Design - MEJORADO */
 @media (max-width: 1200px) {
   .cart-content {
-    gap: 30px;
+    gap: 25px !important;
   }
   
   .cart-summary-section {
-    width: 350px;
+    width: 400px !important;
+  }
+  
+  .cart-items-section {
+    min-width: 500px !important;
   }
 }
 
 @media (max-width: 1024px) {
   .cart-content {
-    flex-direction: column;
-    gap: 30px;
+    flex-direction: column !important;
+    gap: 20px !important;
+    padding: 0 10px !important;
   }
   
   .cart-items-section {
-    min-width: 100%;
+    min-width: 100% !important;
+    order: 2 !important;
   }
   
   .cart-summary-section {
-    order: -1;
-    width: 100%;
+    order: 1 !important;
+    width: 100% !important;
+    max-width: 500px !important;
+    margin: 0 auto !important;
+  }
+  
+  .page-header {
+    padding: 20px 10px !important;
+  }
+  
+  .page-header-content h1 {
+    font-size: 1.8rem !important;
+  }
+  
+  .breadcrumb {
+    font-size: 0.9rem !important;
   }
 }
 
 @media (max-width: 768px) {
-  .page-header {
-    padding: 20px 0;
-    margin-bottom: 20px;
+  .cart-page {
+    padding: 0 !important;
   }
   
-  .page-header-content {
-    padding: 0 15px;
+  .cart-main {
+    padding: 0 !important;
+  }
+  
+  .page-header {
+    padding: 15px 10px !important;
+    margin-bottom: 10px !important;
+  }
+  
+  .page-header-content h1 {
+    font-size: 1.6rem !important;
+    margin-bottom: 8px !important;
+  }
+  
+  .breadcrumb {
+    font-size: 0.85rem !important;
+    gap: 8px !important;
   }
   
   .cart-container {
-    padding: 0 15px 40px 15px;
+    padding: 0 5px !important;
   }
   
   .cart-content {
-    gap: 20px;
+    gap: 15px !important;
+    padding: 0 5px !important;
   }
   
-  .page-header h1 {
-    font-size: 2rem;
+  .cart-items-section {
+    min-width: 100% !important;
+  }
+  
+  .cart-summary-section {
+    width: 100% !important;
+    max-width: none !important;
+  }
+  
+  .loading-container,
+  .error-container {
+    margin: 0 5px !important;
+    padding: 40px 15px !important;
+  }
+  
+  .loading-spinner {
+    width: 35px !important;
+    height: 35px !important;
+  }
+  
+  .error-container h2 {
+    font-size: 1.3rem !important;
+  }
+  
+  .error-container button {
+    padding: 12px 18px !important;
+    font-size: 1rem !important;
   }
 }
 
 @media (max-width: 480px) {
-  .page-header-content {
-    padding: 0 10px;
+  .page-header {
+    padding: 12px 8px !important;
+  }
+  
+  .page-header-content h1 {
+    font-size: 1.4rem !important;
+  }
+  
+  .breadcrumb {
+    font-size: 0.8rem !important;
+    gap: 6px !important;
   }
   
   .cart-container {
-    padding: 0 10px 30px 10px;
+    padding: 0 2px !important;
   }
   
   .cart-content {
-    gap: 15px;
+    gap: 12px !important;
+    padding: 0 2px !important;
   }
   
-  .page-header h1 {
-    font-size: 1.8rem;
+  .loading-container,
+  .error-container {
+    margin: 0 2px !important;
+    padding: 30px 12px !important;
+  }
+  
+  .loading-spinner {
+    width: 30px !important;
+    height: 30px !important;
+  }
+  
+  .error-container h2 {
+    font-size: 1.2rem !important;
+  }
+  
+  .error-container button {
+    padding: 10px 16px !important;
+    font-size: 0.95rem !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .page-header {
+    padding: 10px 6px !important;
+  }
+  
+  .page-header-content h1 {
+    font-size: 1.3rem !important;
+  }
+  
+  .breadcrumb {
+    font-size: 0.75rem !important;
+    gap: 5px !important;
+  }
+  
+  .cart-container {
+    padding: 0 1px !important;
+  }
+  
+  .cart-content {
+    gap: 10px !important;
+    padding: 0 1px !important;
+  }
+  
+  .loading-container,
+  .error-container {
+    margin: 0 1px !important;
+    padding: 25px 10px !important;
+  }
+  
+  .loading-spinner {
+    width: 28px !important;
+    height: 28px !important;
+  }
+  
+  .error-container h2 {
+    font-size: 1.1rem !important;
+  }
+  
+  .error-container button {
+    padding: 8px 14px !important;
+    font-size: 0.9rem !important;
   }
 }

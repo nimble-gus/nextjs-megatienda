@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { safeQueryRaw, safeCount, safeFindMany } from '@/lib/prisma-wrapper';
 import { executeWithRetry, checkDatabaseHealth } from '@/lib/db-utils';
 import { ProductCache } from '@/lib/redis';
 import { queueQuery } from '@/lib/query-queue';

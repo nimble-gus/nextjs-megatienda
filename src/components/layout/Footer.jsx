@@ -67,8 +67,8 @@ const Footer = () => {
           <h3 className="section-title">Información</h3>
           <ul className="info-links">
             <li><a href="/about">Acerca de Nosotros</a></li>
-            <li><a href="/privacy">Políticas de Privacidad</a></li>
-            <li><a href="/terms">Términos y Condiciones</a></li>
+            <li><a href="/privacy" target="_blank" rel="noopener noreferrer">Políticas de Privacidad</a></li>
+            <li><a href="/terms" target="_blank" rel="noopener noreferrer">Términos y Condiciones</a></li>
             <li><a href="/shipping">Envíos y Devoluciones</a></li>
             <li><a href="/faq">Preguntas Frecuentes</a></li>
           </ul>

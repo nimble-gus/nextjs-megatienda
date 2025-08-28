@@ -31,6 +31,7 @@ export async function POST(request) {
       municipio_cliente,
       codigo_postal_cliente,
       nit_cliente,
+      nombre_quien_recibe,
       
       // Datos de la orden
       productos,
@@ -95,6 +96,7 @@ export async function POST(request) {
         municipio_cliente,
         codigo_postal_cliente,
         nit_cliente,
+        nombre_quien_recibe,
         fecha: new Date(),
         total,
         subtotal,
@@ -178,10 +180,15 @@ export async function POST(request) {
           }
         }
       });
+
+      // Disparar evento de nueva orden creada para notificaciones en tiempo real
+      console.log('📢 Disparando evento de nueva orden creada:', ordenCompleta.codigo_orden);
+      
       return {
         success: true,
         orden: ordenCompleta,
-        mensaje: 'Orden creada exitosamente'
+        mensaje: 'Orden creada exitosamente',
+        newOrder: true // Indicador de nueva orden
       };
     };
 

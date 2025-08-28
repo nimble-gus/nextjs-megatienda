@@ -1,0 +1,577 @@
+/* WhatsAppCheckout.css */
+
+.whatsapp-checkout {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 30px 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 1;
+  overflow: visible;
+}
+
+/* Header */
+.whatsapp-header {
+  text-align: center;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.whatsapp-icon {
+  margin-bottom: 15px;
+}
+
+.whatsapp-header h2 {
+  color: #25d366;
+  font-size: 1.8rem;
+  margin-bottom: 10px;
+  font-weight: 700;
+}
+
+.whatsapp-header p {
+  color: #666;
+  font-size: 1rem;
+  margin: 0;
+}
+
+/* Order Summary */
+.order-summary {
+  margin-bottom: 30px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  position: static !important;
+  top: auto !important;
+}
+
+.order-summary h3 {
+  color: #333;
+  font-size: 1.3rem;
+  margin-bottom: 20px;
+  font-weight: 600;
+}
+
+.customer-info {
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.customer-info h4 {
+  color: #333;
+  font-size: 1.1rem;
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.customer-info p {
+  margin: 5px 0;
+  color: #555;
+  font-size: 0.95rem;
+}
+
+.items-summary h4 {
+  color: #333;
+  font-size: 1.1rem;
+  margin-bottom: 15px;
+  font-weight: 600;
+}
+
+.items-list {
+  margin-bottom: 20px;
+}
+
+.item-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 10px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.item-summary:last-child {
+  border-bottom: none;
+}
+
+.item-info {
+  flex: 1;
+  margin-right: 15px;
+}
+
+.item-name {
+  display: block;
+  font-weight: 600;
+  color: #333;
+  font-size: 0.95rem;
+  margin-bottom: 3px;
+}
+
+.item-details {
+  display: block;
+  color: #666;
+  font-size: 0.85rem;
+}
+
+.item-total {
+  font-weight: 600;
+  color: #333;
+  font-size: 0.95rem;
+}
+
+.total-summary {
+  padding-top: 15px;
+  border-top: 2px solid #e9ecef;
+}
+
+.total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #333;
+}
+
+.total-amount {
+  color: #25d366;
+  font-size: 1.3rem;
+}
+
+/* Benefits */
+.whatsapp-benefits {
+  margin-bottom: 30px;
+  padding: 20px;
+  background: linear-gradient(135deg, #25d366, #128c7e);
+  border-radius: 8px;
+  color: white;
+  position: relative;
+  z-index: 1;
+}
+
+.whatsapp-benefits h3 {
+  font-size: 1.2rem;
+  margin-bottom: 15px;
+  font-weight: 600;
+}
+
+.whatsapp-benefits ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.whatsapp-benefits li {
+  padding: 5px 0;
+  font-size: 0.95rem;
+}
+
+/* Actions */
+.whatsapp-actions {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.btn-secondary {
+  flex: 1;
+  padding: 15px 20px;
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #5a6268;
+  transform: translateY(-1px);
+}
+
+.btn-whatsapp {
+  flex: 2;
+  padding: 15px 20px;
+  background: linear-gradient(135deg, #25d366, #128c7e);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.btn-whatsapp:hover:not(:disabled) {
+  background: linear-gradient(135deg, #128c7e, #075e54);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
+}
+
+.btn-whatsapp:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.loading-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Note */
+.whatsapp-note {
+  padding: 15px;
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 6px;
+  color: #856404;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.whatsapp-note p {
+  margin: 0;
+}
+
+/* Success State */
+.whatsapp-checkout-success {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  text-align: center;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.success-icon {
+  font-size: 4rem;
+  margin-bottom: 20px;
+  animation: bounce 0.6s ease-in-out;
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-10px);
+  }
+  60% {
+    transform: translateY(-5px);
+  }
+}
+
+.whatsapp-checkout-success h2 {
+  color: #25d366;
+  font-size: 1.8rem;
+  margin-bottom: 15px;
+  font-weight: 700;
+}
+
+.whatsapp-checkout-success > p {
+  color: #666;
+  font-size: 1.1rem;
+  margin-bottom: 30px;
+  line-height: 1.5;
+}
+
+.order-details {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 25px;
+  text-align: left;
+}
+
+.order-details h3 {
+  color: #333;
+  font-size: 1.2rem;
+  margin-bottom: 15px;
+  font-weight: 600;
+}
+
+.order-details p {
+  margin: 8px 0;
+  color: #555;
+  font-size: 0.95rem;
+}
+
+.next-steps {
+  background: #e8f5e8;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 30px;
+  text-align: left;
+}
+
+.next-steps h3 {
+  color: #2d5a2d;
+  font-size: 1.2rem;
+  margin-bottom: 15px;
+  font-weight: 600;
+}
+
+.next-steps ol {
+  color: #2d5a2d;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  padding-left: 20px;
+}
+
+.next-steps li {
+  margin-bottom: 8px;
+}
+
+/* Cart Cleared Notice */
+.cart-cleared-notice {
+  background: #e8f5e8;
+  border: 1px solid #4caf50;
+  border-radius: 8px;
+  padding: 15px;
+  margin: 20px 0;
+  text-align: center;
+  color: #2d5a2d;
+}
+
+.cart-cleared-notice .notice-icon {
+  font-size: 2rem;
+  margin-bottom: 10px;
+}
+
+.cart-cleared-notice p {
+  margin: 5px 0;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.cart-cleared-notice p:first-of-type {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.success-actions {
+  margin-top: 30px;
+}
+
+.btn-primary {
+  padding: 15px 30px;
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #0056b3, #004085);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .whatsapp-checkout {
+    padding: 20px 15px;
+    margin: 0 10px;
+  }
+  
+  .whatsapp-header h2 {
+    font-size: 1.5rem;
+  }
+  
+  .order-summary {
+    padding: 15px;
+  }
+  
+  .order-summary h3 {
+    font-size: 1.2rem;
+  }
+  
+  .whatsapp-benefits {
+    padding: 15px;
+  }
+  
+  .whatsapp-actions {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .btn-secondary,
+  .btn-whatsapp {
+    width: 100%;
+    padding: 18px 20px;
+    font-size: 1.1rem;
+  }
+  
+  .whatsapp-checkout-success {
+    padding: 30px 15px;
+    margin: 0 10px;
+  }
+  
+  .success-icon {
+    font-size: 3rem;
+  }
+  
+  .whatsapp-checkout-success h2 {
+    font-size: 1.5rem;
+  }
+  
+  .order-details,
+  .next-steps {
+    padding: 15px;
+  }
+  
+  .cart-cleared-notice {
+    padding: 12px;
+    margin: 15px 0;
+  }
+  
+  .cart-cleared-notice .notice-icon {
+    font-size: 1.5rem;
+  }
+  
+  .cart-cleared-notice p {
+    font-size: 0.9rem;
+  }
+  
+  .cart-cleared-notice p:first-of-type {
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .whatsapp-checkout {
+    padding: 15px 10px;
+    margin: 0 5px;
+  }
+  
+  .whatsapp-header h2 {
+    font-size: 1.3rem;
+  }
+  
+  .whatsapp-header p {
+    font-size: 0.9rem;
+  }
+  
+  .order-summary {
+    padding: 12px;
+    position: static !important;
+    top: auto !important;
+    margin-bottom: 20px;
+  }
+  
+  .customer-info p,
+  .item-name,
+  .item-total {
+    font-size: 0.9rem;
+  }
+  
+  .item-details {
+    font-size: 0.8rem;
+  }
+  
+  .total-row {
+    font-size: 1.1rem;
+  }
+  
+  .total-amount {
+    font-size: 1.2rem;
+  }
+  
+  .whatsapp-benefits {
+    padding: 12px;
+  }
+  
+  .whatsapp-benefits h3 {
+    font-size: 1.1rem;
+  }
+  
+  .whatsapp-benefits li {
+    font-size: 0.9rem;
+  }
+  
+  .btn-secondary,
+  .btn-whatsapp {
+    padding: 16px 18px;
+    font-size: 1rem;
+  }
+  
+  .whatsapp-note {
+    padding: 12px;
+    font-size: 0.85rem;
+  }
+  
+  .whatsapp-checkout-success {
+    padding: 25px 10px;
+    margin: 0 5px;
+  }
+  
+  .success-icon {
+    font-size: 2.5rem;
+  }
+  
+  .whatsapp-checkout-success h2 {
+    font-size: 1.3rem;
+  }
+  
+  .whatsapp-checkout-success > p {
+    font-size: 1rem;
+  }
+  
+  .order-details,
+  .next-steps {
+    padding: 12px;
+  }
+  
+  .order-details h3,
+  .next-steps h3 {
+    font-size: 1.1rem;
+  }
+  
+  .order-details p,
+  .next-steps ol {
+    font-size: 0.9rem;
+  }
+  
+  .cart-cleared-notice {
+    padding: 10px;
+    margin: 10px 0;
+  }
+  
+  .cart-cleared-notice .notice-icon {
+    font-size: 1.3rem;
+  }
+  
+  .cart-cleared-notice p {
+    font-size: 0.85rem;
+  }
+  
+  .cart-cleared-notice p:first-of-type {
+    font-size: 0.9rem;
+  }
+}

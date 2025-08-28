@@ -9,7 +9,7 @@ export async function POST(req) {
     if (!refreshToken) {
       return NextResponse.json(
         { error: 'Refresh token es requerido' },
-        { status: 400 }
+        { status: 401 }
       );
     }
     // Verificar y refrescar tokens

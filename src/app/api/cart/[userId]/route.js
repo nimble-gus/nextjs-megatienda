@@ -1,10 +1,34 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { invalidateCartCache } from '@/lib/cache-manager';
+import { redis } from '@/lib/redis.js';
 
 // GET - Obtener items del carrito de un usuario
 export async function GET(request, { params }) {
   try {
     const { userId } = await params;
+    
+    // Verificar caché primero
+    const cacheKey = `megatienda:cart:${userId}`;
+    const cachedData = await redis.get(cacheKey);
+    
+    if (cachedData) {
+      console.log(`🛒 Carrito cargado desde caché para usuario: ${userId}`);
+      try {
+        // Verificar si es un string JSON válido
+        if (typeof cachedData === 'string') {
+          return NextResponse.json(JSON.parse(cachedData));
+        } else {
+          // Si es un objeto, limpiar el caché corrupto
+          console.log('⚠️ Caché corrupto detectado, limpiando...');
+          await redis.del(cacheKey);
+        }
+      } catch (parseError) {
+        console.log('⚠️ Error parseando caché, limpiando...');
+        await redis.del(cacheKey);
+      }
+    }
+
     const cartItems = await prisma.carrito.findMany({
       where: {
         usuario_id: parseInt(userId)
@@ -50,11 +74,17 @@ export async function GET(request, { params }) {
       };
     });
 
-    return NextResponse.json({
+    const response = {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
       success: true,
       items: formattedItems,
       totalItems: formattedItems.length
-    });
+    };
+
+    // Guardar en caché por 5 minutos
+    await redis.setex(cacheKey, 300, JSON.stringify(response));
+    console.log(`🛒 Carrito guardado en caché para usuario: ${userId}`);
+
+    return NextResponse.json(response);
 
   } catch (error) {
     console.error('Error obteniendo carrito:', error);
@@ -77,6 +107,10 @@ export async function DELETE(request, { params }) {
         usuario_id: parseInt(userId)
       }
     });
+
+    // Invalidar caché del carrito para el usuario
+    await invalidateCartCache(parseInt(userId));
+
     return NextResponse.json({
       success: true,
       message: 'Carrito limpiado exitosamente'

@@ -103,6 +103,7 @@ model ordenes {
   municipio_cliente              String?
   codigo_postal_cliente          String?
   nit_cliente                    String?         @db.VarChar(20)
+  nombre_quien_recibe            String?
   subtotal                       Float
   costo_envio                    Float
   comprobante_transferencia      String?

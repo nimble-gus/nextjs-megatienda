@@ -38,7 +38,7 @@ const Topbar = () => {
 
     // Componente de ícono de envío
     const ShippingIcon = () => (
-        <svg className="topbar-svg-icon shipping-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <svg className="topbar-svg-icon topbar-shipping-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <rect x="1" y="3" width="15" height="13"></rect>
             <polygon points="16,8 20,8 23,11 23,16 16,16"></polygon>
             <circle cx="5.5" cy="18.5" r="2.5"></circle>

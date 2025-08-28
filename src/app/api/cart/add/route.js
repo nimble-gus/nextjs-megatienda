@@ -1,12 +1,22 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import jwt from 'jsonwebtoken';
+import { jwtVerify } from 'jose';
+import { invalidateCartCache } from '@/lib/cache-manager';
 
 // POST - Agregar producto al carrito
 export async function POST(request) {
   try {
-    // Verificar autenticación desde cookies
-    const accessToken = request.cookies.get('accessToken')?.value;
+    // Verificar autenticación desde cookies o Authorization header
+    let accessToken = request.cookies.get('accessToken')?.value;
+    
+    // Si no hay token en cookies, verificar Authorization header
+    if (!accessToken) {
+      const authHeader = request.headers.get('authorization');
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        accessToken = authHeader.substring(7);
+      }
+    }
+    
     if (!accessToken) {
       return NextResponse.json(
         { error: 'Token de autenticación requerido' },
@@ -17,7 +27,9 @@ export async function POST(request) {
     let decoded;
     
     try {
-      decoded = jwt.verify(accessToken, process.env.JWT_SECRET || 'your-secret-key');
+      const secret = new TextEncoder().encode(process.env.JWT_SECRET || 'your-secret-key');
+      const { payload } = await jwtVerify(accessToken, secret);
+      decoded = payload;
     } catch (error) {
       return NextResponse.json(
         { error: 'Token inválido o expirado' },
@@ -149,11 +161,14 @@ export async function POST(request) {
       }
     };
 
-    return NextResponse.json({
-      success: true,
-      message: existingCartItem ? 'Cantidad actualizada en el carrito' : 'Producto agregado al carrito',
-      item: formattedItem
-    });
+         // Invalidar caché del carrito
+     await invalidateCartCache(decoded.id);
+
+     return NextResponse.json({
+       success: true,
+       message: existingCartItem ? 'Cantidad actualizada en el carrito' : 'Producto agregado al carrito',
+       item: formattedItem
+     });
 
   } catch (error) {
     console.error('Error agregando al carrito:', error);

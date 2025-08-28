@@ -39,10 +39,15 @@ export default function CartPage() {
       setLoading(true);
       const token = localStorage.getItem('token');
       
-      const response = await fetch(`/api/cart/${userId}`, {
+      // Agregar timestamp para evitar caché del navegador
+      const timestamp = new Date().getTime();
+      const response = await fetch(`/api/cart/${userId}?_t=${timestamp}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
         }
       });
 
@@ -51,7 +56,9 @@ export default function CartPage() {
       }
 
       const data = await response.json();
-      setCartItems(data.items || []);
+      // Ordenar items por ID para mantener consistencia
+      const sortedItems = (data.items || []).sort((a, b) => a.id - b.id);
+      setCartItems(sortedItems);
       
       // Disparar evento para actualizar contador en el header
       window.dispatchEvent(new CustomEvent('cartUpdated'));

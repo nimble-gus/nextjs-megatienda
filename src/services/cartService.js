@@ -1,10 +1,22 @@
 // Servicio para operaciones del carrito
 
-// Función simple para hacer fetch con cookies
+// Función simple para hacer fetch con token de localStorage
 async function fetchWithCredentials(url, options = {}) {
+  const token = localStorage.getItem('token');
+  
+  const headers = {
+    'Content-Type': 'application/json',
+    ...options.headers
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   return await fetch(url, {
     ...options,
-    credentials: 'include' // Incluir cookies automáticamente
+    headers,
+    credentials: 'include' // Mantener cookies también por compatibilidad
   });
 }
 

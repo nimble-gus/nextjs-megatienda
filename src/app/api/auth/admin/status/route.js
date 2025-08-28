@@ -1,115 +1,80 @@
 import { NextResponse } from 'next/server';
 import { jwtVerify } from 'jose';
+import { prisma } from '@/lib/prisma';
 
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'your-secret-key');
 
 export async function GET(request) {
   try {
-    // Obtener cookies
-    const accessToken = request.cookies.get('accessToken')?.value;
-    const refreshToken = request.cookies.get('refreshToken')?.value;
+    // Obtener las cookies específicas del admin
+    const adminAccessToken = request.cookies.get('adminAccessToken')?.value;
+    const adminRefreshToken = request.cookies.get('adminRefreshToken')?.value;
 
-    if (!accessToken && !refreshToken) {
+    if (!adminAccessToken && !adminRefreshToken) {
       return NextResponse.json({
-        authenticated: false,
-        message: 'No hay tokens de autenticación'
+        isAuthenticated: false,
+        user: null
       });
     }
 
-    let user = null;
-    let tokenValid = false;
+    let userData = null;
 
     // Intentar verificar el access token primero
-    if (accessToken) {
+    if (adminAccessToken) {
       try {
-        const { payload } = await jwtVerify(accessToken, JWT_SECRET);
-        user = {
+        const { payload } = await jwtVerify(adminAccessToken, JWT_SECRET);
+        userData = {
           id: payload.userId,
           email: payload.email,
-          role: payload.role,
+          rol: payload.rol,
           nombre: payload.nombre
         };
-        tokenValid = true;
       } catch (error) {
+        console.log('Access token inválido, intentando refresh token');
       }
     }
 
-    // Si el access token no es válido, intentar con el refresh token
-    if (!tokenValid && refreshToken) {
+    // Si no hay userData, intentar con refresh token
+    if (!userData && adminRefreshToken) {
       try {
-        const { payload } = await jwtVerify(refreshToken, JWT_SECRET);
+        const { payload } = await jwtVerify(adminRefreshToken, JWT_SECRET);
         
         // Verificar que el usuario existe y es admin
-        const { prisma } = await import('@/lib/prisma');
-        const dbUser = await prisma.usuarios.findUnique({
+        const user = await prisma.usuarios.findUnique({
           where: { id: payload.userId }
         });
 
-        if (dbUser && dbUser.rol === 'admin') {
-          user = {
-            id: dbUser.id,
-            email: dbUser.correo,
-            role: dbUser.rol,
-            nombre: dbUser.nombre
+        if (user && user.rol === 'admin') {
+          userData = {
+            id: user.id,
+            email: user.correo,
+            rol: user.rol,
+            nombre: user.nombre
           };
-          tokenValid = true;
-
-          // Generar nuevo access token
-          const { SignJWT } = await import('jose');
-          const newAccessToken = await new SignJWT({
-            userId: dbUser.id,
-            email: dbUser.correo,
-            role: dbUser.rol,
-            nombre: dbUser.nombre
-          })
-            .setProtectedHeader({ alg: 'HS256' })
-            .setIssuedAt()
-            .setExpirationTime('1h')
-            .sign(JWT_SECRET);
-
-          // Crear respuesta con nuevo token
-          const response = NextResponse.json({
-            authenticated: true,
-            user,
-            message: 'Token renovado'
-          });
-
-          response.cookies.set('accessToken', newAccessToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 60 * 60, // 1 hora
-            path: '/'
-          });
-
-          return response;
         }
       } catch (error) {
+        console.log('Refresh token inválido');
       }
     }
 
-    if (tokenValid && user && user.role === 'admin') {
+    if (userData) {
       return NextResponse.json({
-        authenticated: true,
-        user,
-        message: 'Usuario autenticado'
+        isAuthenticated: true,
+        user: userData
+      });
+    } else {
+      return NextResponse.json({
+        isAuthenticated: false,
+        user: null
       });
     }
 
-    return NextResponse.json({
-      authenticated: false,
-      message: 'Usuario no autenticado o sin permisos de admin'
-    });
-
   } catch (error) {
-    console.error('❌ Error verificando estado de autenticación:', error);
-    return NextResponse.json(
-      { 
-        authenticated: false,
-        error: 'Error interno del servidor' 
-      },
-      { status: 500 }
-    );
+    console.error('Error verificando estado de autenticación del admin:', error);
+    return NextResponse.json({
+      isAuthenticated: false,
+      user: null
+    });
   }
 }
 

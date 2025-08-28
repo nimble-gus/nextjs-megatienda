@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { executeWithRetry } from '@/lib/db-utils';
+import { invalidateOrderCache, invalidateProductCache } from '@/lib/cache-manager';
 
 export async function PUT(request, { params }) {
   try {
@@ -162,6 +163,13 @@ export async function PUT(request, { params }) {
         }
       });
     });
+
+    // Invalidar caché relacionado con órdenes y productos (si se actualizó stock)
+    await Promise.all([
+      invalidateOrderCache(),
+      ...(isBeingCancelled ? [invalidateProductCache()] : [])
+    ]);
+
     return NextResponse.json({
       success: true,
       message: isBeingCancelled 

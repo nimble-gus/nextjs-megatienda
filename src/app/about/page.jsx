@@ -42,7 +42,7 @@ const AboutPage = () => {
             <h1 className="hero-title">
               <span className="title-highlight">Acerca de</span>
               <br />
-              <span className="title-main">La Mega Tienda GT</span>
+              <span className="title-main">Nosotros</span>
             </h1>
             <div className="hero-subtitle">
               Tu tienda online de confianza en Guatemala

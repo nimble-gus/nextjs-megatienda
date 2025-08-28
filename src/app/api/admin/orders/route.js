@@ -97,6 +97,9 @@ export async function GET(request) {
         nit: order.nit_cliente
       },
       
+      // Nombre de quien recibe
+      nombre_quien_recibe: order.nombre_quien_recibe,
+      
       // Para transferencias
       comprobante_transferencia: order.comprobante_transferencia,
       fecha_validacion_transferencia: order.fecha_validacion_transferencia,

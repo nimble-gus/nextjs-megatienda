@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import NewHamsterLoader from '../common/NewHamsterLoader';
 import '@/styles/AdminLogin.css';
 
@@ -19,15 +19,15 @@ const AdminLogin = () => {
   const [lockoutTime, setLockoutTime] = useState(0);
   
   const router = useRouter();
-  const { login, isAuthenticated, isAdmin, isLoading } = useAuth();
+  const { adminLogin, isAdminAuthenticated, isLoading } = useAdminAuth();
 
   // Verificar si el usuario ya está autenticado como admin
   useEffect(() => {
-    if (!isLoading && isAuthenticated && isAdmin()) {
+    if (!isLoading && isAdminAuthenticated) {
       console.log('🔄 Usuario admin autenticado, redirigiendo...');
       router.push('/admin');
     }
-  }, [isLoading, isAuthenticated, isAdmin, router]);
+  }, [isLoading, isAdminAuthenticated, router]);
 
   // Manejar bloqueo por intentos fallidos
   useEffect(() => {
@@ -97,7 +97,7 @@ const AdminLogin = () => {
       setLoading(true);
       setError('');
 
-      const result = await login(formData.email, formData.password);
+      const result = await adminLogin(formData.email, formData.password);
 
       if (result.success) {
         console.log('✅ Login exitoso, redirigiendo al admin...');

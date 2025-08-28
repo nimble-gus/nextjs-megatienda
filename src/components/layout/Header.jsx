@@ -29,7 +29,7 @@ const Header = () => {
     // Cargar carrito cuando el usuario esté autenticado
     useEffect(() => {
         if (isAuthenticated && user) {
-            loadUserCart(user.id);
+            loadUserCart(user.id || user.usuario_id);
         } else {
             setCartCount(0);
         }
@@ -39,11 +39,18 @@ const Header = () => {
     const loadUserCart = async (userId) => {
         try {
             console.log('🛒 Cargando carrito para usuario:', userId);
-            const response = await fetch(`/api/cart/${userId}`, {
+            const token = localStorage.getItem('token');
+            
+            // Agregar timestamp para evitar caché del navegador
+            const timestamp = new Date().getTime();
+            const response = await fetch(`/api/cart/${userId}?_t=${timestamp}`, {
                 headers: {
-                    'Content-Type': 'application/json'
-                },
-                credentials: 'include'
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
+                }
             });
             
             if (response.ok) {
@@ -62,7 +69,7 @@ const Header = () => {
     // Actualizar contador del carrito
     const updateCartCount = async () => {
         if (isAuthenticated && user) {
-            await loadUserCart(user.id);
+            await loadUserCart(user.id || user.usuario_id);
         }
     };
 
@@ -73,11 +80,57 @@ const Header = () => {
             updateCartCount();
         };
 
+        const handleCartCleared = () => {
+            console.log('🔄 Evento cartCleared recibido, limpiando contador...');
+            setCartCount(0);
+        };
+
+        const handleCartStateChanged = (event) => {
+            console.log('🔄 Evento cartStateChanged recibido:', event.detail);
+            if (event.detail?.action === 'cleared') {
+                setCartCount(0);
+            } else {
+                updateCartCount();
+            }
+        };
+
+        // Escuchar el evento cartUpdated
         window.addEventListener('cartUpdated', handleCartUpdate);
+        
+        // Escuchar el evento cartCleared
+        window.addEventListener('cartCleared', handleCartCleared);
+        
+        // Escuchar el evento cartStateChanged
+        window.addEventListener('cartStateChanged', handleCartStateChanged);
+        
+        // También escuchar el evento loginSuccess para actualizar el carrito
+        const handleLoginSuccess = () => {
+            console.log('🔄 Login exitoso, actualizando carrito...');
+            if (isAuthenticated && user) {
+                updateCartCount();
+            }
+        };
+        
+        window.addEventListener('loginSuccess', handleLoginSuccess);
         
         return () => {
             window.removeEventListener('cartUpdated', handleCartUpdate);
+            window.removeEventListener('cartCleared', handleCartCleared);
+            window.removeEventListener('cartStateChanged', handleCartStateChanged);
+            window.removeEventListener('loginSuccess', handleLoginSuccess);
         };
+    }, [isAuthenticated, user]);
+
+    // Actualizar carrito periódicamente cada 30 segundos si el usuario está autenticado
+    useEffect(() => {
+        if (!isAuthenticated || !user) return;
+
+        const interval = setInterval(() => {
+            console.log('🔄 Actualización periódica del carrito...');
+            updateCartCount();
+        }, 30000); // 30 segundos
+
+        return () => clearInterval(interval);
     }, [isAuthenticated, user]);
 
     // Manejar éxito del login
@@ -246,6 +299,7 @@ const Header = () => {
                             width={120} 
                             height={40}
                             className="logo-img"
+                            style={{ width: 'auto', height: 'auto' }}
                             priority // Para cargar la imagen inmediatamente
                         />
                     </Link>

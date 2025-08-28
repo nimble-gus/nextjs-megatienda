@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { executeWithRetry } from '@/lib/db-utils';
-import { invalidateProductRelatedCache } from '@/lib/redis';
-import { SalesCache, KPICache } from '@/lib/redis';
+import { invalidateProductCache, invalidateOrderCache } from '@/lib/cache-manager';
 
 export async function GET() {
   try {
@@ -91,9 +90,8 @@ export async function POST(request) {
     
     // Invalidar caché de productos y relacionados
     await Promise.all([
-      invalidateProductRelatedCache(),
-      SalesCache.invalidate(),
-      KPICache.invalidate()
+      invalidateProductCache(),
+      invalidateOrderCache()
     ]);
     
     return NextResponse.json({

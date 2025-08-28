@@ -1,5 +1,6 @@
 'use client';
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { clearUserSessions, clearAllSessions } from '@/utils/session-cleaner';
 
 const AuthContext = createContext();
 
@@ -19,6 +20,9 @@ export const AuthProvider = ({ children }) => {
   // Función para verificar el estado de autenticación
   const checkAuthStatus = useCallback(async () => {
     try {
+      // NO limpiar cookies de admin - mantener sesiones separadas
+      // Las cookies de admin se manejan por separado en el contexto de admin
+
       const response = await fetch('/api/auth/status', {
         credentials: 'include'
       });
@@ -32,17 +36,23 @@ export const AuthProvider = ({ children }) => {
           // Guardar en localStorage para persistencia
           localStorage.setItem('user', JSON.stringify(data.user));
         } else {
-          // Token inválido, intentar refresh
-          await attemptTokenRefresh();
+          // Token inválido, no intentar refresh automáticamente
+          setUser(null);
+          setIsAuthenticated(false);
+          localStorage.removeItem('user');
         }
       } else {
-        // Error en la verificación, intentar refresh
-        await attemptTokenRefresh();
+        // Error en la verificación, no intentar refresh automáticamente
+        setUser(null);
+        setIsAuthenticated(false);
+        localStorage.removeItem('user');
       }
     } catch (error) {
       console.error('Error checking auth status:', error);
-      // En caso de error, intentar refresh
-      await attemptTokenRefresh();
+      // En caso de error, no intentar refresh automáticamente
+      setUser(null);
+      setIsAuthenticated(false);
+      localStorage.removeItem('user');
     } finally {
       setIsLoading(false);
     }
@@ -79,6 +89,7 @@ export const AuthProvider = ({ children }) => {
   // Función para hacer logout
   const logout = useCallback(async () => {
     try {
+      // Llamar a la API de logout
       await fetch('/api/auth/logout', {
         method: 'POST',
         credentials: 'include'
@@ -86,9 +97,14 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('Error en logout:', error);
     } finally {
+      // Limpiar estado local
       setUser(null);
       setIsAuthenticated(false);
-      localStorage.removeItem('user');
+      
+      // Usar la utilidad para limpiar solo sesiones de usuario normal
+      clearUserSessions();
+      
+      console.log('🔒 Logout de usuario completado - sesiones de usuario limpiadas');
     }
   }, []);
 
@@ -134,28 +150,29 @@ export const AuthProvider = ({ children }) => {
 
   // Verificar autenticación al montar el componente
   useEffect(() => {
-    // Solo verificar si no hay datos en localStorage
-    const savedUser = localStorage.getItem('user');
-    if (!savedUser) {
-      checkAuthStatus();
-    } else {
-      try {
-        const userData = JSON.parse(savedUser);
-        setUser(userData);
-        setIsAuthenticated(true);
-        setIsLoading(false);
-      } catch (error) {
-        console.error('Error parsing saved user:', error);
-        localStorage.removeItem('user');
-        checkAuthStatus();
-      }
+    // Verificar si hay datos de admin en localStorage y limpiarlos si existen
+    const adminUser = localStorage.getItem('adminUser');
+    if (adminUser) {
+      console.log('🔒 Detectado usuario admin en localStorage, limpiando...');
+      localStorage.removeItem('adminUser');
     }
+
+    // Siempre verificar el estado de autenticación con el servidor
+    // para asegurar que las cookies siguen siendo válidas
+    checkAuthStatus();
   }, [checkAuthStatus]);
 
   // Configurar un intervalo para verificar la autenticación periódicamente
   useEffect(() => {
     if (isAuthenticated) {
       const interval = setInterval(() => {
+        // Verificar si hay datos de admin y limpiarlos
+        const adminUser = localStorage.getItem('adminUser');
+        if (adminUser) {
+          console.log('🔒 Detectado usuario admin en localStorage, limpiando...');
+          localStorage.removeItem('adminUser');
+        }
+        
         checkAuthStatus();
       }, 5 * 60 * 1000); // Verificar cada 5 minutos
 

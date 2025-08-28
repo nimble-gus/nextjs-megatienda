@@ -176,7 +176,7 @@
     transition: var(--transition-smooth);
 }
 
-.shipping-icon {
+.topbar-shipping-icon {
     color: var(--topbar-accent);
     animation: float 3s ease-in-out infinite;
 }

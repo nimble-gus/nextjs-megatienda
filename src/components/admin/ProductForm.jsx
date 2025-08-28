@@ -89,6 +89,10 @@ export default function ProductForm({ onProductAdded }) {
     setStock([...stock, { color_id: '', cantidad: '', precio: '' }]);
   };
 
+  const removeStockRow = (index) => {
+    setStock(stock.filter((_, i) => i !== index));
+  };
+
   const handleStockChange = (index, field, value) => {
     const updated = [...stock];
     updated[index][field] = value;
@@ -312,6 +316,14 @@ export default function ProductForm({ onProductAdded }) {
                 min="0"
                 step="0.01"
               />
+              <button
+                type="button"
+                onClick={() => removeStockRow(index)}
+                className="remove-stock-btn"
+                title="Eliminar variante"
+              >
+                🗑️
+              </button>
             </div>
           ))}
           <button type="button" onClick={addStockRow} className="add-stock-btn">

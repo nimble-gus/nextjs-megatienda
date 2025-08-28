@@ -31,6 +31,27 @@ const OrdersManager = () => {
     fetchOrders();
   }, [statusFilter, paymentFilter, searchOrder, page]);
 
+  // Escuchar eventos de nuevas órdenes para actualizar en tiempo real
+  useEffect(() => {
+    const handleNewOrder = () => {
+      console.log('📢 Nueva orden recibida, actualizando lista...');
+      fetchOrders();
+    };
+
+    const handleOrderProcessed = () => {
+      console.log('📢 Orden procesada, actualizando lista...');
+      fetchOrders();
+    };
+
+    window.addEventListener('newOrderCreated', handleNewOrder);
+    window.addEventListener('orderProcessed', handleOrderProcessed);
+
+    return () => {
+      window.removeEventListener('newOrderCreated', handleNewOrder);
+      window.removeEventListener('orderProcessed', handleOrderProcessed);
+    };
+  }, []);
+
   // Resetear página cuando se cambia la búsqueda
   useEffect(() => {
     setPage(1);
@@ -322,7 +343,10 @@ const OrdersManager = () => {
                   <p><strong>Nombre:</strong> {order.cliente.nombre}</p>
                   <p><strong>Email:</strong> {order.cliente.email}</p>
                   <p><strong>Teléfono:</strong> {order.cliente.telefono}</p>
-                                     <p><strong>Municipio:</strong> {order.cliente.municipio}</p>
+                  <p><strong>Municipio:</strong> {order.cliente.municipio}</p>
+                  {order.nombre_quien_recibe && (
+                    <p><strong>Quien Recibe:</strong> {order.nombre_quien_recibe}</p>
+                  )}
                   {order.cliente.nit && (
                     <p><strong>NIT:</strong> {order.cliente.nit}</p>
                   )}

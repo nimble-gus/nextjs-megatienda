@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { invalidateProductCache } from '@/lib/cache-manager';
 
 export async function PATCH(request, { params }) {
   try {
@@ -22,6 +23,10 @@ export async function PATCH(request, { params }) {
       where: { id: parseInt(id) },
       data: { featured: featured }
     });
+
+    // Invalidar caché de productos
+    await invalidateProductCache();
+
     return NextResponse.json({
       success: true,
       product: {

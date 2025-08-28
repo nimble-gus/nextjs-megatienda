@@ -416,6 +416,9 @@ export default function OrdersPage() {
                   <p><strong>Dirección:</strong> {selectedOrder.direccion_cliente || 'No especificada'}</p>
                   <p><strong>Municipio:</strong> {selectedOrder.municipio_cliente || 'No especificado'}</p>
                   <p><strong>Código Postal:</strong> {selectedOrder.codigo_postal_cliente || 'No especificado'}</p>
+                  {selectedOrder.nombre_quien_recibe && (
+                    <p><strong>Quien Recibe:</strong> {selectedOrder.nombre_quien_recibe}</p>
+                  )}
                   {selectedOrder.nit_cliente && (
                     <p><strong>NIT:</strong> {selectedOrder.nit_cliente}</p>
                   )}

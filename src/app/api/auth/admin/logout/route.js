@@ -2,32 +2,32 @@ import { NextResponse } from 'next/server';
 
 export async function POST() {
   try {
+    // Crear respuesta de éxito
     const response = NextResponse.json({
       success: true,
-      message: 'Sesión cerrada exitosamente'
+      message: 'Logout de admin exitoso'
     });
 
-    // Limpiar cookies de autenticación
-    response.cookies.set('accessToken', '', {
+    // Eliminar solo cookies de admin
+    response.cookies.set('adminAccessToken', '', {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 0,
+      secure: false, // Cambiar a false para desarrollo local
+      sameSite: 'lax', // Cambiar a lax para mejor compatibilidad
+      maxAge: 0, // Expirar inmediatamente
       path: '/'
     });
 
-    response.cookies.set('refreshToken', '', {
+    response.cookies.set('adminRefreshToken', '', {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 0,
+      secure: false, // Cambiar a false para desarrollo local
+      sameSite: 'lax', // Cambiar a lax para mejor compatibilidad
+      maxAge: 0, // Expirar inmediatamente
       path: '/'
     });
 
     return response;
-
   } catch (error) {
-    console.error('❌ Error en logout:', error);
+    console.error('Error en logout de admin:', error);
     return NextResponse.json(
       { error: 'Error interno del servidor' },
       { status: 500 }

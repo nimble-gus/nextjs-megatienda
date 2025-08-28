@@ -376,9 +376,9 @@ const LoginModal = ({ onClose, onLoginSuccess }) => {
                         {isRegister && (
                             <p>
                                 Al registrarte, aceptas nuestros{' '}
-                                <a href="#" className="link">Términos de Servicio</a>{' '}
+                                <a href="/terms" target="_blank" rel="noopener noreferrer" className="link">Términos de Servicio</a>{' '}
                                 y{' '}
-                                <a href="#" className="link">Política de Privacidad</a>
+                                <a href="/privacy" target="_blank" rel="noopener noreferrer" className="link">Política de Privacidad</a>
                             </p>
                         )}
                     </div>

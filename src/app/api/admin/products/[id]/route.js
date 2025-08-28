@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { invalidateProductCache, invalidateOrderCache } from '@/lib/cache-manager';
 
 // GET - Obtener un producto específico
 export async function GET(request, { params }) {
@@ -78,6 +79,13 @@ export async function PUT(request, { params }) {
         categoria: true
       }
     });
+
+    // Invalidar caché de productos y relacionados
+    await Promise.all([
+      invalidateProductCache(),
+      invalidateOrderCache()
+    ]);
+
     return NextResponse.json(updatedProduct);
   } catch (error) {
     console.error(`=== ERROR EN PUT /api/admin/products/${params?.id} ===`);
@@ -132,6 +140,13 @@ export async function DELETE(request, { params }) {
     await prisma.productos.delete({
       where: { id: parseInt(id) }
     });
+
+    // Invalidar caché de productos y relacionados
+    await Promise.all([
+      invalidateProductCache(),
+      invalidateOrderCache()
+    ]);
+
     return NextResponse.json({ 
       message: 'Producto eliminado exitosamente',
       deleted: {

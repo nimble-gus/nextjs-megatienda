@@ -6,11 +6,14 @@ import Link from 'next/link';
 import Image from 'next/image';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
+import WhatsAppCheckout from '@/components/Checkout/WhatsAppCheckout';
+import { useAuth } from '@/contexts/AuthContext';
 import '@/styles/CheckoutPage.css';
 
 export default function CheckoutPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { user, isAuthenticated } = useAuth();
   
   // Estados para productos
   const [productos, setProductos] = useState([]);
@@ -23,6 +26,7 @@ export default function CheckoutPage() {
     lastName: '',
     streetAddress: '',
     apartment: '',
+    nombreQuienRecibe: '',
     city: '',
     state: '',
     postcode: '',
@@ -44,6 +48,7 @@ export default function CheckoutPage() {
   const [isGuestCheckout, setIsGuestCheckout] = useState(false);
   const [queuePosition, setQueuePosition] = useState(null);
   const [processingStatus, setProcessingStatus] = useState('');
+  const [showWhatsAppCheckout, setShowWhatsAppCheckout] = useState(false);
 
   // Cargar productos al montar el componente
   useEffect(() => {
@@ -283,10 +288,11 @@ export default function CheckoutPage() {
         nombre_cliente: `${formData.firstName} ${formData.lastName}`,
         email_cliente: formData.email,
         telefono_cliente: formData.phone,
-                 direccion_cliente: `${formData.streetAddress}${formData.apartment ? `, ${formData.apartment}` : ''}`,
-         municipio_cliente: formData.city,
-         codigo_postal_cliente: formData.postcode,
+        direccion_cliente: `${formData.streetAddress}${formData.apartment ? `, ${formData.apartment}` : ''}`,
+        municipio_cliente: formData.city,
+        codigo_postal_cliente: formData.postcode,
         nit_cliente: formData.nit,
+        nombre_quien_recibe: formData.nombreQuienRecibe,
         
         // Datos de la orden
         productos: productos,
@@ -343,6 +349,15 @@ export default function CheckoutPage() {
         // Orden creada exitosamente
         // Disparar evento para actualizar el contador del carrito en el header
         window.dispatchEvent(new CustomEvent('cartUpdated'));
+        
+        // Disparar evento de nueva orden creada para notificaciones en tiempo real
+        window.dispatchEvent(new CustomEvent('newOrderCreated', {
+          detail: {
+            orderNumber: result.orden.codigo_orden,
+            orderId: result.orden.id,
+            method: result.orden.metodo_pago
+          }
+        }));
         
         // Redirigir a la página de confirmación
         router.push(`/checkout/confirmation?orderId=${result.orden.codigo_orden}`);
@@ -421,6 +436,56 @@ export default function CheckoutPage() {
             </Link>
           </div>
         </div>
+      </div>
+    );
+  }
+
+  // Mostrar WhatsApp Checkout si está activado
+  if (showWhatsAppCheckout) {
+    const customerData = {
+      nombre: `${formData.firstName} ${formData.lastName}`,
+      email: formData.email,
+      telefono: formData.phone,
+      direccion: `${formData.streetAddress} ${formData.apartment}, ${formData.city}, ${formData.state} ${formData.postcode}`
+    };
+
+    const totalAmount = productos.reduce((total, producto) => {
+      const precio = producto.precio || producto.producto?.precio || 0;
+      const cantidad = producto.cantidad || 1;
+      return total + (precio * cantidad);
+    }, 0) + costoEnvio;
+
+    return (
+      <div className="checkout-page">
+        <div className="sticky-wrapper">
+          <Header />
+        </div>
+        <div className="checkout-main">
+          <div className="checkout-container">
+            <WhatsAppCheckout
+              orderData={{
+                productos,
+                costoEnvio,
+                metodoPago,
+                notas: formData.orderNotes,
+                nit_cliente: formData.nit,
+                municipio_cliente: formData.state,
+                codigo_postal_cliente: formData.postcode,
+                nombre_quien_recibe: formData.nombreQuienRecibe,
+                usuario_id: user?.id || null
+              }}
+              customerData={customerData}
+              cartItems={productos}
+              totalAmount={totalAmount}
+              onBack={() => setShowWhatsAppCheckout(false)}
+              onSuccess={(orderResult) => {
+                console.log('Orden enviada por WhatsApp:', orderResult);
+                // Aquí puedes manejar el éxito de la orden
+              }}
+            />
+          </div>
+        </div>
+        <Footer />
       </div>
     );
   }
@@ -528,6 +593,19 @@ export default function CheckoutPage() {
                       />
                     </div>
 
+                    <div className="form-group full-width">
+                      <label className="form-label required">Nombre de Quien Recibe</label>
+                      <input
+                        type="text"
+                        name="nombreQuienRecibe"
+                        value={formData.nombreQuienRecibe}
+                        onChange={handleInputChange}
+                        className="form-input"
+                        placeholder="Nombre completo de la persona que recibirá el pedido"
+                        required
+                      />
+                    </div>
+
                     <div className="form-row">
                                              <div className="form-group">
                          <label className="form-label required">Municipio</label>
@@ -557,14 +635,14 @@ export default function CheckoutPage() {
 
                     <div className="form-row">
                       <div className="form-group">
-                        <label className="form-label required">Código Postal</label>
+                        <label className="form-label required">Zona</label>
                         <input
                           type="text"
                           name="postcode"
                           value={formData.postcode}
                           onChange={handleInputChange}
                           className="form-input"
-                          placeholder="Código postal"
+                          placeholder="Zona"
                           required
                         />
                       </div>
@@ -679,9 +757,7 @@ export default function CheckoutPage() {
                             onChange={() => handlePaymentMethodChange('contra_entrega')}
                             className="payment-radio"
                           />
-                          <div className="payment-content">
-                            <div className="payment-label">Pago contra entrega</div>
-                          </div>
+                          <div className="payment-label">Pago contra entrega</div>
                         </div>
                         
                         <div 
@@ -696,29 +772,28 @@ export default function CheckoutPage() {
                             onChange={() => handlePaymentMethodChange('transferencia')}
                             className="payment-radio"
                           />
-                          <div className="payment-content">
-                            <div className="payment-label">Pago con transferencia</div>
-                          </div>
+                          <div className="payment-label">Pago con transferencia</div>
                         </div>
                       </div>
                     </div>
 
-                    {/* Upload de comprobante (solo para transferencias) */}
+                    {/* WhatsApp Checkout para transferencias */}
                     {metodoPago === 'transferencia' && (
                       <div className="form-group full-width">
-                        <label className="form-label required">Comprobante de Transferencia</label>
-                        <input
-                          type="file"
-                          accept="image/*,.pdf"
-                          onChange={handleFileChange}
-                          className="file-input"
-                          required
-                        />
-                        {comprobanteTransferencia && (
-                          <div style={{ marginTop: '8px', fontSize: '0.85rem', color: 'var(--success-color)' }}>
-                            ✓ Archivo seleccionado: {comprobanteTransferencia.name}
+                        <div className="whatsapp-transfer-notice">
+                          <div className="notice-icon">💬</div>
+                          <div className="notice-content">
+                            <h4>Finalizar por WhatsApp</h4>
+                            <p>Para proteger tu seguridad, los datos bancarios se proporcionan por WhatsApp. Haz clic en el botón para continuar.</p>
+                            <button 
+                              type="button"
+                              className="btn-whatsapp-transfer"
+                              onClick={() => setShowWhatsAppCheckout(true)}
+                            >
+                              📱 Finalizar por WhatsApp
+                            </button>
                           </div>
-                        )}
+                        </div>
                       </div>
                     )}
 

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { invalidateCartCache } from '@/lib/cache-manager';
 
 // PATCH - Actualizar cantidad de un item del carrito
 export async function PATCH(request, { params }) {
@@ -95,6 +96,9 @@ export async function PATCH(request, { params }) {
       }
     };
 
+    // Invalidar caché del carrito para el usuario
+    await invalidateCartCache(currentItem.usuario_id);
+
     return NextResponse.json({
       success: true,
       item: formattedItem
@@ -116,11 +120,30 @@ export async function PATCH(request, { params }) {
 export async function DELETE(request, { params }) {
   try {
     const { itemId } = params;
+    
+    // Primero obtener el item para saber el usuario_id
+    const item = await prisma.carrito.findUnique({
+      where: {
+        id: parseInt(itemId)
+      }
+    });
+
+    if (!item) {
+      return NextResponse.json(
+        { error: 'Item del carrito no encontrado' },
+        { status: 404 }
+      );
+    }
+
     await prisma.carrito.delete({
       where: {
         id: parseInt(itemId)
       }
     });
+
+    // Invalidar caché del carrito para el usuario
+    await invalidateCartCache(item.usuario_id);
+
     return NextResponse.json({
       success: true,
       message: 'Item eliminado exitosamente'

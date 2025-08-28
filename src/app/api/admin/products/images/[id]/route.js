@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { invalidateProductCache } from '@/lib/cache-manager';
 
 // DELETE - Eliminar una imagen específica
 export async function DELETE(request, { params }) {
@@ -22,6 +23,9 @@ export async function DELETE(request, { params }) {
     await prisma.imagenes_producto.delete({
       where: { id: parseInt(id) }
     });
+
+    // Invalidar caché de productos
+    await invalidateProductCache();
     
     return NextResponse.json({ 
       success: true, 

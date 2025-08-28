@@ -141,7 +141,9 @@ const ProductDetails = ({ product }) => {
       setCartMessage(result.message);
       
       // Disparar evento para actualizar contador en el header
+      console.log('📢 Disparando evento cartUpdated...');
       window.dispatchEvent(new CustomEvent('cartUpdated'));
+      console.log('✅ Evento cartUpdated disparado');
       
       // Limpiar mensaje después de 3 segundos
       setTimeout(() => {

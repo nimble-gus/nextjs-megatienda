@@ -491,6 +491,15 @@ button[disabled] {
   
   .action-buttons {
     flex-direction: column;
+    gap: 12px;
+  }
+  
+  .add-to-cart-btn,
+  .buy-now-btn {
+    width: 100%;
+    padding: 14px 20px;
+    font-size: 15px;
+    min-height: 48px;
   }
   
   .color-options {
@@ -499,5 +508,34 @@ button[disabled] {
   
   .color-option {
     min-width: 50px;
+  }
+}
+
+@media (max-width: 480px) {
+  .product-info {
+    padding: 16px;
+  }
+  
+  .product-name {
+    font-size: 20px;
+  }
+  
+  .current-price {
+    font-size: 24px;
+  }
+  
+  .action-buttons {
+    gap: 10px;
+  }
+  
+  .add-to-cart-btn,
+  .buy-now-btn {
+    padding: 12px 16px;
+    font-size: 14px;
+    min-height: 44px;
+  }
+  
+  .cart-icon {
+    font-size: 16px;
   }
 }

@@ -9,7 +9,16 @@ export const getProducts = async () => {
   
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      const response = await fetch(API_BASE);
+      // Agregar timestamp para evitar caché del navegador
+      const timestamp = new Date().getTime();
+      const response = await fetch(`${API_BASE}?_t=${timestamp}`, {
+        method: 'GET',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      });
       if (!response.ok) {
         throw new Error('Error al obtener productos');
       }

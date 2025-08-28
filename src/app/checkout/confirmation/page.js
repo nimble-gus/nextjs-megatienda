@@ -178,6 +178,11 @@ export default function CheckoutConfirmationPage() {
                                              <p style={{ margin: '0 0 10px 0', fontWeight: '600', color: '#000' }}>
                          {orden?.nombre_cliente}
                        </p>
+                      {orden?.nombre_quien_recibe && (
+                        <p style={{ margin: '0 0 5px 0', color: '#000', fontStyle: 'italic' }}>
+                          <strong>Quien Recibe:</strong> {orden.nombre_quien_recibe}
+                        </p>
+                      )}
                       <p style={{ margin: '0 0 5px 0', color: '#000' }}>
                         {orden?.direccion_cliente}
                       </p>

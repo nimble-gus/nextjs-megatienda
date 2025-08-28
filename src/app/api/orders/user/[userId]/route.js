@@ -65,6 +65,7 @@ export async function GET(request, { params }) {
       municipio_cliente: order.municipio_cliente,
       codigo_postal_cliente: order.codigo_postal_cliente,
       nit_cliente: order.nit_cliente,
+      nombre_quien_recibe: order.nombre_quien_recibe,
       detalles: order.detalle.map(detalle => ({
         id: detalle.id,
         cantidad: detalle.cantidad,

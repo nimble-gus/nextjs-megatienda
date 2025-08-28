@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { invalidateProductCache, invalidateOrderCache } from '@/lib/cache-manager';
 
 // GET - Obtener stock detallado de un producto
 export async function GET(request, { params }) {
@@ -100,6 +101,13 @@ export async function PUT(request, { params }) {
     }
     
     await Promise.all(operations);
+
+    // Invalidar caché de productos y relacionados
+    await Promise.all([
+      invalidateProductCache(),
+      invalidateOrderCache()
+    ]);
+
     return NextResponse.json({ 
       success: true, 
       message: 'Stock actualizado exitosamente',

@@ -18,8 +18,8 @@ export async function middleware(request) {
   const isAdminApiRoute = pathname.startsWith('/api/admin');
   
   if (isAdminRoute || isAdminApiRoute) {
-    const accessToken = request.cookies.get('accessToken')?.value;
-    const refreshToken = request.cookies.get('refreshToken')?.value;
+    const accessToken = request.cookies.get('adminAccessToken')?.value;
+    const refreshToken = request.cookies.get('adminRefreshToken')?.value;
     
     let isAuthenticated = false;
     let isAdmin = false;
@@ -29,7 +29,7 @@ export async function middleware(request) {
       try {
         const { payload } = await jwtVerify(accessToken, JWT_SECRET);
         isAuthenticated = true;
-        isAdmin = payload.role === 'admin';
+        isAdmin = payload.rol === 'admin';
       } catch (error) {
         console.log('Access token inválido o expirado');
       }
@@ -39,7 +39,7 @@ export async function middleware(request) {
     if (!isAuthenticated && refreshToken) {
       try {
         const { payload } = await jwtVerify(refreshToken, JWT_SECRET);
-        if (payload.role === 'admin') {
+        if (payload.rol === 'admin') {
           isAuthenticated = true;
           isAdmin = true;
           
@@ -48,7 +48,7 @@ export async function middleware(request) {
           const newAccessToken = await new SignJWT({
             userId: payload.userId,
             email: payload.email,
-            role: payload.role,
+            rol: payload.rol,
             nombre: payload.nombre
           })
             .setProtectedHeader({ alg: 'HS256' })
@@ -57,7 +57,7 @@ export async function middleware(request) {
             .sign(JWT_SECRET);
           
           const response = NextResponse.next();
-          response.cookies.set('accessToken', newAccessToken, {
+          response.cookies.set('adminAccessToken', newAccessToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
@@ -87,11 +87,11 @@ export async function middleware(request) {
   
   // Si está en login y ya está autenticado, redirigir a admin
   if (pathname === '/admin/login') {
-    const accessToken = request.cookies.get('accessToken')?.value;
+    const accessToken = request.cookies.get('adminAccessToken')?.value;
     if (accessToken) {
       try {
         const { payload } = await jwtVerify(accessToken, JWT_SECRET);
-        if (payload.role === 'admin') {
+        if (payload.rol === 'admin') {
           return NextResponse.redirect(new URL('/admin', request.url));
         }
       } catch (error) {

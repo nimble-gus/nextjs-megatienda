@@ -282,7 +282,7 @@ const TermsPage = () => {
                   <a href="/contact" className="contact-btn primary">
                     Contáctanos
                   </a>
-                  <a href="/privacy" className="contact-btn secondary">
+                  <a href="/privacy" target="_blank" rel="noopener noreferrer" className="contact-btn secondary">
                     Ver Políticas de Privacidad
                   </a>
                 </div>

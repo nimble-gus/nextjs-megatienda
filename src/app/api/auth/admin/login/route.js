@@ -51,7 +51,7 @@ export async function POST(request) {
     const accessToken = await new SignJWT({
       userId: user.id,
       email: user.correo,
-      role: user.rol,
+      rol: user.rol,
       nombre: user.nombre
     })
       .setProtectedHeader({ alg: 'HS256' })
@@ -62,7 +62,7 @@ export async function POST(request) {
     const refreshToken = await new SignJWT({
       userId: user.id,
       email: user.correo,
-      role: user.rol
+      rol: user.rol
     })
       .setProtectedHeader({ alg: 'HS256' })
       .setIssuedAt()
@@ -81,19 +81,19 @@ export async function POST(request) {
       message: 'Login exitoso'
     });
 
-    // Configurar cookies HttpOnly
-    response.cookies.set('accessToken', accessToken, {
+    // Configurar cookies HttpOnly específicas para admin
+    response.cookies.set('adminAccessToken', accessToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      secure: false, // Cambiar a false para desarrollo local
+      sameSite: 'lax', // Cambiar a lax para mejor compatibilidad
       maxAge: 60 * 60, // 1 hora
       path: '/'
     });
 
-    response.cookies.set('refreshToken', refreshToken, {
+    response.cookies.set('adminRefreshToken', refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      secure: false, // Cambiar a false para desarrollo local
+      sameSite: 'lax', // Cambiar a lax para mejor compatibilidad
       maxAge: 7 * 24 * 60 * 60, // 7 días
       path: '/'
     });

@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { getSales, getKpis } from '@/services/salesService';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAdminAuth } from '@/contexts/AdminAuthContext';
+import { useAdminOrders } from '@/contexts/AdminOrdersContext';
 
 import KPICard from './KPICard';
 import SalesTable from './SalesTable';
@@ -13,10 +14,13 @@ import ContactMessages from './ContactMessages';
 import LowStockAlert from './LowStockAlert';
 import MultimediaManager from './MultimediaManager';
 import OrdersManager from './OrdersManager';
+import CacheManager from './CacheManager';
+import OrderNotifications from './OrderNotifications';
 import '@/styles/AdminDashboard.css';
 
 export default function AdminDashboard() {
-  const { user, logout } = useAuth();
+  const { adminUser, adminLogout } = useAdminAuth();
+  const { pendingOrdersCount } = useAdminOrders();
   const [sales, setSales] = useState([]);
   const [salesSummary, setSalesSummary] = useState({ totalVentas: 0, totalPedidos: 0 });
   const [kpis, setKpis] = useState({});
@@ -225,6 +229,8 @@ export default function AdminDashboard() {
         return <MultimediaManager />;
       case 'orders':
         return <OrdersManager />;
+      case 'cache':
+        return <CacheManager />;
       default:
         return <div>Sección no encontrada</div>;
     }
@@ -232,6 +238,9 @@ export default function AdminDashboard() {
 
   return (
     <div className="admin-dashboard">
+      {/* Notificaciones de órdenes */}
+      <OrderNotifications />
+      
       {/* Sidebar */}
       <aside className={`admin-sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
         <div className="sidebar-header">
@@ -294,6 +303,17 @@ export default function AdminDashboard() {
           >
             <span className="nav-icon">📦</span>
             <span className="nav-text">Pedidos</span>
+            {pendingOrdersCount > 0 && (
+              <span className="badge orders-badge">{pendingOrdersCount}</span>
+            )}
+          </button>
+          
+          <button 
+            className={`nav-item ${activeTab === 'cache' ? 'active' : ''}`}
+            onClick={() => setActiveTab('cache')}
+          >
+            <span className="nav-icon">🔄</span>
+            <span className="nav-text">Caché</span>
           </button>
         </nav>
       </aside>
@@ -307,8 +327,8 @@ export default function AdminDashboard() {
               <div className="user-info">
                 <span className="user-avatar">👨‍💼</span>
                 <div className="user-details">
-                                                <span className="user-name">{user?.nombre || 'Admin'}</span>
-                <span className="user-role">{user?.rol === 'admin' ? 'Administrador' : 'Usuario'}</span>
+                                                <span className="user-name">{adminUser?.nombre || 'Admin'}</span>
+                <span className="user-role">{adminUser?.rol === 'admin' ? 'Administrador' : 'Usuario'}</span>
                 </div>
               </div>
               <button className="btn-secondary" title="Notificaciones">
@@ -316,7 +336,7 @@ export default function AdminDashboard() {
               </button>
                             <button 
                 className="btn-logout"
-                onClick={logout}
+                onClick={adminLogout}
                 title="Cerrar sesión"
               >
                 <span>🚪</span>

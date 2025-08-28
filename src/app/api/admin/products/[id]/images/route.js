@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { invalidateProductCache } from '@/lib/cache-manager';
 
 // GET - Obtener imágenes de un producto
 export async function GET(request, { params }) {
@@ -46,6 +47,9 @@ export async function POST(request, { params }) {
         url_imagen: url_imagen.trim()
       }
     });
+
+    // Invalidar caché de productos
+    await invalidateProductCache();
     
     return NextResponse.json({ 
       success: true, 

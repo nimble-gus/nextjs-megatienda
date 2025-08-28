@@ -8,22 +8,25 @@ export async function POST() {
       message: 'Logout exitoso'
     });
 
-    // Eliminar cookies de autenticación
+    // Eliminar cookies de autenticación de usuario normal
     response.cookies.set('accessToken', '', {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      secure: false, // Cambiar a false para desarrollo local
+      sameSite: 'lax', // Cambiar a lax para mejor compatibilidad
       maxAge: 0, // Expirar inmediatamente
       path: '/'
     });
 
     response.cookies.set('refreshToken', '', {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      secure: false, // Cambiar a false para desarrollo local
+      sameSite: 'lax', // Cambiar a lax para mejor compatibilidad
       maxAge: 0, // Expirar inmediatamente
       path: '/'
     });
+
+    // NO eliminar cookies de admin - mantener sesiones separadas
+    // Las cookies de admin se manejan por separado en el contexto de admin
 
     return response;
   } catch (error) {
