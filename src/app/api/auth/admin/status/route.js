@@ -30,7 +30,7 @@ export async function GET(request) {
           nombre: payload.nombre
         };
       } catch (error) {
-        console.log('Access token inválido, intentando refresh token');
+
       }
     }
 
@@ -53,7 +53,7 @@ export async function GET(request) {
           };
         }
       } catch (error) {
-        console.log('Refresh token inválido');
+
       }
     }
 

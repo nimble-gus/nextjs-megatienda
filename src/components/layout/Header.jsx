@@ -3,7 +3,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import '@/styles/Header.css';
-import LoginModal from '../Auth/LoginModal';
+import LoginModal from '../auth/LoginModal';
 import { useAuth } from '@/contexts/AuthContext';
 
 const Header = () => {

@@ -13,18 +13,18 @@ export async function GET(request, { params }) {
     const cachedData = await redis.get(cacheKey);
     
     if (cachedData) {
-      console.log(`🛒 Carrito cargado desde caché para usuario: ${userId}`);
+      
       try {
         // Verificar si es un string JSON válido
         if (typeof cachedData === 'string') {
           return NextResponse.json(JSON.parse(cachedData));
         } else {
           // Si es un objeto, limpiar el caché corrupto
-          console.log('⚠️ Caché corrupto detectado, limpiando...');
+  
           await redis.del(cacheKey);
         }
       } catch (parseError) {
-        console.log('⚠️ Error parseando caché, limpiando...');
+
         await redis.del(cacheKey);
       }
     }
@@ -82,7 +82,7 @@ export async function GET(request, { params }) {
 
     // Guardar en caché por 5 minutos
     await redis.setex(cacheKey, 300, JSON.stringify(response));
-    console.log(`🛒 Carrito guardado en caché para usuario: ${userId}`);
+    
 
     return NextResponse.json(response);
 

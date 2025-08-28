@@ -27,12 +27,12 @@ export const AdminOrdersProvider = ({ children }) => {
       const count = await getPendingOrdersCount();
       setPendingOrdersCount(count);
       setLastUpdate(new Date());
-      console.log(`📊 Órdenes pendientes actualizadas: ${count}`);
+      
     } catch (error) {
       console.error('Error cargando órdenes pendientes:', error);
       // Si es error de autenticación o autorización, no mostrar error en consola
       if (error.message && (error.message.includes('401') || error.message.includes('403'))) {
-        console.log('🔒 Usuario no autenticado como admin, omitiendo carga de órdenes');
+
         setPendingOrdersCount(0);
       }
     } finally {
@@ -44,14 +44,14 @@ export const AdminOrdersProvider = ({ children }) => {
   const updatePendingOrdersCount = (newCount) => {
     setPendingOrdersCount(newCount);
     setLastUpdate(new Date());
-    console.log(`📊 Conteo de órdenes actualizado manualmente: ${newCount}`);
+    
   };
 
   // Función para incrementar el conteo (cuando llega una nueva orden)
   const incrementPendingOrders = () => {
     setPendingOrdersCount(prev => {
       const newCount = prev + 1;
-      console.log(`📊 Nueva orden recibida, conteo incrementado: ${newCount}`);
+      
       return newCount;
     });
     setLastUpdate(new Date());
@@ -61,7 +61,7 @@ export const AdminOrdersProvider = ({ children }) => {
   const decrementPendingOrders = () => {
     setPendingOrdersCount(prev => {
       const newCount = Math.max(0, prev - 1);
-      console.log(`📊 Orden procesada, conteo decrementado: ${newCount}`);
+      
       return newCount;
     });
     setLastUpdate(new Date());
@@ -71,7 +71,7 @@ export const AdminOrdersProvider = ({ children }) => {
   const resetPendingOrders = () => {
     setPendingOrdersCount(0);
     setLastUpdate(new Date());
-    console.log('📊 Conteo de órdenes reseteado');
+    
   };
 
   // Cargar datos iniciales solo si el admin está autenticado
@@ -110,17 +110,17 @@ export const AdminOrdersProvider = ({ children }) => {
   // Escuchar eventos de nuevas órdenes
   useEffect(() => {
     const handleNewOrder = () => {
-      console.log('📢 Evento de nueva orden recibido');
+      
       incrementPendingOrders();
     };
 
     const handleOrderProcessed = () => {
-      console.log('📢 Evento de orden procesada recibido');
+      
       decrementPendingOrders();
     };
 
     const handleOrdersUpdated = () => {
-      console.log('📢 Evento de órdenes actualizadas recibido');
+      
       loadPendingOrdersCount();
     };
 

@@ -23,8 +23,7 @@ export async function GET(request) {
     const search = searchParams.get('search');
     // Verificar si DATABASE_URL está configurada
     const databaseUrl = process.env.DATABASE_URL;
-    console.log('🔍 DATABASE_URL valor:', databaseUrl ? databaseUrl.substring(0, 50) + '...' : 'undefined');
-    console.log('🔍 Todas las variables de entorno:', Object.keys(process.env).filter(key => key.includes('DATABASE')));
+      
     
     if (!databaseUrl) {
       // Datos de prueba con URLs de placeholder que funcionan

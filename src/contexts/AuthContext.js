@@ -104,7 +104,7 @@ export const AuthProvider = ({ children }) => {
       // Usar la utilidad para limpiar solo sesiones de usuario normal
       clearUserSessions();
       
-      console.log('🔒 Logout de usuario completado - sesiones de usuario limpiadas');
+      
     }
   }, []);
 
@@ -153,7 +153,7 @@ export const AuthProvider = ({ children }) => {
     // Verificar si hay datos de admin en localStorage y limpiarlos si existen
     const adminUser = localStorage.getItem('adminUser');
     if (adminUser) {
-      console.log('🔒 Detectado usuario admin en localStorage, limpiando...');
+      
       localStorage.removeItem('adminUser');
     }
 
@@ -169,7 +169,7 @@ export const AuthProvider = ({ children }) => {
         // Verificar si hay datos de admin y limpiarlos
         const adminUser = localStorage.getItem('adminUser');
         if (adminUser) {
-          console.log('🔒 Detectado usuario admin en localStorage, limpiando...');
+  
           localStorage.removeItem('adminUser');
         }
         

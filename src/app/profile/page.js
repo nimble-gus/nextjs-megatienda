@@ -24,11 +24,17 @@ const ProfilePage = () => {
             if (response.ok) {
                 const data = await response.json();
                 if (data.isAuthenticated) {
-                    const savedUser = localStorage.getItem('user');
-                    if (savedUser) {
-                        const userData = JSON.parse(savedUser);
-                        setUser(userData);
-                    } else {
+                    try {
+                        const savedUser = localStorage.getItem('user');
+                        if (savedUser) {
+                            const userData = JSON.parse(savedUser);
+                            setUser(userData);
+                        } else {
+                            router.push('/');
+                        }
+                    } catch (error) {
+                        console.error('Error parsing user data:', error);
+                        localStorage.removeItem('user');
                         router.push('/');
                     }
                 } else {

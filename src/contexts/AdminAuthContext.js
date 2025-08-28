@@ -126,7 +126,7 @@ export const AdminAuthProvider = ({ children }) => {
       // Usar la utilidad para limpiar sesiones
       clearAdminSessions();
       
-      console.log('🔒 Admin logout completado - todas las sesiones limpiadas');
+      
     }
   }, []);
 
@@ -137,16 +137,20 @@ export const AdminAuthProvider = ({ children }) => {
 
   // Verificar si hay datos de admin en localStorage al cargar
   useEffect(() => {
-    const adminUserData = localStorage.getItem('adminUser');
-    if (adminUserData && !adminUser) {
-      try {
-        const parsedUser = JSON.parse(adminUserData);
-        setAdminUser(parsedUser);
-        setIsAdminAuthenticated(true);
-      } catch (error) {
-        console.error('Error parsing admin user data:', error);
-        localStorage.removeItem('adminUser');
+    try {
+      const adminUserData = localStorage.getItem('adminUser');
+      if (adminUserData && !adminUser) {
+        try {
+          const parsedUser = JSON.parse(adminUserData);
+          setAdminUser(parsedUser);
+          setIsAdminAuthenticated(true);
+        } catch (error) {
+          console.error('Error parsing admin user data:', error);
+          localStorage.removeItem('adminUser');
+        }
       }
+    } catch (error) {
+      console.error('Error accessing localStorage:', error);
     }
   }, [adminUser]);
 

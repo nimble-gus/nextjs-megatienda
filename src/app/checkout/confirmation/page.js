@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -8,7 +8,7 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import '@/styles/CheckoutPage.css';
 
-export default function CheckoutConfirmationPage() {
+function CheckoutConfirmationContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const orderId = searchParams.get('orderId');
@@ -350,5 +350,27 @@ export default function CheckoutConfirmationPage() {
       
       <Footer />
     </div>
+  );
+}
+
+// Componente principal que envuelve en Suspense
+export default function CheckoutConfirmationPage() {
+  return (
+    <Suspense fallback={
+      <div className="checkout-page">
+        <div className="sticky-wrapper">
+          <Header />
+        </div>
+        <div className="checkout-main">
+          <div className="loading-state">
+            <div className="loading-spinner"></div>
+            <div className="loading-text">Cargando confirmación...</div>
+            <div className="loading-subtext">Preparando los detalles de tu orden</div>
+          </div>
+        </div>
+      </div>
+    }>
+      <CheckoutConfirmationContent />
+    </Suspense>
   );
 }

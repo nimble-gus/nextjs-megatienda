@@ -23,16 +23,16 @@ export class CacheManager {
   static async invalidatePattern(pattern) {
     try {
       if (!redis) {
-        console.log('⚠️ Redis no disponible, saltando invalidación');
+
         return;
       }
       
       const keys = await redis.keys(pattern);
       if (keys.length > 0) {
         await redis.del(...keys);
-        console.log(`🗑️ Invalidado ${keys.length} claves con patrón: ${pattern}`);
+
       } else {
-        console.log(`ℹ️ No se encontraron claves para invalidar con patrón: ${pattern}`);
+
       }
     } catch (error) {
       console.error(`❌ Error invalidando caché con patrón ${pattern}:`, error);
@@ -53,7 +53,7 @@ export class CacheManager {
       CACHE_PATTERNS.FEATURED_PRODUCTS
     ];
     await this.invalidatePatterns(patterns);
-    console.log('🔄 Caché de productos invalidado');
+    
   }
 
   // Invalidar caché relacionado con órdenes
@@ -64,7 +64,7 @@ export class CacheManager {
       CACHE_PATTERNS.KPIS
     ];
     await this.invalidatePatterns(patterns);
-    console.log('🔄 Caché de órdenes invalidado');
+    
   }
 
   // Invalidar caché relacionado con multimedia
@@ -74,20 +74,20 @@ export class CacheManager {
       CACHE_PATTERNS.PROMO_BANNERS
     ];
     await this.invalidatePatterns(patterns);
-    console.log('🔄 Caché de multimedia invalidado');
+    
   }
 
   // Invalidar caché del carrito para un usuario específico
   static async invalidateCartCache(userId) {
     try {
       if (!redis) {
-        console.log('⚠️ Redis no disponible, saltando invalidación de carrito');
+
         return;
       }
       
       const cartKey = `megatienda:cart:${userId}`;
       await redis.del(cartKey);
-      console.log(`🛒 Caché del carrito invalidado para usuario: ${userId}`);
+      
     } catch (error) {
       console.error(`❌ Error invalidando caché del carrito para usuario ${userId}:`, error);
     }
@@ -96,7 +96,7 @@ export class CacheManager {
   // Invalidar todo el caché
   static async invalidateAllCache() {
     await this.invalidatePattern(CACHE_PATTERNS.ALL);
-    console.log('🔄 Todo el caché invalidado');
+    
   }
 
   // Invalidar caché específico por clave
@@ -104,7 +104,7 @@ export class CacheManager {
     try {
       if (!redis) return;
       await redis.del(key);
-      console.log(`🗑️ Clave invalidada: ${key}`);
+      
     } catch (error) {
       console.error(`❌ Error invalidando clave ${key}:`, error);
     }
@@ -115,7 +115,7 @@ export class CacheManager {
     try {
       if (!redis) return;
       await redis.del(...keys);
-      console.log(`🗑️ ${keys.length} claves invalidadas`);
+      
     } catch (error) {
       console.error('❌ Error invalidando claves:', error);
     }
@@ -166,7 +166,7 @@ export class CacheManager {
       }
       
       if (expiredCount > 0) {
-        console.log(`🧹 Limpiados ${expiredCount} elementos sin TTL`);
+
       }
     } catch (error) {
       console.error('❌ Error limpiando caché expirado:', error);

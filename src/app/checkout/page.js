@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -10,7 +10,7 @@ import WhatsAppCheckout from '@/components/Checkout/WhatsAppCheckout';
 import { useAuth } from '@/contexts/AuthContext';
 import '@/styles/CheckoutPage.css';
 
-export default function CheckoutPage() {
+function CheckoutPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, isAuthenticated } = useAuth();
@@ -479,7 +479,7 @@ export default function CheckoutPage() {
               totalAmount={totalAmount}
               onBack={() => setShowWhatsAppCheckout(false)}
               onSuccess={(orderResult) => {
-                console.log('Orden enviada por WhatsApp:', orderResult);
+        
                 // Aquí puedes manejar el éxito de la orden
               }}
             />
@@ -908,5 +908,27 @@ export default function CheckoutPage() {
       
       <Footer />
     </div>
+  );
+}
+
+// Componente principal que envuelve en Suspense
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={
+      <div className="checkout-page">
+        <div className="sticky-wrapper">
+          <Header />
+        </div>
+        <div className="checkout-main">
+          <div className="loading-state">
+            <div className="loading-spinner"></div>
+            <div className="loading-text">Cargando checkout...</div>
+            <div className="loading-subtext">Preparando tu orden</div>
+          </div>
+        </div>
+      </div>
+    }>
+      <CheckoutPageContent />
+    </Suspense>
   );
 }

@@ -91,7 +91,7 @@ export async function PUT(request, { params }) {
               stockNuevo: newQuantity
             });
 
-            console.log(`✅ Stock actualizado: ${item.producto.nombre} (${item.color.nombre}) +${item.cantidad} unidades (${currentStock.cantidad} → ${newQuantity})`);
+
           } else {
             const errorMsg = `No se encontró stock para: ${item.producto.nombre} (${item.color.nombre})`;
             console.warn(`⚠️ ${errorMsg}`);

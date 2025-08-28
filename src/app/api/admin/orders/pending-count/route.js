@@ -35,7 +35,7 @@ export async function GET(request) {
       }
     });
 
-    console.log(`📊 Órdenes pendientes encontradas: ${pendingCount}`);
+    
 
     return NextResponse.json({
       pendingCount,

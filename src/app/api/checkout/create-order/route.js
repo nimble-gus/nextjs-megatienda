@@ -182,7 +182,7 @@ export async function POST(request) {
       });
 
       // Disparar evento de nueva orden creada para notificaciones en tiempo real
-      console.log('📢 Disparando evento de nueva orden creada:', ordenCompleta.codigo_orden);
+      
       
       return {
         success: true,

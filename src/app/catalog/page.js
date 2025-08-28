@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect , Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Topbar from '@/components/layout/Topbar';
 import Header from '@/components/layout/Header';
@@ -9,7 +9,7 @@ import ProductGrid from '@/components/Catalog/ProductGrid';
 import { getProducts } from '@/services/catalogService';
 import '@/styles/CatalogPage.css';
 
-export default function CatalogPage() {
+function CatalogPageContent() {
   const searchParams = useSearchParams();
   
   // Obtener parámetros de URL
@@ -196,5 +196,41 @@ export default function CatalogPage() {
       {/* Footer */}
       <Footer />
     </div>
+  );
+
+}
+
+// Componente principal que envuelve en Suspense
+export default function CatalogPage() {
+  return (
+    <Suspense fallback={
+      <div style={{ 
+        display: 'flex', 
+        flexDirection: 'column', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        minHeight: '100vh',
+        background: '#f7fafc'
+      }}>
+        <div style={{
+          width: '40px',
+          height: '40px',
+          border: '4px solid #e2e8f0',
+          borderTop: '4px solid #ff6a00',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite',
+          marginBottom: '20px'
+        }}></div>
+        <p style={{ color: '#718096', fontSize: '16px', margin: 0 }}>Cargando...</p>
+        <style jsx>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
+      </div>
+    }>
+      <CatalogPageContent />
+    </Suspense>
   );
 }

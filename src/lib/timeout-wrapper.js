@@ -254,7 +254,7 @@ export async function handleCriticalOperation(operation, fallback, operationName
     if (error instanceof TimeoutError) {
       console.error(`❌ Critical operation timeout: ${operationName}`);
       if (fallback) {
-        console.log(`🔄 Using fallback for ${operationName}`);
+
         return await fallback();
       }
     }

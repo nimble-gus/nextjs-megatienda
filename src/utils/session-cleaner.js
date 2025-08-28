@@ -31,7 +31,7 @@ export const clearAllSessions = () => {
       document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/admin;`;
     });
 
-    console.log('🧹 Todas las sesiones limpiadas completamente');
+
     return true;
   } catch (error) {
     console.error('Error limpiando sesiones:', error);
@@ -63,7 +63,7 @@ export const clearUserSessions = () => {
     document.cookie = 'accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
     document.cookie = 'refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
     
-    console.log('🧹 Sesiones de usuario limpiadas');
+
     return true;
   } catch (error) {
     console.error('Error limpiando sesiones de usuario:', error);
@@ -79,7 +79,7 @@ export const clearAdminSessions = () => {
     document.cookie = 'adminAccessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
     document.cookie = 'adminRefreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
     
-    console.log('🧹 Sesiones de admin limpiadas');
+
     return true;
   } catch (error) {
     console.error('Error limpiando sesiones de admin:', error);

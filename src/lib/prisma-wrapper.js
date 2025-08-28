@@ -15,7 +15,7 @@ export async function withPrismaRetry(operation, retries = MAX_RETRIES) {
       // Verificar salud de la conexión antes de cada intento
       const health = await checkPrismaHealth();
       if (!health.healthy) {
-        console.log(`🔄 Intento ${attempt}: Reintentando conexión...`);
+
         await delay(RETRY_DELAY);
         continue;
       }
@@ -36,7 +36,7 @@ export async function withPrismaRetry(operation, retries = MAX_RETRIES) {
       if (error.message.includes('Engine') || 
           error.message.includes('empty') || 
           error.message.includes('connection')) {
-        console.log(`🔄 Reintentando en ${RETRY_DELAY}ms...`);
+
         await delay(RETRY_DELAY);
         continue;
       }
@@ -80,7 +80,7 @@ export async function safeDelete(model, options) {
 export async function cleanupPrisma() {
   try {
     await prisma.$disconnect();
-    console.log('✅ Conexión de Prisma cerrada correctamente');
+    
   } catch (error) {
     console.error('❌ Error al cerrar conexión de Prisma:', error);
   }

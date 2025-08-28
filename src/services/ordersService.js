@@ -5,7 +5,7 @@ export const getPendingOrdersCount = async (retryCount = 0) => {
     const hasAdminCookies = document.cookie.includes('adminAccessToken') || document.cookie.includes('adminRefreshToken');
     
     if (!hasAdminCookies && retryCount === 0) {
-      console.log('🔒 No hay cookies de admin, intentando refresh de autenticación...');
+      
       
       // Intentar hacer refresh de la autenticación
       try {
@@ -15,12 +15,12 @@ export const getPendingOrdersCount = async (retryCount = 0) => {
         });
         
         if (refreshResponse.ok) {
-          console.log('✅ Refresh de autenticación exitoso');
+
           // Esperar un momento para que las cookies se establezcan
           await new Promise(resolve => setTimeout(resolve, 500));
         }
       } catch (refreshError) {
-        console.log('⚠️ Error en refresh de autenticación:', refreshError.message);
+        
       }
     }
 
@@ -35,14 +35,14 @@ export const getPendingOrdersCount = async (retryCount = 0) => {
     } else {
       // Si es error 401 o 403, intentar una vez más después de un delay
       if ((response.status === 401 || response.status === 403) && retryCount < 1) {
-        console.log('🔒 Reintentando autenticación...');
+
         await new Promise(resolve => setTimeout(resolve, 2000)); // Esperar 2 segundos
         return getPendingOrdersCount(retryCount + 1);
       }
       
       // Si es error 401 o 403 después del retry, no mostrar error en consola
       if (response.status === 401 || response.status === 403) {
-        console.log('🔒 Usuario no autenticado como admin');
+
         return 0;
       }
       console.error('Error obteniendo conteo de órdenes pendientes:', response.status);

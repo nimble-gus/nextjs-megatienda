@@ -25,8 +25,7 @@ if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 // Manejo de errores mejorado
 prisma.$on('query', (e) => {
   if (process.env.NODE_ENV === 'development') {
-    console.log('🔍 Query:', e.query);
-    console.log('⏱️  Duración:', e.duration + 'ms');
+    
   }
 });
 
