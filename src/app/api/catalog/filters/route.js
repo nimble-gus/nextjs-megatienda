@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import prisma from '@/lib/prisma-production';
 import { executeWithRetry, checkDatabaseHealth } from '@/lib/db-utils';
 import { FilterCache } from '@/lib/redis';
 import { queueQuery } from '@/lib/query-queue';

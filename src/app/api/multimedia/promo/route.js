@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import prisma from '@/lib/prisma-simple';
 import { executeWithRetry } from '@/lib/db-utils';
 import { MultimediaCache } from '@/lib/redis';
 

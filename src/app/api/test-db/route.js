@@ -1,4 +1,4 @@
-import prisma from '@/lib/prisma-production';
+import prisma from '@/lib/prisma-simple';
 
 export async function GET() {
   

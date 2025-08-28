@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcrypt';
 import { sessionManager } from '@/lib/session-manager';
-import { prisma } from '@/lib/prisma';
+import prisma from '@/lib/prisma-production';
 import { CircuitBreakerManager } from '@/lib/circuit-breaker';
 import { applyGlobalRateLimit, getRateLimitHeaders } from '@/lib/global-rate-limiter';
 import { withDatabaseTimeout } from '@/lib/timeout-wrapper';

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import prisma from '@/lib/prisma-production';
 import { invalidateProductCache } from '@/lib/cache-manager';
 
 // DELETE - Eliminar una imagen específica

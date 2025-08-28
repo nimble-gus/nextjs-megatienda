@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import prisma from '@/lib/prisma-production';
 import { invalidateProductCache, invalidateOrderCache } from '@/lib/cache-manager';
 
 // GET - Obtener un producto específico

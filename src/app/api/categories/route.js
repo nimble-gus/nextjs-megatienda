@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import prisma from '@/lib/prisma-simple';
 import { CategoryCache } from '@/lib/redis';
 
 export async function GET() {

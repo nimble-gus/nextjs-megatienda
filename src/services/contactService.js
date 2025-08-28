@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/prisma';
+import prisma from '@/lib/prisma-production';
 import { executeWithRetry } from '@/lib/db-utils';
 
 export const contactService = {

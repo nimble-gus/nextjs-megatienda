@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import prisma from '@/lib/prisma-production';
 import { jwtVerify } from 'jose';
 import { invalidateCartCache } from '@/lib/cache-manager';
 
