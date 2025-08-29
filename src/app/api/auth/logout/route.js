@@ -8,9 +8,34 @@ export async function POST(request) {
   try {
     console.log('🔓 Usuario cerrando sesión');
 
+    // Obtener deviceId para identificar las cookies correctas
+    const deviceId = request.cookies.get('deviceId')?.value;
+    
+    if (!deviceId) {
+      console.log('No hay deviceId, limpiando todas las cookies posibles');
+      const response = NextResponse.json({
+        success: true,
+        message: 'Sesión cerrada exitosamente'
+      });
+      
+      // Limpiar todas las cookies posibles
+      response.cookies.delete('accessToken');
+      response.cookies.delete('refreshToken');
+      response.cookies.delete('sessionId');
+      response.cookies.delete('adminAccessToken');
+      response.cookies.delete('adminRefreshToken');
+      response.cookies.delete('deviceId');
+      
+      return response;
+    }
+
+    // Construir nombres de cookies específicos del dispositivo
+    const accessTokenCookieName = `access_${deviceId}`;
+    const refreshTokenCookieName = `refresh_${deviceId}`;
+
     // Obtener tokens actuales para invalidarlos
-    const accessToken = request.cookies.get('accessToken')?.value;
-    const refreshToken = request.cookies.get('refreshToken')?.value;
+    const accessToken = request.cookies.get(accessTokenCookieName)?.value;
+    const refreshToken = request.cookies.get(refreshTokenCookieName)?.value;
 
     // Invalidar tokens en la blacklist
     if (accessToken) {
@@ -39,12 +64,15 @@ export async function POST(request) {
       message: 'Sesión cerrada exitosamente'
     });
 
-    // Eliminar cookies de autenticación usando delete()
+    // Eliminar cookies específicas del dispositivo
+    response.cookies.delete(accessTokenCookieName);
+    response.cookies.delete(refreshTokenCookieName);
+    response.cookies.delete('deviceId');
+    
+    // También eliminar cookies legacy por compatibilidad
     response.cookies.delete('accessToken');
     response.cookies.delete('refreshToken');
     response.cookies.delete('sessionId');
-    
-    // También eliminar cookies de admin por si acaso
     response.cookies.delete('adminAccessToken');
     response.cookies.delete('adminRefreshToken');
 

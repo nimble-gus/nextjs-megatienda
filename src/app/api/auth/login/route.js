@@ -136,28 +136,39 @@ export async function POST(req) {
           nombre: user.nombre,
           correo: user.correo,
           rol: user.rol
-        }
+        },
+        sessionId: sessionId // Devolver sessionId para debugging
       });
 
-      // Establecer cookies sin dominio para evitar compartir entre dispositivos
-      const cookieDomain = undefined;
+      // Crear nombres de cookies únicos por dispositivo
+      const deviceHash = Buffer.from(deviceFingerprint).toString('base64').substring(0, 16);
+      const accessTokenCookieName = `access_${deviceHash}`;
+      const refreshTokenCookieName = `refresh_${deviceHash}`;
 
-      response.cookies.set('accessToken', accessToken, {
+      // Establecer cookies con nombres únicos por dispositivo
+      response.cookies.set(accessTokenCookieName, accessToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict', // Volver a 'strict' para mayor seguridad
+        sameSite: 'strict',
         maxAge: 60 * 60, // 1 hora
-        path: '/',
-        domain: cookieDomain
+        path: '/'
       });
 
-      response.cookies.set('refreshToken', refreshToken, {
+      response.cookies.set(refreshTokenCookieName, refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict', // Volver a 'strict' para mayor seguridad
+        sameSite: 'strict',
         maxAge: 7 * 24 * 60 * 60, // 7 días
-        path: '/',
-        domain: cookieDomain
+        path: '/'
+      });
+
+      // Cookie para identificar el dispositivo
+      response.cookies.set('deviceId', deviceHash, {
+        httpOnly: false, // Necesario para que el frontend pueda leerlo
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 365 * 24 * 60 * 60, // 1 año
+        path: '/'
       });
 
       return response;

@@ -4,22 +4,30 @@ import tokenBlacklist from '@/lib/token-blacklist';
 
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'your-secret-key');
 
-// Función para verificar si una sesión está en blacklist
-async function verifySessionNotBlacklisted(sessionId) {
-  if (!sessionId) return false;
-  return await tokenBlacklist.isSessionBlacklisted(sessionId);
-}
-
 export async function GET(request) {
   try {
-    const accessToken = request.cookies.get('accessToken')?.value;
-    const refreshToken = request.cookies.get('refreshToken')?.value;
+    // Obtener deviceId para identificar las cookies correctas
+    const deviceId = request.cookies.get('deviceId')?.value;
+    
+    if (!deviceId) {
+      return NextResponse.json({ 
+        isAuthenticated: false, 
+        message: 'No hay dispositivo identificado' 
+      });
+    }
+
+    // Construir nombres de cookies específicos del dispositivo
+    const accessTokenCookieName = `access_${deviceId}`;
+    const refreshTokenCookieName = `refresh_${deviceId}`;
+    
+    const accessToken = request.cookies.get(accessTokenCookieName)?.value;
+    const refreshToken = request.cookies.get(refreshTokenCookieName)?.value;
     
     // Si no hay ningún token, no está autenticado
     if (!accessToken && !refreshToken) {
       return NextResponse.json({ 
         isAuthenticated: false, 
-        message: 'No hay tokens de autenticación' 
+        message: 'No hay tokens de autenticación para este dispositivo' 
       });
     }
 
@@ -46,6 +54,7 @@ export async function GET(request) {
             rol: payload.rol
           },
           sessionId: payload.sessionId,
+          deviceId: deviceId,
           message: 'Token válido'
         });
       } catch (jwtError) {
@@ -90,19 +99,17 @@ export async function GET(request) {
             rol: payload.rol
           },
           sessionId: payload.sessionId,
+          deviceId: deviceId,
           message: 'Tokens refrescados automáticamente'
         });
 
-        // Establecer nuevo access token sin dominio para evitar compartir entre dispositivos
-        const cookieDomain = undefined;
-
-        response.cookies.set('accessToken', newAccessToken, {
+        // Establecer nuevo access token con nombre específico del dispositivo
+        response.cookies.set(accessTokenCookieName, newAccessToken, {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
           sameSite: 'strict',
           maxAge: 60 * 60, // 1 hora
-          path: '/',
-          domain: cookieDomain
+          path: '/'
         });
 
         return response;
