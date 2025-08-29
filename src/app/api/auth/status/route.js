@@ -91,10 +91,10 @@ export async function GET(request) {
         response.cookies.set('accessToken', newAccessToken, {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
-          sameSite: 'strict',
+          sameSite: 'lax', // Cambiar a 'lax' para mejor compatibilidad
           maxAge: 60 * 60, // 1 hora
-          path: '/',
-          domain: process.env.NODE_ENV === 'production' ? '.lamegatiendagt.vercel.app' : undefined
+          path: '/'
+          // Remover domain para que funcione en todos los subdominios de Vercel
         });
 
         return response;

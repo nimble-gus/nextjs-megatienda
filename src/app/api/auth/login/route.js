@@ -138,19 +138,19 @@ export async function POST(req) {
       response.cookies.set('accessToken', accessToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict', // Cambiar a 'strict' para mayor seguridad
+        sameSite: 'lax', // Cambiar a 'lax' para mejor compatibilidad
         maxAge: 60 * 60, // 1 hora
-        path: '/',
-        domain: process.env.NODE_ENV === 'production' ? '.lamegatiendagt.vercel.app' : undefined
+        path: '/'
+        // Remover domain para que funcione en todos los subdominios de Vercel
       });
 
       response.cookies.set('refreshToken', refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict', // Cambiar a 'strict' para mayor seguridad
+        sameSite: 'lax', // Cambiar a 'lax' para mejor compatibilidad
         maxAge: 7 * 24 * 60 * 60, // 7 días
-        path: '/',
-        domain: process.env.NODE_ENV === 'production' ? '.lamegatiendagt.vercel.app' : undefined
+        path: '/'
+        // Remover domain para que funcione en todos los subdominios de Vercel
       });
 
       return response;

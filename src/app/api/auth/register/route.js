@@ -96,12 +96,18 @@ export async function POST(req) {
 
       const newUser = newUsers[0];
 
-      // Crear tokens JWT
+      // Generar sessionId único
+      const userAgent = req.headers.get('user-agent') || 'unknown';
+      const deviceFingerprint = userAgent.substring(0, 50).replace(/[^a-zA-Z0-9]/g, '');
+      const sessionId = `${newUser.id}-${Date.now()}-${deviceFingerprint}-${Math.random().toString(36).substr(2, 9)}`;
+
+      // Crear tokens JWT con sessionId
       const accessToken = await new SignJWT({
         id: newUser.id,
         nombre: newUser.nombre,
         correo: newUser.correo,
-        rol: newUser.rol
+        rol: newUser.rol,
+        sessionId: sessionId
       })
         .setProtectedHeader({ alg: 'HS256' })
         .setExpirationTime('1h')
@@ -111,7 +117,8 @@ export async function POST(req) {
         id: newUser.id,
         nombre: newUser.nombre,
         correo: newUser.correo,
-        rol: newUser.rol
+        rol: newUser.rol,
+        sessionId: sessionId
       })
         .setProtectedHeader({ alg: 'HS256' })
         .setExpirationTime('7d')
@@ -134,14 +141,16 @@ export async function POST(req) {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        maxAge: 60 * 60 // 1 hora
+        maxAge: 60 * 60, // 1 hora
+        path: '/'
       });
 
       response.cookies.set('refreshToken', refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        maxAge: 7 * 24 * 60 * 60 // 7 días
+        maxAge: 7 * 24 * 60 * 60, // 7 días
+        path: '/'
       });
 
       return response;

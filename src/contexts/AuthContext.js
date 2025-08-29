@@ -153,12 +153,23 @@ export const AuthProvider = ({ children }) => {
     // Verificar si hay datos de admin en localStorage y limpiarlos si existen
     const adminUser = localStorage.getItem('adminUser');
     if (adminUser) {
-      
       localStorage.removeItem('adminUser');
     }
 
-    // Siempre verificar el estado de autenticación con el servidor
-    // para asegurar que las cookies siguen siendo válidas
+    // Cargar datos del usuario desde localStorage como fallback
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      try {
+        const userData = JSON.parse(savedUser);
+        setUser(userData);
+        setIsAuthenticated(true);
+      } catch (error) {
+        console.error('Error parsing saved user:', error);
+        localStorage.removeItem('user');
+      }
+    }
+
+    // Verificar el estado de autenticación con el servidor
     checkAuthStatus();
   }, [checkAuthStatus]);
 
@@ -197,3 +208,4 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
+
