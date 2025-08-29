@@ -54,42 +54,7 @@ async function verifyAuth(request) {
   }
 }
 
-// Función para verificar autenticación
-async function verifyAuth(request) {
-  try {
-    const accessToken = request.cookies.get('accessToken')?.value;
-    const refreshToken = request.cookies.get('refreshToken')?.value;
 
-    if (!accessToken && !refreshToken) {
-      return { isAuthenticated: false, user: null };
-    }
-
-    // Intentar verificar access token primero
-    if (accessToken) {
-      try {
-        const { payload } = await jwtVerify(accessToken, JWT_SECRET);
-        return { isAuthenticated: true, user: payload };
-      } catch (error) {
-        // Access token expirado, continuar con refresh token
-      }
-    }
-
-    // Si no hay access token válido, verificar refresh token
-    if (refreshToken) {
-      try {
-        const { payload } = await jwtVerify(refreshToken, JWT_SECRET);
-        return { isAuthenticated: true, user: payload };
-      } catch (error) {
-        return { isAuthenticated: false, user: null };
-      }
-    }
-
-    return { isAuthenticated: false, user: null };
-  } catch (error) {
-    console.error('Error verificando autenticación:', error);
-    return { isAuthenticated: false, user: null };
-  }
-}
 
 // GET - Obtener items del carrito de un usuario
 export async function GET(request, { params }) {
