@@ -96,10 +96,19 @@ export async function POST(req) {
 
       const newUser = newUsers[0];
 
-      // Generar sessionId único
+      // Generar sessionId único con más información del dispositivo
       const userAgent = req.headers.get('user-agent') || 'unknown';
-      const deviceFingerprint = userAgent.substring(0, 50).replace(/[^a-zA-Z0-9]/g, '');
-      const sessionId = `${newUser.id}-${Date.now()}-${deviceFingerprint}-${Math.random().toString(36).substr(2, 9)}`;
+      const ipAddress = req.headers.get('x-forwarded-for') || 
+                       req.headers.get('x-real-ip') || 
+                       'unknown';
+      const acceptLanguage = req.headers.get('accept-language') || 'unknown';
+      
+      // Crear un fingerprint más único del dispositivo
+      const deviceFingerprint = `${userAgent.substring(0, 30)}-${ipAddress}-${acceptLanguage.substring(0, 10)}`.replace(/[^a-zA-Z0-9-]/g, '');
+      const randomString = Math.random().toString(36).substr(2, 15);
+      const timestamp = Date.now();
+      
+      const sessionId = `${newUser.id}-${timestamp}-${deviceFingerprint}-${randomString}`;
 
       // Crear tokens JWT con sessionId
       const accessToken = await new SignJWT({
@@ -136,21 +145,27 @@ export async function POST(req) {
         }
       });
 
-      // Establecer cookies
+      // Establecer cookies con dominio específico
+      const cookieDomain = process.env.NODE_ENV === 'production' 
+        ? '.lamegatienda.vercel.app' 
+        : undefined;
+
       response.cookies.set('accessToken', accessToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        sameSite: 'strict',
         maxAge: 60 * 60, // 1 hora
-        path: '/'
+        path: '/',
+        domain: cookieDomain
       });
 
       response.cookies.set('refreshToken', refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        sameSite: 'strict',
         maxAge: 7 * 24 * 60 * 60, // 7 días
-        path: '/'
+        path: '/',
+        domain: cookieDomain
       });
 
       return response;

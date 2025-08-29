@@ -94,10 +94,19 @@ export async function POST(req) {
       // Login exitoso - resetear intentos fallidos
       await failedLoginManager.resetAttempts(correo, ipAddress);
 
-      // Generar sessionId único que incluya información del dispositivo
+      // Generar sessionId único con más información del dispositivo
       const userAgent = req.headers.get('user-agent') || 'unknown';
-      const deviceFingerprint = userAgent.substring(0, 50).replace(/[^a-zA-Z0-9]/g, '');
-      const sessionId = `${user.id}-${Date.now()}-${deviceFingerprint}-${Math.random().toString(36).substr(2, 9)}`;
+      const ipAddress = req.headers.get('x-forwarded-for') || 
+                       req.headers.get('x-real-ip') || 
+                       'unknown';
+      const acceptLanguage = req.headers.get('accept-language') || 'unknown';
+      
+      // Crear un fingerprint más único del dispositivo
+      const deviceFingerprint = `${userAgent.substring(0, 30)}-${ipAddress}-${acceptLanguage.substring(0, 10)}`.replace(/[^a-zA-Z0-9-]/g, '');
+      const randomString = Math.random().toString(36).substr(2, 15);
+      const timestamp = Date.now();
+      
+      const sessionId = `${user.id}-${timestamp}-${deviceFingerprint}-${randomString}`;
       
       // Crear tokens JWT con sessionId único
       const accessToken = await new SignJWT({
@@ -134,23 +143,27 @@ export async function POST(req) {
         }
       });
 
-      // Establecer cookies con configuración más estricta
+      // Establecer cookies con dominio específico para evitar compartir entre dispositivos
+      const cookieDomain = process.env.NODE_ENV === 'production' 
+        ? '.lamegatienda.vercel.app' 
+        : undefined;
+
       response.cookies.set('accessToken', accessToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax', // Cambiar a 'lax' para mejor compatibilidad
+        sameSite: 'strict', // Volver a 'strict' para mayor seguridad
         maxAge: 60 * 60, // 1 hora
-        path: '/'
-        // Remover domain para que funcione en todos los subdominios de Vercel
+        path: '/',
+        domain: cookieDomain
       });
 
       response.cookies.set('refreshToken', refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax', // Cambiar a 'lax' para mejor compatibilidad
+        sameSite: 'strict', // Volver a 'strict' para mayor seguridad
         maxAge: 7 * 24 * 60 * 60, // 7 días
-        path: '/'
-        // Remover domain para que funcione en todos los subdominios de Vercel
+        path: '/',
+        domain: cookieDomain
       });
 
       return response;

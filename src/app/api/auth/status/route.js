@@ -93,14 +93,18 @@ export async function GET(request) {
           message: 'Tokens refrescados automáticamente'
         });
 
-        // Establecer nuevo access token
+        // Establecer nuevo access token con dominio específico
+        const cookieDomain = process.env.NODE_ENV === 'production' 
+          ? '.lamegatienda.vercel.app' 
+          : undefined;
+
         response.cookies.set('accessToken', newAccessToken, {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
-          sameSite: 'lax', // Cambiar a 'lax' para mejor compatibilidad
+          sameSite: 'strict',
           maxAge: 60 * 60, // 1 hora
-          path: '/'
-          // Remover domain para que funcione en todos los subdominios de Vercel
+          path: '/',
+          domain: cookieDomain
         });
 
         return response;
