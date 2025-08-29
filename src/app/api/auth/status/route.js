@@ -95,7 +95,7 @@ export async function GET(request) {
 
         // Establecer nuevo access token con dominio específico
         const cookieDomain = process.env.NODE_ENV === 'production' 
-          ? '.lamegatienda.vercel.app' 
+          ? '.lamegatiendagt.vercel.app' 
           : undefined;
 
         response.cookies.set('accessToken', newAccessToken, {
