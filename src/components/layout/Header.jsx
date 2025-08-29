@@ -3,16 +3,11 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import '@/styles/Header.css';
-import LoginModal from '../auth/LoginModal';
-import { useAuth } from '@/contexts/AuthContext';
 
 const Header = () => {
     const router = useRouter();
-    const { user, isAuthenticated, logout, updateUser } = useAuth();
     const [searchFocused, setSearchFocused] = useState(false);
     const [headerVisible, setHeaderVisible] = useState(false);
-    const [cartCount, setCartCount] = useState(0);
-    const [showLoginModal, setShowLoginModal] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [recentSearches, setRecentSearches] = useState([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
@@ -25,143 +20,6 @@ const Header = () => {
         // Cargar búsquedas recientes
         loadRecentSearches();
     }, []);
-
-    // Cargar carrito cuando el usuario esté autenticado
-    useEffect(() => {
-        if (isAuthenticated && user) {
-            loadUserCart(user.id || user.usuario_id);
-        } else {
-            setCartCount(0);
-        }
-    }, [isAuthenticated, user]);
-
-    // Función para cargar el carrito del usuario
-    const loadUserCart = async (userId) => {
-        try {
-            console.log('🛒 Cargando carrito para usuario:', userId);
-            
-            // Agregar timestamp para evitar caché del navegador
-            const timestamp = new Date().getTime();
-            const response = await fetch(`/api/cart/${userId}?_t=${timestamp}`, {
-                credentials: 'include', // Usar cookies automáticamente
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Cache-Control': 'no-cache, no-store, must-revalidate',
-                    'Pragma': 'no-cache',
-                    'Expires': '0'
-                }
-            });
-            
-            if (response.ok) {
-                const cartData = await response.json();
-                if (cartData.success && cartData.items) {
-                    const totalItems = cartData.items.reduce((total, item) => total + (item.cantidad || 0), 0);
-                    setCartCount(totalItems);
-                    console.log(`🛒 Carrito cargado: ${totalItems} items`);
-                }
-            }
-        } catch (error) {
-            console.error('Error cargando carrito:', error);
-        }
-    };
-
-    // Actualizar contador del carrito
-    const updateCartCount = async () => {
-        if (isAuthenticated && user) {
-            await loadUserCart(user.id || user.usuario_id);
-        }
-    };
-
-    // Escuchar eventos de actualización del carrito
-    useEffect(() => {
-        const handleCartUpdate = () => {
-            console.log('🔄 Evento cartUpdated recibido, actualizando contador...');
-            updateCartCount();
-        };
-
-        const handleCartCleared = () => {
-            console.log('🔄 Evento cartCleared recibido, limpiando contador...');
-            setCartCount(0);
-        };
-
-        const handleCartStateChanged = (event) => {
-            console.log('🔄 Evento cartStateChanged recibido:', event.detail);
-            if (event.detail?.action === 'cleared') {
-                setCartCount(0);
-            } else {
-                updateCartCount();
-            }
-        };
-
-        // Escuchar el evento cartUpdated
-        window.addEventListener('cartUpdated', handleCartUpdate);
-        
-        // Escuchar el evento cartCleared
-        window.addEventListener('cartCleared', handleCartCleared);
-        
-        // Escuchar el evento cartStateChanged
-        window.addEventListener('cartStateChanged', handleCartStateChanged);
-        
-        // También escuchar el evento loginSuccess para actualizar el carrito
-        const handleLoginSuccess = () => {
-            console.log('🔄 Login exitoso, actualizando carrito...');
-            if (isAuthenticated && user) {
-                updateCartCount();
-            }
-        };
-        
-        window.addEventListener('loginSuccess', handleLoginSuccess);
-        
-        return () => {
-            window.removeEventListener('cartUpdated', handleCartUpdate);
-            window.removeEventListener('cartCleared', handleCartCleared);
-            window.removeEventListener('cartStateChanged', handleCartStateChanged);
-            window.removeEventListener('loginSuccess', handleLoginSuccess);
-        };
-    }, [isAuthenticated, user]);
-
-    // Actualizar carrito periódicamente cada 30 segundos si el usuario está autenticado
-    useEffect(() => {
-        if (!isAuthenticated || !user) return;
-
-        const interval = setInterval(() => {
-            console.log('🔄 Actualización periódica del carrito...');
-            updateCartCount();
-        }, 30000); // 30 segundos
-
-        return () => clearInterval(interval);
-    }, [isAuthenticated, user]);
-
-    // Manejar éxito del login
-    const handleLoginSuccess = (data) => {
-        console.log('Login exitoso:', data);
-        
-        const userData = data.user || data;
-        updateUser(userData);
-        
-        loadUserCart(userData.id || userData.usuario_id);
-        setShowLoginModal(false);
-        
-        // Disparar evento de login exitoso
-        window.dispatchEvent(new CustomEvent('loginSuccess'));
-        
-        console.log(`¡Bienvenido ${userData.nombre}!`);
-    };
-
-    // Manejar logout
-    const handleLogout = async () => {
-        try {
-            await logout();
-            setCartCount(0);
-            
-            // Disparar evento de logout
-            window.dispatchEvent(new CustomEvent('logout'));
-            
-            console.log('👋 Sesión cerrada exitosamente');
-        } catch (error) {
-            console.error('Error en logout:', error);
-        }
-    };
 
     // Cargar búsquedas recientes desde localStorage
     const loadRecentSearches = () => {
@@ -396,67 +254,6 @@ const Header = () => {
                             </div>
                         )}
                     </div>
-
-                    {/* Botón de login cuando no está logueado */}
-                    {!isAuthenticated && (
-                        <button 
-                            className="login-btn" 
-                            onClick={() => setShowLoginModal(true)}
-                            suppressHydrationWarning
-                        >
-                            <span>Login</span>
-                            <div className="btn-glow"></div>
-                        </button>
-                    )}
-
-                    {/* Acciones del usuario logueado */}
-                    {isAuthenticated && (
-                        <div className="user-actions">
-                            <div className="cart-container">
-                                <Link href="/cart" className="cart-link">
-                                    <Image 
-                                        src="/assets/bag.svg" 
-                                        alt="Carrito" 
-                                        width={24} 
-                                        height={24}
-                                        className="icon-btn cart-icon" 
-                                    />
-                                    {cartCount > 0 && (
-                                        <span className="cart-badge">
-                                            {cartCount > 99 ? '99+' : cartCount}
-                                        </span>
-                                    )}
-                                </Link>
-                            </div>
-                            <div className="user-container">
-                                <Image 
-                                    src="/assets/user.svg" 
-                                    alt="Usuario" 
-                                    width={24} 
-                                    height={24}
-                                    className="icon-btn user-icon" 
-                                />
-                                <div className="user-dropdown">
-                                    <div className="user-info">
-                                        <strong>{user?.nombre || 'Usuario'}</strong>
-                                    </div>
-                                    <div className="dropdown-divider"></div>
-                                    
-                                    <Link href="/orders" className="dropdown-item">
-                                        📦 Mis Pedidos
-                                    </Link>
-
-                                    <div className="dropdown-divider"></div>
-                                    <div 
-                                        className="dropdown-item logout"
-                                        onClick={handleLogout}
-                                    >
-                                        🚪 Cerrar Sesión
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
                 </div>
 
                 {/* Hamburger menu para móvil */}
@@ -465,14 +262,6 @@ const Header = () => {
                     <span></span>
                     <span></span>
                 </div>
-
-                {/* Modal de login */}
-                {showLoginModal && (
-                    <LoginModal 
-                        onClose={() => setShowLoginModal(false)} 
-                        onLoginSuccess={handleLoginSuccess}
-                    />
-                )}
             </header>
 
             {/* Menú móvil */}
@@ -522,37 +311,6 @@ const Header = () => {
                             />
                         </button>
                     </form>
-                </div>
-
-                <div className="mobile-user-actions">
-                    {!isAuthenticated ? (
-                        <button 
-                            className="login-btn" 
-                            onClick={() => {
-                                setShowLoginModal(true);
-                                closeMobileMenu();
-                            }}
-                        >
-                            <span>Iniciar Sesión</span>
-                            <div className="btn-glow"></div>
-                        </button>
-                    ) : (
-                        <div className="user-actions">
-                            <Link href="/orders" className="dropdown-item" onClick={closeMobileMenu}>
-                                📦 Mis Pedidos
-                            </Link>
-                            
-                            <div 
-                                className="dropdown-item logout"
-                                onClick={() => {
-                                    handleLogout();
-                                    closeMobileMenu();
-                                }}
-                            >
-                                🚪 Cerrar Sesión
-                            </div>
-                        </div>
-                    )}
                 </div>
             </div>
 
