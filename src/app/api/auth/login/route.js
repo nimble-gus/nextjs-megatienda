@@ -139,10 +139,8 @@ export async function POST(req) {
         }
       });
 
-      // Establecer cookies con dominio específico para evitar compartir entre dispositivos
-      const cookieDomain = process.env.NODE_ENV === 'production' 
-        ? '.lamegatiendagt.vercel.app' 
-        : undefined;
+      // Establecer cookies sin dominio para evitar compartir entre dispositivos
+      const cookieDomain = undefined;
 
       response.cookies.set('accessToken', accessToken, {
         httpOnly: true,

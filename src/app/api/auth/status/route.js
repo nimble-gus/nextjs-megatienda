@@ -93,10 +93,8 @@ export async function GET(request) {
           message: 'Tokens refrescados automáticamente'
         });
 
-        // Establecer nuevo access token con dominio específico
-        const cookieDomain = process.env.NODE_ENV === 'production' 
-          ? '.lamegatiendagt.vercel.app' 
-          : undefined;
+        // Establecer nuevo access token sin dominio para evitar compartir entre dispositivos
+        const cookieDomain = undefined;
 
         response.cookies.set('accessToken', newAccessToken, {
           httpOnly: true,
