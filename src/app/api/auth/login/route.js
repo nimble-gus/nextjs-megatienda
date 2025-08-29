@@ -95,10 +95,6 @@ export async function POST(req) {
       await failedLoginManager.resetAttempts(correo, ipAddress);
 
       // Generar sessionId único con más información del dispositivo
-      const userAgent = req.headers.get('user-agent') || 'unknown';
-      const ipAddress = req.headers.get('x-forwarded-for') || 
-                       req.headers.get('x-real-ip') || 
-                       'unknown';
       const acceptLanguage = req.headers.get('accept-language') || 'unknown';
       
       // Crear un fingerprint más único del dispositivo

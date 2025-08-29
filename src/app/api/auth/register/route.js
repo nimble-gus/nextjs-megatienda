@@ -96,12 +96,8 @@ export async function POST(req) {
 
       const newUser = newUsers[0];
 
-      // Generar sessionId único con más información del dispositivo
-      const userAgent = req.headers.get('user-agent') || 'unknown';
-      const ipAddress = req.headers.get('x-forwarded-for') || 
-                       req.headers.get('x-real-ip') || 
-                       'unknown';
-      const acceptLanguage = req.headers.get('accept-language') || 'unknown';
+             // Generar sessionId único con más información del dispositivo
+       const acceptLanguage = req.headers.get('accept-language') || 'unknown';
       
       // Crear un fingerprint más único del dispositivo
       const deviceFingerprint = `${userAgent.substring(0, 30)}-${ipAddress}-${acceptLanguage.substring(0, 10)}`.replace(/[^a-zA-Z0-9-]/g, '');
