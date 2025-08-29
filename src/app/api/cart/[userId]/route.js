@@ -8,8 +8,59 @@ const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'your-secr
 // Función para verificar autenticación y blacklist
 async function verifyAuth(request) {
   try {
-    const accessToken = request.cookies.get('accessToken')?.value;
-    const refreshToken = request.cookies.get('refreshToken')?.value;
+    // Obtener deviceId para identificar las cookies correctas
+    const deviceId = request.cookies.get('deviceId')?.value;
+    
+    if (!deviceId) {
+      // Fallback a cookies legacy si no hay deviceId
+      const accessToken = request.cookies.get('accessToken')?.value;
+      const refreshToken = request.cookies.get('refreshToken')?.value;
+
+      if (!accessToken && !refreshToken) {
+        return { isAuthenticated: false, user: null };
+      }
+
+      // Intentar verificar access token primero
+      if (accessToken) {
+        try {
+          const { payload } = await jwtVerify(accessToken, JWT_SECRET);
+          
+          // Verificar que la sesión no esté en blacklist
+          if (payload.sessionId && await tokenBlacklist.isSessionBlacklisted(payload.sessionId)) {
+            return { isAuthenticated: false, user: null, reason: 'session_blacklisted' };
+          }
+          
+          return { isAuthenticated: true, user: payload };
+        } catch (error) {
+          // Access token inválido, continuar con refresh token
+        }
+      }
+
+      // Intentar con refresh token
+      if (refreshToken) {
+        try {
+          const { payload } = await jwtVerify(refreshToken, JWT_SECRET);
+          
+          // Verificar que la sesión no esté en blacklist
+          if (payload.sessionId && await tokenBlacklist.isSessionBlacklisted(payload.sessionId)) {
+            return { isAuthenticated: false, user: null, reason: 'session_blacklisted' };
+          }
+          
+          return { isAuthenticated: true, user: payload };
+        } catch (error) {
+          return { isAuthenticated: false, user: null };
+        }
+      }
+
+      return { isAuthenticated: false, user: null };
+    }
+
+    // Usar cookies específicas del dispositivo
+    const accessTokenCookieName = `access_${deviceId}`;
+    const refreshTokenCookieName = `refresh_${deviceId}`;
+    
+    const accessToken = request.cookies.get(accessTokenCookieName)?.value;
+    const refreshToken = request.cookies.get(refreshTokenCookieName)?.value;
 
     if (!accessToken && !refreshToken) {
       return { isAuthenticated: false, user: null };
@@ -53,8 +104,6 @@ async function verifyAuth(request) {
     return { isAuthenticated: false, user: null };
   }
 }
-
-
 
 // GET - Obtener items del carrito de un usuario
 export async function GET(request, { params }) {
