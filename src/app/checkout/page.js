@@ -7,11 +7,13 @@ import Image from 'next/image';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import WhatsAppCheckout from '@/components/Checkout/WhatsAppCheckout';
+
 import '@/styles/CheckoutPage.css';
 
 function CheckoutPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+
   
   // Estados para productos
   const [productos, setProductos] = useState([]);
@@ -43,9 +45,15 @@ function CheckoutPageContent() {
   // Estados de UI
   const [isLoading, setIsLoading] = useState(false);
   const [selectedShipping, setSelectedShipping] = useState('free_shipping');
+
   const [queuePosition, setQueuePosition] = useState(null);
   const [processingStatus, setProcessingStatus] = useState('');
   const [showWhatsAppCheckout, setShowWhatsAppCheckout] = useState(false);
+
+  // Debug: verificar cuando cambia el estado
+  useEffect(() => {
+    console.log('showWhatsAppCheckout cambió a:', showWhatsAppCheckout);
+  }, [showWhatsAppCheckout]);
 
   // Cargar productos al montar el componente
   useEffect(() => {
@@ -59,7 +67,7 @@ function CheckoutPageContent() {
       // Redirigir al catálogo si no hay productos
       router.push('/catalog');
     }
-  }, [searchParams, router]);
+  }, [searchParams]);
 
   // Cargar producto específico (para "Comprar ahora")
   const cargarProductoEspecifico = async (productoId, colorId, cantidad) => {
@@ -94,22 +102,17 @@ function CheckoutPageContent() {
           setError('Color no disponible');
         }
       } else {
-        setError('Error al cargar el producto');
+        setError('Error cargando el producto');
       }
     } catch (error) {
       console.error('Error cargando producto:', error);
-      setError('Error al cargar el producto');
+      setError('Error cargando el producto');
     } finally {
       setIsLoadingProducts(false);
     }
   };
 
-  // Calcular totales
-  const subtotal = productos.reduce((total, producto) => {
-    return total + (producto.precio * producto.cantidad);
-  }, 0);
 
-  const total = subtotal + costoEnvio;
 
   // Manejar cambios en el formulario
   const handleInputChange = (e) => {
@@ -123,21 +126,18 @@ function CheckoutPageContent() {
   // Manejar cambio de método de pago
   const handlePaymentMethodChange = (method) => {
     setMetodoPago(method);
-    setComprobanteTransferencia(null);
+    setComprobanteTransferencia(null); // Limpiar comprobante al cambiar método
   };
 
-  // Manejar cambio de método de envío
-  const handleShippingChange = (method) => {
-    setSelectedShipping(method);
-    switch (method) {
-      case 'free_shipping':
+  // Manejar cambio de opción de envío
+  const handleShippingChange = (option) => {
+    setSelectedShipping(option);
+    switch (option) {
+      case 'local_pickup':
         setCostoEnvio(0);
         break;
-      case 'standard_shipping':
-        setCostoEnvio(25);
-        break;
-      case 'express_shipping':
-        setCostoEnvio(50);
+      case 'free_shipping':
+        setCostoEnvio(0);
         break;
       default:
         setCostoEnvio(0);
@@ -147,493 +147,729 @@ function CheckoutPageContent() {
   // Manejar archivo de comprobante
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    if (file && file.type.startsWith('image/')) {
+    if (file) {
       setComprobanteTransferencia(file);
+    }
+  };
+
+  // Calcular totales
+  const subtotal = productos.reduce((total, producto) => {
+    return total + (producto.precio * producto.cantidad);
+  }, 0);
+
+  const total = subtotal + costoEnvio;
+
+  // Validar NIT
+  const validateNIT = (nit) => {
+    const nitValue = nit.trim().toUpperCase();
+    
+    // Si el total es menor o igual a Q2499, permitir CF, C/F, Cliente final
+    if (total <= 2499) {
+      const allowedCFValues = ['CF', 'C/F', 'CLIENTE FINAL', 'CLIENTE FINAL.'];
+      if (allowedCFValues.includes(nitValue)) {
+        return true;
+      }
+    }
+    
+    // Para montos mayores a Q2499, NIT es obligatorio y no puede ser CF
+    if (total >= 2500) {
+      if (!nitValue || nitValue === '' || ['CF', 'C/F', 'CLIENTE FINAL', 'CLIENTE FINAL.'].includes(nitValue)) {
+        return false;
+      }
+    }
+    
+    // Validar formato de NIT (debe tener al menos 4 caracteres y ser alfanumérico)
+    if (nitValue && nitValue.length < 4) {
+      return false;
+    }
+    
+    // Validar que el NIT tenga un formato válido (números y letras, sin caracteres especiales excepto guiones)
+    if (nitValue && !/^[A-Z0-9-]+$/.test(nitValue)) {
+      return false;
+    }
+    
+    return true;
+  };
+
+  // Obtener mensaje de error para NIT
+  const getNITErrorMessage = () => {
+    if (total >= 2500) {
+      return 'Para compras mayores a Q2,500 es obligatorio proporcionar un NIT válido';
     } else {
-      alert('Por favor selecciona una imagen válida');
+      return 'Puede usar "CF" para Cliente Final o proporcionar un NIT válido';
     }
   };
 
   // Validar formulario
-  const validateForm = () => {
-    const requiredFields = ['firstName', 'lastName', 'streetAddress', 'city', 'phone', 'email'];
+  const isFormValid = () => {
+    const requiredFields = ['firstName', 'lastName', 'streetAddress', 'city', 'state', 'postcode', 'phone', 'email'];
+    const hasRequiredFields = requiredFields.every(field => formData[field].trim() !== '');
     
-    for (const field of requiredFields) {
-      if (!formData[field].trim()) {
-        alert(`Por favor completa el campo ${field === 'firstName' ? 'Nombre' : 
-               field === 'lastName' ? 'Apellido' : 
-               field === 'streetAddress' ? 'Dirección' : 
-               field === 'city' ? 'Ciudad' : 
-               field === 'phone' ? 'Teléfono' : 'Email'}`);
-        return false;
-      }
-    }
-
-    if (!agreeToTerms) {
-      alert('Debes aceptar los términos y condiciones');
-      return false;
-    }
-
+    // Validar NIT
+    const isNITValid = validateNIT(formData.nit);
+    
     if (metodoPago === 'transferencia' && !comprobanteTransferencia) {
-      alert('Debes subir el comprobante de transferencia');
       return false;
     }
-
-    return true;
+    
+    return hasRequiredFields && isNITValid && agreeToTerms;
   };
 
-  // Procesar orden
+  // Manejar envío del formulario
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!validateForm()) return;
+    if (!isFormValid()) {
+      // Verificar específicamente el NIT
+      if (formData.nit && !validateNIT(formData.nit)) {
+        alert(getNITErrorMessage());
+        return;
+      }
+      
+      alert('Por favor completa todos los campos requeridos y acepta los términos');
+      return;
+    }
 
     setIsLoading(true);
-    setProcessingStatus('Procesando orden...');
 
     try {
-      // Preparar datos de la orden
+      // Obtener usuario actual del localStorage
+      const savedUser = localStorage.getItem('user');
+      const userData = savedUser ? JSON.parse(savedUser) : null;
+      const userId = userData ? (userData.id || userData.usuario_id) : null;
+      
       const orderData = {
-        productos: productos.map(producto => ({
-          id: producto.id,
-          nombre: producto.nombre,
-          precio: producto.precio,
-          cantidad: producto.cantidad,
-          color: producto.color,
-          stockId: producto.stockId
-        })),
-        cliente: {
-          nombre: `${formData.firstName} ${formData.lastName}`,
-          direccion: `${formData.streetAddress} ${formData.apartment}`,
-          ciudad: formData.city,
-          departamento: formData.state,
-          codigoPostal: formData.postcode,
-          nit: formData.nit,
-          telefono: formData.phone,
-          email: formData.email,
-          nombreQuienRecibe: formData.nombreQuienRecibe || `${formData.firstName} ${formData.lastName}`
-        },
-        metodoPago: metodoPago,
-        metodoEnvio: selectedShipping,
-        costoEnvio: costoEnvio,
+        // Datos del usuario (si está logueado)
+        usuario_id: userId,
+        
+        // Datos del cliente
+        nombre_cliente: `${formData.firstName} ${formData.lastName}`,
+        email_cliente: formData.email,
+        telefono_cliente: formData.phone,
+        direccion_cliente: `${formData.streetAddress}${formData.apartment ? `, ${formData.apartment}` : ''}`,
+        municipio_cliente: formData.city,
+        codigo_postal_cliente: formData.postcode,
+        nit_cliente: formData.nit,
+        nombre_quien_recibe: formData.nombreQuienRecibe,
+        
+        // Datos de la orden
+        productos: productos,
         subtotal: subtotal,
+        costo_envio: costoEnvio,
         total: total,
+        metodo_pago: metodoPago,
+        estado: 'pendiente',
         notas: formData.orderNotes,
-        comprobanteTransferencia: comprobanteTransferencia
+        
+        // Para transferencias
+        comprobante_transferencia: comprobanteTransferencia ? comprobanteTransferencia.name : null
       };
 
-      // Mostrar checkout de WhatsApp
-      setShowWhatsAppCheckout(true);
-      setProcessingStatus('');
+      // Preparar los datos para enviar
+      let requestData;
+      let headers = {};
+
+      if (metodoPago === 'transferencia' && comprobanteTransferencia) {
+        // Si hay archivo de transferencia, usar FormData
+        const formData = new FormData();
+        
+        // Agregar el archivo
+        formData.append('comprobante_transferencia', comprobanteTransferencia);
+        
+        // Agregar todos los demás datos como JSON string
+        const orderDataWithoutFile = { ...orderData };
+        delete orderDataWithoutFile.comprobante_transferencia;
+        formData.append('orderData', JSON.stringify(orderDataWithoutFile));
+        
+        requestData = formData;
+        // No establecer Content-Type, dejar que el navegador lo establezca automáticamente para FormData
+      } else {
+        // Si no hay archivo, usar JSON normal
+        requestData = JSON.stringify(orderData);
+        headers['Content-Type'] = 'application/json';
+      }
+
+      // Llamada a la API para crear la orden
+      const response = await fetch('/api/checkout/create-order', {
+        method: 'POST',
+        headers,
+        body: requestData
+      });
+
+      if (response.status === 429) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Demasiadas peticiones. Intenta de nuevo en unos minutos.');
+      }
+
+      const result = await response.json();
+
+      if (response.ok) {
+        // Orden creada exitosamente
+        // Disparar evento para actualizar el contador del carrito en el header
+        window.dispatchEvent(new CustomEvent('cartUpdated'));
+        
+        // Disparar evento de nueva orden creada para notificaciones en tiempo real
+        window.dispatchEvent(new CustomEvent('newOrderCreated', {
+          detail: {
+            orderNumber: result.orden.codigo_orden,
+            orderId: result.orden.id,
+            method: result.orden.metodo_pago
+          }
+        }));
+        
+        // Redirigir a la página de confirmación
+        router.push(`/checkout/confirmation?orderId=${result.orden.codigo_orden}`);
+      } else {
+        throw new Error(result.error || 'Error al procesar la orden');
+      }
 
     } catch (error) {
-      console.error('Error procesando orden:', error);
-      setProcessingStatus('Error al procesar la orden');
+      console.error('Error creando orden:', error);
+      alert('Error al procesar la orden. Intenta de nuevo.');
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Mostrar loading mientras se cargan los productos
   if (isLoadingProducts) {
     return (
-      <div className="checkout-loading">
-        <div className="loading-spinner"></div>
-        <p>Cargando productos...</p>
+      <div className="checkout-page">
+        <div className="sticky-wrapper">
+          <Header />
+        </div>
+        <div className="checkout-main">
+          <div className="loading-state">
+            <div className="loading-spinner"></div>
+            <div className="loading-text">Cargando productos...</div>
+            <div className="loading-subtext">Preparando tu orden</div>
+          </div>
+        </div>
       </div>
     );
   }
 
+  // Mostrar error si hay algún problema
   if (error) {
     return (
-      <div className="checkout-error">
-        <h2>Error</h2>
-        <p>{error}</p>
-        <Link href="/catalog" className="btn-primary">
-          Volver al catálogo
-        </Link>
+      <div className="checkout-page">
+        <div className="sticky-wrapper">
+          <Header />
+        </div>
+        <div className="checkout-main">
+          <div className="error-state">
+            <div className="error-icon">⚠️</div>
+            <div className="error-title">Error</div>
+            <div className="error-message">{error}</div>
+            <Link href="/catalog" className="error-action">
+              Ir al catálogo
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }
 
+  // Mostrar carrito vacío solo si no hay productos y no está cargando
   if (productos.length === 0) {
     return (
-      <div className="checkout-empty">
-        <h2>No hay productos para procesar</h2>
-        <Link href="/catalog" className="btn-primary">
-          Ir al catálogo
-        </Link>
+      <div className="checkout-page">
+        <div className="sticky-wrapper">
+          <Header />
+        </div>
+        <div className="checkout-main">
+          <div className="empty-state">
+            <div className="empty-icon">🛒</div>
+            <div className="empty-title">
+              Producto no disponible
+            </div>
+            <div className="empty-message">
+              No se pudo cargar el producto seleccionado
+            </div>
+            <Link href="/catalog" className="empty-action">
+              Continuar comprando
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Mostrar WhatsApp Checkout si está activado
+  if (showWhatsAppCheckout) {
+    const customerData = {
+      nombre: `${formData.firstName} ${formData.lastName}`,
+      email: formData.email,
+      telefono: formData.phone,
+      direccion: `${formData.streetAddress} ${formData.apartment}, ${formData.city}, ${formData.state} ${formData.postcode}`
+    };
+
+    const totalAmount = productos.reduce((total, producto) => {
+      const precio = producto.precio || producto.producto?.precio || 0;
+      const cantidad = producto.cantidad || 1;
+      return total + (precio * cantidad);
+    }, 0) + costoEnvio;
+
+    return (
+      <div className="checkout-page">
+        <div className="sticky-wrapper">
+          <Header />
+        </div>
+        <div className="checkout-main">
+          <div className="checkout-container">
+            <WhatsAppCheckout
+              orderData={{
+                productos,
+                costoEnvio,
+                metodoPago,
+                notas: formData.orderNotes,
+                nit_cliente: formData.nit,
+                municipio_cliente: formData.state,
+                codigo_postal_cliente: formData.postcode,
+                nombre_quien_recibe: formData.nombreQuienRecibe,
+                usuario_id: null
+              }}
+              customerData={customerData}
+              cartItems={productos}
+              totalAmount={totalAmount}
+              onBack={() => setShowWhatsAppCheckout(false)}
+              onSuccess={(orderResult) => {
+        
+                // Aquí puedes manejar el éxito de la orden
+              }}
+            />
+          </div>
+        </div>
+        <Footer />
       </div>
     );
   }
 
   return (
-    <>
-      <Header />
+    <div className="checkout-page">
+      <div className="sticky-wrapper">
+        <Header />
+      </div>
       
-      <main className="checkout-container">
-        <div className="checkout-content">
-          <div className="checkout-form-section">
-            <h1>Finalizar Compra</h1>
+      <div className="checkout-main">
+        {/* Header de la página */}
+        <div className="page-header">
+          <div className="page-header-content">
+            <h1>Compra Rápida</h1>
+            <div className="breadcrumb">
+              <span>Inicio</span>
+              <span>•</span>
+              <span>Producto</span>
+              <span>•</span>
+              <span>Compra Rápida</span>
+            </div>
+            <div className="guest-notice">
+              <span className="guest-icon">👤</span>
+              <span>Compra sin cuenta - Completa tus datos para continuar</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Contenido principal */}
+        <div className="checkout-container">
+          <div className="checkout-content">
             
-            <form onSubmit={handleSubmit} className="checkout-form">
-              {/* Información de contacto */}
-              <div className="form-section">
-                <h3>Información de Contacto</h3>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label htmlFor="firstName">Nombre *</label>
-                    <input
-                      type="text"
-                      id="firstName"
-                      name="firstName"
-                      value={formData.firstName}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="lastName">Apellido *</label>
-                    <input
-                      type="text"
-                      id="lastName"
-                      name="lastName"
-                      value={formData.lastName}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
+            {/* Columna izquierda - Detalles de facturación */}
+            <div className="billing-details-section">
+              <div className="checkout-card">
+                <div className="card-header">
+                  <h2>Detalles de Facturación</h2>
                 </div>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label htmlFor="email">Email *</label>
-                    <input
-                      type="email"
-                      id="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="phone">Teléfono *</label>
-                    <input
-                      type="tel"
-                      id="phone"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-                </div>
-                <div className="form-group">
-                  <label htmlFor="nit">NIT (opcional)</label>
-                  <input
-                    type="text"
-                    id="nit"
-                    name="nit"
-                    value={formData.nit}
-                    onChange={handleInputChange}
-                  />
-                </div>
-              </div>
-
-              {/* Dirección de envío */}
-              <div className="form-section">
-                <h3>Dirección de Envío</h3>
-                <div className="form-group">
-                  <label htmlFor="streetAddress">Dirección *</label>
-                  <input
-                    type="text"
-                    id="streetAddress"
-                    name="streetAddress"
-                    value={formData.streetAddress}
-                    onChange={handleInputChange}
-                    placeholder="Calle, número, zona"
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="apartment">Apartamento, suite, etc. (opcional)</label>
-                  <input
-                    type="text"
-                    id="apartment"
-                    name="apartment"
-                    value={formData.apartment}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label htmlFor="city">Ciudad *</label>
-                    <input
-                      type="text"
-                      id="city"
-                      name="city"
-                      value={formData.city}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="state">Departamento</label>
-                    <input
-                      type="text"
-                      id="state"
-                      name="state"
-                      value={formData.state}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-                </div>
-                <div className="form-group">
-                  <label htmlFor="postcode">Código Postal</label>
-                  <input
-                    type="text"
-                    id="postcode"
-                    name="postcode"
-                    value={formData.postcode}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="nombreQuienRecibe">Nombre de quien recibe (opcional)</label>
-                  <input
-                    type="text"
-                    id="nombreQuienRecibe"
-                    name="nombreQuienRecibe"
-                    value={formData.nombreQuienRecibe}
-                    onChange={handleInputChange}
-                    placeholder="Si es diferente al comprador"
-                  />
-                </div>
-              </div>
-
-              {/* Método de envío */}
-              <div className="form-section">
-                <h3>Método de Envío</h3>
-                <div className="shipping-options">
-                  <label className="shipping-option">
-                    <input
-                      type="radio"
-                      name="shipping"
-                      value="free_shipping"
-                      checked={selectedShipping === 'free_shipping'}
-                      onChange={() => handleShippingChange('free_shipping')}
-                    />
-                    <span className="option-content">
-                      <span className="option-title">Envío Gratis</span>
-                      <span className="option-description">5-7 días hábiles</span>
-                    </span>
-                    <span className="option-price">Q0.00</span>
-                  </label>
-                  <label className="shipping-option">
-                    <input
-                      type="radio"
-                      name="shipping"
-                      value="standard_shipping"
-                      checked={selectedShipping === 'standard_shipping'}
-                      onChange={() => handleShippingChange('standard_shipping')}
-                    />
-                    <span className="option-content">
-                      <span className="option-title">Envío Estándar</span>
-                      <span className="option-description">3-5 días hábiles</span>
-                    </span>
-                    <span className="option-price">Q25.00</span>
-                  </label>
-                  <label className="shipping-option">
-                    <input
-                      type="radio"
-                      name="shipping"
-                      value="express_shipping"
-                      checked={selectedShipping === 'express_shipping'}
-                      onChange={() => handleShippingChange('express_shipping')}
-                    />
-                    <span className="option-content">
-                      <span className="option-title">Envío Express</span>
-                      <span className="option-description">1-2 días hábiles</span>
-                    </span>
-                    <span className="option-price">Q50.00</span>
-                  </label>
-                </div>
-              </div>
-
-              {/* Método de pago */}
-              <div className="form-section">
-                <h3>Método de Pago</h3>
-                <div className="payment-options">
-                  <label className="payment-option">
-                    <input
-                      type="radio"
-                      name="payment"
-                      value="contra_entrega"
-                      checked={metodoPago === 'contra_entrega'}
-                      onChange={() => handlePaymentMethodChange('contra_entrega')}
-                    />
-                    <span className="option-content">
-                      <span className="option-title">Contra Entrega</span>
-                      <span className="option-description">Paga cuando recibas tu pedido</span>
-                    </span>
-                  </label>
-                  <label className="payment-option">
-                    <input
-                      type="radio"
-                      name="payment"
-                      value="transferencia"
-                      checked={metodoPago === 'transferencia'}
-                      onChange={() => handlePaymentMethodChange('transferencia')}
-                    />
-                    <span className="option-content">
-                      <span className="option-title">Transferencia Bancaria</span>
-                      <span className="option-description">Paga por transferencia y sube tu comprobante</span>
-                    </span>
-                  </label>
-                </div>
-
-                {metodoPago === 'transferencia' && (
-                  <div className="transfer-info">
-                    <h4>Información de Transferencia</h4>
-                    <p><strong>Banco:</strong> Banco Industrial</p>
-                    <p><strong>Cuenta:</strong> 123-456789-0</p>
-                    <p><strong>Titular:</strong> La Mega Tienda GT</p>
-                    <p><strong>Tipo:</strong> Cuenta Corriente</p>
+                <div className="card-body">
+                  <form onSubmit={handleSubmit} className="billing-form">
                     
-                    <div className="form-group">
-                      <label htmlFor="comprobante">Comprobante de Transferencia *</label>
+                    {/* Información personal */}
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label className="form-label required">Nombre</label>
+                        <input
+                          type="text"
+                          name="firstName"
+                          value={formData.firstName}
+                          onChange={handleInputChange}
+                          className="form-input"
+                          placeholder="Tu nombre"
+                          required
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label required">Apellido</label>
+                        <input
+                          type="text"
+                          name="lastName"
+                          value={formData.lastName}
+                          onChange={handleInputChange}
+                          className="form-input"
+                          placeholder="Tu apellido"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="form-group full-width">
+                      <label className="form-label required">Dirección</label>
                       <input
-                        type="file"
-                        id="comprobante"
-                        accept="image/*"
-                        onChange={handleFileChange}
-                        required={metodoPago === 'transferencia'}
+                        type="text"
+                        name="streetAddress"
+                        value={formData.streetAddress}
+                        onChange={handleInputChange}
+                        className="form-input"
+                        placeholder="Dirección de la calle"
+                        required
                       />
                     </div>
-                  </div>
-                )}
-              </div>
 
-              {/* Notas adicionales */}
-              <div className="form-section">
-                <h3>Notas Adicionales</h3>
-                <div className="form-group">
-                  <textarea
-                    name="orderNotes"
-                    value={formData.orderNotes}
-                    onChange={handleInputChange}
-                    placeholder="Instrucciones especiales, comentarios, etc."
-                    rows="3"
-                  />
+                    <div className="form-group full-width">
+                      <label className="form-label">Apartamento, suite, etc. (opcional)</label>
+                      <input
+                        type="text"
+                        name="apartment"
+                        value={formData.apartment}
+                        onChange={handleInputChange}
+                        className="form-input"
+                        placeholder="Apartamento, suite, unidad, etc."
+                      />
+                    </div>
+
+                    <div className="form-group full-width">
+                      <label className="form-label required">Nombre de Quien Recibe</label>
+                      <input
+                        type="text"
+                        name="nombreQuienRecibe"
+                        value={formData.nombreQuienRecibe}
+                        onChange={handleInputChange}
+                        className="form-input"
+                        placeholder="Nombre completo de la persona que recibirá el pedido"
+                        required
+                      />
+                    </div>
+
+                    <div className="form-row">
+                                             <div className="form-group">
+                         <label className="form-label required">Municipio</label>
+                         <input
+                           type="text"
+                           name="city"
+                           value={formData.city}
+                           onChange={handleInputChange}
+                           className="form-input"
+                           placeholder="Municipio"
+                           required
+                         />
+                       </div>
+                                             <div className="form-group">
+                         <label className="form-label required">Departamento</label>
+                         <input
+                           type="text"
+                           name="state"
+                           value={formData.state}
+                           onChange={handleInputChange}
+                           className="form-input"
+                           placeholder="Departamento"
+                           required
+                         />
+                       </div>
+                    </div>
+
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label className="form-label required">Zona</label>
+                        <input
+                          type="text"
+                          name="postcode"
+                          value={formData.postcode}
+                          onChange={handleInputChange}
+                          className="form-input"
+                          placeholder="Zona"
+                          required
+                        />
+                      </div>
+                                             <div className="form-group">
+                         <label className={`form-label ${total >= 2500 ? 'required' : ''}`}>
+                           NIT {total >= 2500 ? '(Obligatorio)' : '(Opcional)'}
+                         </label>
+                         <input
+                           type="text"
+                           name="nit"
+                           value={formData.nit}
+                           onChange={handleInputChange}
+                           className={`form-input ${formData.nit && !validateNIT(formData.nit) ? 'form-input-error' : ''}`}
+                           placeholder={total >= 2500 ? 'NIT obligatorio para facturación' : 'CF para Cliente Final o NIT de la empresa'}
+                         />
+                         {formData.nit && !validateNIT(formData.nit) && (
+                           <div className="form-error-message">
+                             {getNITErrorMessage()}
+                           </div>
+                         )}
+                         {total >= 2500 && (
+                           <div className="form-help-text">
+                             💡 Para compras mayores a Q2,500 se requiere NIT para facturación
+                           </div>
+                         )}
+                         {total <= 2499 && (
+                           <div className="form-help-text">
+                             💡 Puede usar &quot;CF&quot; para Cliente Final o proporcionar un NIT
+                           </div>
+                         )}
+                       </div>
+                    </div>
+
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label className="form-label required">Teléfono</label>
+                        <input
+                          type="tel"
+                          name="phone"
+                          value={formData.phone}
+                          onChange={handleInputChange}
+                          className="form-input"
+                          placeholder="Tu teléfono"
+                          required
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label required">Email</label>
+                        <input
+                          type="email"
+                          name="email"
+                          value={formData.email}
+                          onChange={handleInputChange}
+                          className="form-input"
+                          placeholder="tu@email.com"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                                         {/* Opciones de envío */}
+                     <div className="form-group full-width">
+                       <label className="form-label">Opciones de Envío</label>
+                       <div className="shipping-options">
+                         <div 
+                           className={`shipping-option ${selectedShipping === 'local_pickup' ? 'selected' : ''}`}
+                           onClick={() => handleShippingChange('local_pickup')}
+                         >
+                           <input
+                             type="radio"
+                             name="shipping"
+                             value="local_pickup"
+                             checked={selectedShipping === 'local_pickup'}
+                             onChange={() => handleShippingChange('local_pickup')}
+                             className="shipping-radio"
+                           />
+                           <div className="shipping-label">Recoger en bodega</div>
+                           <div className="shipping-price">Q0.00</div>
+                         </div>
+                         
+                         <div 
+                           className={`shipping-option ${selectedShipping === 'free_shipping' ? 'selected' : ''}`}
+                           onClick={() => handleShippingChange('free_shipping')}
+                         >
+                           <input
+                             type="radio"
+                             name="shipping"
+                             value="free_shipping"
+                             checked={selectedShipping === 'free_shipping'}
+                             onChange={() => handleShippingChange('free_shipping')}
+                             className="shipping-radio"
+                           />
+                           <div className="shipping-label">Envío gratis</div>
+                           <div className="shipping-price">Q0.00</div>
+                         </div>
+                       </div>
+                     </div>
+
+                    {/* Métodos de pago */}
+                    <div className="form-group full-width">
+                      <label className="form-label">Método de Pago</label>
+                      <div className="payment-methods">
+                        <div 
+                          className={`payment-method ${metodoPago === 'contra_entrega' ? 'selected' : ''}`}
+                          onClick={() => handlePaymentMethodChange('contra_entrega')}
+                        >
+                          <input
+                            type="radio"
+                            name="payment"
+                            value="contra_entrega"
+                            checked={metodoPago === 'contra_entrega'}
+                            onChange={() => handlePaymentMethodChange('contra_entrega')}
+                            className="payment-radio"
+                          />
+                          <div className="payment-label">Pago contra entrega</div>
+                        </div>
+                        
+                        <div 
+                          className={`payment-method ${metodoPago === 'transferencia' ? 'selected' : ''}`}
+                          onClick={() => handlePaymentMethodChange('transferencia')}
+                        >
+                          <input
+                            type="radio"
+                            name="payment"
+                            value="transferencia"
+                            checked={metodoPago === 'transferencia'}
+                            onChange={() => handlePaymentMethodChange('transferencia')}
+                            className="payment-radio"
+                          />
+                          <div className="payment-label">Pago con transferencia</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* WhatsApp Checkout para transferencias */}
+                    {metodoPago === 'transferencia' && (
+                      <div className="form-group full-width">
+                        <div className="whatsapp-transfer-notice">
+                          <div className="notice-icon">💬</div>
+                          <div className="notice-content">
+                            <h4>Finalizar por WhatsApp</h4>
+                            <p>Para proteger tu seguridad, los datos bancarios se proporcionan por WhatsApp. Haz clic en el botón para continuar.</p>
+                            <button 
+                              type="button"
+                              className="btn-whatsapp-transfer"
+                              onClick={() => {
+                                console.log('Botón WhatsApp clickeado');
+                                setShowWhatsAppCheckout(true);
+                              }}
+                            >
+                              📱 Finalizar por WhatsApp
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Notas de la orden */}
+                    <div className="form-group full-width">
+                      <label className="form-label">Notas de la Orden (Opcional)</label>
+                      <textarea
+                        name="orderNotes"
+                        value={formData.orderNotes}
+                        onChange={handleInputChange}
+                        className="form-input form-textarea"
+                        placeholder="Notas especiales para tu orden..."
+                      />
+                    </div>
+
+                                         {/* Checkbox de términos y condiciones */}
+                     <div className="form-checkbox-group">
+                       <input
+                         type="checkbox"
+                         id="agreeToTerms"
+                         checked={agreeToTerms}
+                         onChange={(e) => setAgreeToTerms(e.target.checked)}
+                         className="form-checkbox"
+                         required
+                       />
+                       <label htmlFor="agreeToTerms" className="form-checkbox-label">
+                         He leído y acepto los <Link href="/terms" style={{ color: 'var(--primary-orange)' }}>términos y condiciones</Link> *
+                       </label>
+                     </div>
+                  </form>
                 </div>
               </div>
-
-              {/* Términos y condiciones */}
-              <div className="form-section">
-                <label className="terms-checkbox">
-                  <input
-                    type="checkbox"
-                    checked={agreeToTerms}
-                    onChange={(e) => setAgreeToTerms(e.target.checked)}
-                    required
-                  />
-                  <span>Acepto los <Link href="/terms" target="_blank">términos y condiciones</Link> y la <Link href="/privacy" target="_blank">política de privacidad</Link></span>
-                </label>
-              </div>
-
-              {/* Botón de envío */}
-              <button
-                type="submit"
-                className="btn-submit"
-                disabled={isLoading}
-              >
-                {isLoading ? 'Procesando...' : 'Finalizar Compra'}
-              </button>
-            </form>
-          </div>
-
-          {/* Resumen de la orden */}
-          <div className="checkout-summary">
-            <h3>Resumen de la Orden</h3>
-            
-            <div className="order-items">
-              {productos.map((producto, index) => (
-                <div key={index} className="order-item">
-                  <div className="item-image">
-                    <Image
-                      src={producto.url_imagen}
-                      alt={producto.nombre}
-                      width={60}
-                      height={60}
-                      className="product-image"
-                    />
-                  </div>
-                  <div className="item-details">
-                    <h4>{producto.nombre}</h4>
-                    <p className="item-color">Color: {producto.color.nombre}</p>
-                    <p className="item-quantity">Cantidad: {producto.cantidad}</p>
-                    <p className="item-price">Q{producto.precio.toFixed(2)}</p>
-                  </div>
-                  <div className="item-total">
-                    Q{(producto.precio * producto.cantidad).toFixed(2)}
-                  </div>
-                </div>
-              ))}
             </div>
 
-            <div className="order-totals">
-              <div className="total-row">
-                <span>Subtotal:</span>
-                <span>Q{subtotal.toFixed(2)}</span>
-              </div>
-              <div className="total-row">
-                <span>Envío:</span>
-                <span>Q{costoEnvio.toFixed(2)}</span>
-              </div>
-              <div className="total-row total-final">
-                <span>Total:</span>
-                <span>Q{total.toFixed(2)}</span>
+            {/* Columna derecha - Resumen de la orden */}
+            <div className="order-summary-section">
+              <div className="checkout-card order-summary">
+                <div className="card-header">
+                  <h2>Resumen de Compra</h2>
+                  <div className="guest-summary-notice">
+                    Compra directa sin cuenta
+                  </div>
+                </div>
+                <div className="card-body">
+                  
+                  {/* Lista de productos */}
+                  <div className="order-items">
+                    {productos.map((producto, index) => (
+                      <div key={index} className="order-item">
+                        <Image
+                          src={producto.url_imagen || producto.producto?.url_imagen || producto.imagenes?.[0]?.url || 'https://res.cloudinary.com/demo/image/upload/v1/samples/ecommerce/accessories-bag'}
+                          alt={producto.nombre || producto.producto?.nombre || 'Producto'}
+                          width={80}
+                          height={80}
+                          className="item-image"
+                          onError={(e) => {
+                            e.target.src = 'https://res.cloudinary.com/demo/image/upload/v1/samples/ecommerce/accessories-bag';
+                          }}
+                        />
+                        <div className="item-details">
+                          <div className="item-name">{producto.nombre || producto.producto?.nombre}</div>
+                          <div className="item-meta">
+                            Cantidad: {producto.cantidad} | 
+                            Color: {producto.color?.nombre || 'N/A'}
+                          </div>
+                        </div>
+                                                 <div className="item-price">
+                           Q{(producto.precio * producto.cantidad).toFixed(2)}
+                         </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Totales */}
+                  <div className="order-totals">
+                                         <div className="total-row">
+                       <span>Subtotal</span>
+                       <span>Q{subtotal.toFixed(2)}</span>
+                     </div>
+                     <div className="total-row">
+                       <span>Envío</span>
+                       <span>Q{costoEnvio.toFixed(2)}</span>
+                     </div>
+                     <div className="total-row final">
+                       <span>Total</span>
+                       <span>Q{total.toFixed(2)}</span>
+                     </div>
+                  </div>
+
+                  {/* Botón de orden */}
+                  <button
+                    type="submit"
+                    onClick={handleSubmit}
+                    disabled={!isFormValid() || isLoading}
+                    className="place-order-btn"
+                  >
+                    {isLoading 
+                      ? 'Procesando...' 
+                      : 'Completar Compra'
+                    }
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </main>
-
-      {/* Modal de WhatsApp Checkout */}
-      {showWhatsAppCheckout && (
-        <WhatsAppCheckout
-          orderData={{
-            productos: productos,
-            cliente: {
-              nombre: `${formData.firstName} ${formData.lastName}`,
-              direccion: `${formData.streetAddress} ${formData.apartment}`,
-              ciudad: formData.city,
-              departamento: formData.state,
-              codigoPostal: formData.postcode,
-              nit: formData.nit,
-              telefono: formData.phone,
-              email: formData.email,
-              nombreQuienRecibe: formData.nombreQuienRecibe || `${formData.firstName} ${formData.lastName}`
-            },
-            metodoPago: metodoPago,
-            metodoEnvio: selectedShipping,
-            costoEnvio: costoEnvio,
-            subtotal: subtotal,
-            total: total,
-            notas: formData.orderNotes,
-            comprobanteTransferencia: comprobanteTransferencia
-          }}
-          onClose={() => setShowWhatsAppCheckout(false)}
-        />
-      )}
-
+      </div>
+      
       <Footer />
-    </>
+    </div>
   );
 }
 
+// Componente principal que envuelve en Suspense
 export default function CheckoutPage() {
   return (
-    <Suspense fallback={<div>Cargando...</div>}>
+    <Suspense fallback={
+      <div className="checkout-page">
+        <div className="sticky-wrapper">
+          <Header />
+        </div>
+        <div className="checkout-main">
+          <div className="loading-state">
+            <div className="loading-spinner"></div>
+            <div className="loading-text">Cargando checkout...</div>
+            <div className="loading-subtext">Preparando tu orden</div>
+          </div>
+        </div>
+      </div>
+    }>
       <CheckoutPageContent />
     </Suspense>
   );

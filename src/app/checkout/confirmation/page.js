@@ -35,6 +35,13 @@ function CheckoutConfirmationContent() {
       const data = await response.json();
       
       if (response.ok) {
+        console.log('📦 Datos de la orden recibidos:', JSON.stringify(data.orden, null, 2));
+        console.log('📦 Estructura de cliente:', data.orden?.cliente);
+        console.log('📦 Datos directos:', {
+          nombre_cliente: data.orden?.nombre_cliente,
+          telefono_cliente: data.orden?.telefono_cliente,
+          email_cliente: data.orden?.email_cliente
+        });
         setOrden(data.orden);
       } else {
         setError(data.error || 'Error cargando la orden');
@@ -150,7 +157,7 @@ function CheckoutConfirmationContent() {
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                         <span style={{ fontWeight: '600', color: '#000' }}>Fecha:</span>
                         <span style={{ color: '#000' }}>
-                          {orden?.fecha ? new Date(orden.fecha).toLocaleDateString('es-ES') : 'N/A'}
+                          {orden?.fecha_orden ? new Date(orden.fecha_orden).toLocaleDateString('es-ES') : 'N/A'}
                         </span>
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -175,29 +182,29 @@ function CheckoutConfirmationContent() {
                   <div style={{ marginBottom: '30px' }}>
                     <h3 style={{ margin: '0 0 15px 0', color: '#333' }}>Información de Envío</h3>
                     <div style={{ background: '#f8f9fa', padding: '20px', borderRadius: '8px' }}>
-                                             <p style={{ margin: '0 0 10px 0', fontWeight: '600', color: '#000' }}>
-                         {orden?.nombre_cliente}
-                       </p>
-                      {orden?.nombre_quien_recibe && (
+                      <p style={{ margin: '0 0 10px 0', fontWeight: '600', color: '#000' }}>
+                        {orden?.cliente?.nombre || 'N/A'}
+                      </p>
+                      {orden?.cliente?.nombre_quien_recibe && (
                         <p style={{ margin: '0 0 5px 0', color: '#000', fontStyle: 'italic' }}>
-                          <strong>Quien Recibe:</strong> {orden.nombre_quien_recibe}
+                          <strong>Quien Recibe:</strong> {orden.cliente.nombre_quien_recibe}
                         </p>
                       )}
                       <p style={{ margin: '0 0 5px 0', color: '#000' }}>
-                        {orden?.direccion_cliente}
+                        {orden?.cliente?.direccion || 'N/A'}
                       </p>
                       <p style={{ margin: '0 0 5px 0', color: '#000' }}>
-                        {orden?.municipio_cliente}, {orden?.codigo_postal_cliente}
+                        {orden?.cliente?.municipio || 'N/A'}, Zona {orden?.cliente?.codigo_postal || 'N/A'}
                       </p>
                       <p style={{ margin: '0 0 5px 0', color: '#000' }}>
-                        Tel: {orden?.telefono_cliente}
+                        Tel: {orden?.cliente?.telefono || 'N/A'}
                       </p>
                       <p style={{ margin: '0 0 5px 0', color: '#000' }}>
-                        Email: {orden?.email_cliente}
+                        Email: {orden?.cliente?.email || 'N/A'}
                       </p>
-                      {orden?.nit_cliente && (
+                      {orden?.cliente?.nit && (
                         <p style={{ margin: '0', color: '#000' }}>
-                          NIT: {orden.nit_cliente}
+                          NIT: {orden.cliente.nit}
                         </p>
                       )}
                     </div>

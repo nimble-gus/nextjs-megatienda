@@ -3,7 +3,7 @@ import mysql from 'mysql2/promise';
 
 export async function GET(request, { params }) {
   try {
-    const { codigo } = params;
+    const { codigo } = await params;
 
     if (!codigo) {
       return NextResponse.json(
@@ -12,7 +12,8 @@ export async function GET(request, { params }) {
       );
     }
 
-    console.log('Obteniendo orden:', { codigo });
+    console.log('🔍 Obteniendo orden:', { codigo });
+    console.log('🔍 Parámetros recibidos:', params);
 
     // Configuración de conexión
     const databaseUrl = process.env.DATABASE_URL;
@@ -46,22 +47,31 @@ export async function GET(request, { params }) {
           o.fecha,
           o.estado,
           o.total,
-          o.direccion_cliente,
-          o.telefono_cliente,
+          o.subtotal,
+          o.costo_envio,
+          o.nombre_cliente,
           o.email_cliente,
+          o.telefono_cliente,
+          o.direccion_cliente,
+          o.municipio_cliente,
+          o.codigo_postal_cliente,
+          o.nombre_quien_recibe,
+          o.nit_cliente,
           o.metodo_pago,
           o.notas,
-          u.nombre as usuario_nombre,
-          u.apellido as usuario_apellido,
-          u.correo as usuario_email
+          o.comprobante_transferencia,
+          o.fecha_validacion_transferencia,
+          o.validado_por
         FROM ordenes o
-        LEFT JOIN usuarios u ON o.usuario_id = u.id
         WHERE o.codigo_orden = ?
       `;
       
+      console.log('🔍 Ejecutando consulta de orden...');
       const [ordenes] = await connection.query(ordenQuery, [codigo]);
+      console.log('📦 Resultados de orden:', ordenes.length, 'registros encontrados');
 
       if (ordenes.length === 0) {
+        console.log('❌ Orden no encontrada en la base de datos');
         return NextResponse.json(
           { error: 'Orden no encontrada' },
           { status: 404 }
@@ -69,6 +79,17 @@ export async function GET(request, { params }) {
       }
 
       const orden = ordenes[0];
+      console.log('✅ Orden encontrada:', { id: orden.id, codigo: orden.codigo_orden });
+      console.log('📦 Datos de la orden:', {
+        nombre_cliente: orden.nombre_cliente,
+        email_cliente: orden.email_cliente,
+        telefono_cliente: orden.telefono_cliente,
+        direccion_cliente: orden.direccion_cliente,
+        municipio_cliente: orden.municipio_cliente,
+        codigo_postal_cliente: orden.codigo_postal_cliente,
+        nombre_quien_recibe: orden.nombre_quien_recibe,
+        nit_cliente: orden.nit_cliente
+      });
 
       // Obtener detalles de la orden
       const detallesQuery = `
@@ -105,16 +126,28 @@ export async function GET(request, { params }) {
         fecha_orden: orden.fecha,
         estado: orden.estado,
         total: orden.total,
-        direccion_envio: orden.direccion_cliente,
-        telefono: orden.telefono_cliente,
-        email: orden.email_cliente,
+        subtotal: orden.subtotal,
+        costo_envio: orden.costo_envio,
+        cliente: {
+          nombre: orden.nombre_cliente,
+          email: orden.email_cliente,
+          telefono: orden.telefono_cliente,
+          direccion: orden.direccion_cliente,
+          municipio: orden.municipio_cliente,
+          codigo_postal: orden.codigo_postal_cliente,
+          nombre_quien_recibe: orden.nombre_quien_recibe,
+          nit: orden.nit_cliente
+        },
         metodo_pago: orden.metodo_pago,
         notas: orden.notas,
-        usuario: {
-          nombre: orden.usuario_nombre,
-          apellido: orden.usuario_apellido,
-          email: orden.usuario_email
-        },
+        comprobante_transferencia: orden.comprobante_transferencia,
+        fecha_validacion_transferencia: orden.fecha_validacion_transferencia,
+        validado_por: orden.validado_por,
+        usuario: orden.usuario_id ? {
+          id: orden.usuario_id,
+          nombre: 'Usuario registrado',
+          email: 'N/A'
+        } : null,
         detalle: detalles.map(detalle => ({
           id: detalle.id,
           orden_id: detalle.orden_id,
@@ -143,6 +176,7 @@ export async function GET(request, { params }) {
       };
 
       console.log('Orden obtenida exitosamente');
+      console.log('📤 Enviando respuesta:', JSON.stringify(ordenFormateada, null, 2));
 
       return NextResponse.json({
         success: true,

@@ -97,6 +97,11 @@ ${itemsList}
     setIsLoading(true);
     
     try {
+      console.log('🔄 Iniciando WhatsApp checkout...');
+      console.log('📦 customerData:', customerData);
+      console.log('📦 cartItems:', cartItems);
+      console.log('📦 orderData:', orderData);
+      
       // Crear la orden en la base de datos primero
       const orderDataToSend = {
         // Datos del cliente
@@ -129,6 +134,8 @@ ${itemsList}
         usuario_id: orderData?.usuario_id || null
       };
 
+      console.log('📤 Datos a enviar:', JSON.stringify(orderDataToSend, null, 2));
+
       // Crear la orden en la base de datos
       const response = await fetch('/api/checkout/create-order', {
         method: 'POST',
@@ -138,11 +145,16 @@ ${itemsList}
         body: JSON.stringify(orderDataToSend)
       });
 
+      console.log('📡 Respuesta del servidor:', response.status, response.statusText);
+
       if (!response.ok) {
-        throw new Error('Error al crear la orden en la base de datos');
+        const errorText = await response.text();
+        console.error('❌ Error response:', errorText);
+        throw new Error(`Error al crear la orden en la base de datos: ${response.status} ${response.statusText}`);
       }
 
       const result = await response.json();
+      console.log('✅ Resultado exitoso:', result);
       
       // Número de WhatsApp de la empresa
       const whatsappNumber = '+50254844058';
