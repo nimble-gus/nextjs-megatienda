@@ -4,6 +4,12 @@ import tokenBlacklist from '@/lib/token-blacklist';
 
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'your-secret-key');
 
+// Función para verificar si una sesión está en blacklist
+async function verifySessionNotBlacklisted(sessionId) {
+  if (!sessionId) return false;
+  return await tokenBlacklist.isSessionBlacklisted(sessionId);
+}
+
 export async function GET(request) {
   try {
     const accessToken = request.cookies.get('accessToken')?.value;

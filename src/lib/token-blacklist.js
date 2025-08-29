@@ -53,12 +53,32 @@ class TokenBlacklist {
     try {
       const connection = await this.getConnection();
       
-      const [rows] = await connection.query(
+      // Verificar sessionId específico
+      const [specificRows] = await connection.query(
         'SELECT id FROM session_blacklist WHERE session_id = ?',
         [sessionId]
       );
 
-      return rows.length > 0;
+      if (specificRows.length > 0) {
+        console.log('❌ SessionId específico encontrado en blacklist:', sessionId);
+        return true;
+      }
+
+      // Verificar si hay un patrón de invalidación global para el usuario
+      if (sessionId && sessionId.includes('-')) {
+        const userId = sessionId.split('-')[0];
+        const [globalRows] = await connection.query(
+          'SELECT id FROM session_blacklist WHERE session_id LIKE ? AND usuario_id = ?',
+          [`user-${userId}-all-sessions`, userId]
+        );
+
+        if (globalRows.length > 0) {
+          console.log('❌ Sesión invalidada globalmente para usuario:', userId);
+          return true;
+        }
+      }
+
+      return false;
     } catch (error) {
       console.error('❌ Error verificando blacklist:', error);
       // En caso de error, permitir la sesión (fail-safe)

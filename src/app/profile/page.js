@@ -51,6 +51,35 @@ const ProfilePage = () => {
         }
     };
 
+    const handleForceLogoutAll = async () => {
+        if (!confirm('¿Estás seguro de que quieres cerrar sesión en todos los dispositivos? Esta acción no se puede deshacer.')) {
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/auth/force-logout-all', {
+                method: 'POST',
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                // Limpiar localStorage
+                localStorage.removeItem('user');
+                
+                // Redirigir al home
+                router.push('/');
+                
+                alert('Sesión cerrada exitosamente en todos los dispositivos');
+            } else {
+                const errorData = await response.json();
+                alert(`Error: ${errorData.error || 'No se pudo cerrar sesión'}`);
+            }
+        } catch (error) {
+            console.error('Error en force logout:', error);
+            alert('Error al cerrar sesión. Intenta de nuevo.');
+        }
+    };
+
     if (loading) {
         return (
             <div style={{ 
@@ -276,6 +305,64 @@ const ProfilePage = () => {
                                 </svg>
                                 <span style={{ fontWeight: '600', fontSize: '16px' }}>Ver mi carrito</span>
                             </Link>
+                        </div>
+
+                        {/* Sección de seguridad */}
+                        <div style={{
+                            marginTop: '40px',
+                            padding: '30px',
+                            background: '#fff5f5',
+                            borderRadius: '15px',
+                            border: '2px solid #fed7d7'
+                        }}>
+                            <h3 style={{
+                                margin: '0 0 20px 0',
+                                color: '#c53030',
+                                fontSize: '1.3rem',
+                                fontWeight: '600'
+                            }}>
+                                🔒 Seguridad de la cuenta
+                            </h3>
+                            
+                            <p style={{
+                                margin: '0 0 20px 0',
+                                color: '#744210',
+                                fontSize: '14px',
+                                lineHeight: '1.5'
+                            }}>
+                                Si sospechas que tu cuenta está siendo utilizada en otro dispositivo, puedes cerrar sesión en todos los dispositivos de una vez.
+                            </p>
+                            
+                            <button 
+                                onClick={handleForceLogoutAll}
+                                style={{
+                                    background: 'linear-gradient(135deg, #e53e3e 0%, #c53030 100%)',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '10px',
+                                    padding: '12px 24px',
+                                    fontSize: '14px',
+                                    fontWeight: '600',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '10px'
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.target.style.transform = 'translateY(-2px)';
+                                    e.target.style.boxShadow = '0 4px 20px rgba(197, 48, 48, 0.3)';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.target.style.transform = 'translateY(0)';
+                                    e.target.style.boxShadow = 'none';
+                                }}
+                            >
+                                <svg viewBox="0 0 24 24" fill="currentColor" style={{ width: '18px', height: '18px' }}>
+                                    <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
+                                </svg>
+                                Cerrar sesión en todos los dispositivos
+                            </button>
                         </div>
                     </div>
                 </div>
