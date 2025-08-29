@@ -1,11 +1,14 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcrypt';
-import { sessionManager } from '@/lib/session-manager';
-import prisma from '@/lib/prisma-production';
+import mysql from 'mysql2/promise';
+import { SignJWT } from 'jose';
+
+const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'your-secret-key');
 
 export async function POST(req) {
   try {
     const { nombre, correo, contraseña } = await req.json();
+    
     // Validar datos básicos
     if (!nombre || !correo || !contraseña) {
       return NextResponse.json(
@@ -37,49 +40,121 @@ export async function POST(req) {
         { status: 400 }
       );
     }
-    // Verificar usuario existente
-    const existingUser = await prisma.usuarios.findUnique({
-      where: { correo },
-    });
-    
-    if (existingUser) {
-      return NextResponse.json(
-        { error: 'El correo ya está registrado' },
-        { status: 400 }
-      );
+
+    // Configuración de conexión
+    const databaseUrl = process.env.DATABASE_URL;
+    if (!databaseUrl) {
+      throw new Error('DATABASE_URL no está configurada');
     }
-    // Encriptar contraseña
-    const hashedPassword = await bcrypt.hash(contraseña, 10);
-    // Crear usuario
-    const newUser = await prisma.usuarios.create({
-      data: {
-        nombre,
-        correo,
-        password: hashedPassword,
-        rol: 'cliente',
-      },
-    });
-    // Crear sesión automáticamente después del registro
-    const session = await sessionManager.createSession({
-      id: newUser.id,
-      nombre: newUser.nombre,
-      correo: newUser.correo,
-      rol: newUser.rol
-    });
-    // Respuesta con tokens
-    return NextResponse.json({
-      success: true,
-      message: 'Usuario registrado correctamente',
-      accessToken: session.accessToken,
-      refreshToken: session.refreshToken,
-      user: session.user,
-      expiresAt: session.expiresAt
-    });
+
+    const url = new URL(databaseUrl);
+    const connectionConfig = {
+      host: url.hostname,
+      port: parseInt(url.port) || 3306,
+      user: url.username,
+      password: url.password,
+      database: url.pathname.substring(1),
+      connectTimeout: 10000,
+      acquireTimeout: 10000,
+      timeout: 10000,
+      reconnect: false
+    };
+
+    // Crear conexión
+    const connection = await mysql.createConnection(connectionConfig);
+
+    try {
+      // Verificar usuario existente
+      const [existingUsers] = await connection.query(
+        'SELECT id FROM usuarios WHERE correo = ?',
+        [correo]
+      );
+      
+      if (existingUsers.length > 0) {
+        return NextResponse.json(
+          { error: 'El correo ya está registrado' },
+          { status: 400 }
+        );
+      }
+
+      // Encriptar contraseña
+      const hashedPassword = await bcrypt.hash(contraseña, 10);
+
+      // Crear usuario
+      const [result] = await connection.query(
+        'INSERT INTO usuarios (nombre, correo, contraseña, rol) VALUES (?, ?, ?, ?)',
+        [nombre, correo, hashedPassword, 'cliente']
+      );
+
+      const newUserId = result.insertId;
+
+      // Obtener el usuario creado
+      const [newUsers] = await connection.query(
+        'SELECT id, nombre, correo, rol FROM usuarios WHERE id = ?',
+        [newUserId]
+      );
+
+      const newUser = newUsers[0];
+
+      // Crear tokens JWT
+      const accessToken = await new SignJWT({
+        id: newUser.id,
+        nombre: newUser.nombre,
+        correo: newUser.correo,
+        rol: newUser.rol
+      })
+        .setProtectedHeader({ alg: 'HS256' })
+        .setExpirationTime('1h')
+        .sign(JWT_SECRET);
+
+      const refreshToken = await new SignJWT({
+        id: newUser.id,
+        nombre: newUser.nombre,
+        correo: newUser.correo,
+        rol: newUser.rol
+      })
+        .setProtectedHeader({ alg: 'HS256' })
+        .setExpirationTime('7d')
+        .sign(JWT_SECRET);
+
+      // Crear respuesta con cookies
+      const response = NextResponse.json({
+        success: true,
+        message: 'Usuario registrado correctamente',
+        user: {
+          id: newUser.id,
+          nombre: newUser.nombre,
+          correo: newUser.correo,
+          rol: newUser.rol
+        }
+      });
+
+      // Establecer cookies
+      response.cookies.set('accessToken', accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60 * 60 // 1 hora
+      });
+
+      response.cookies.set('refreshToken', refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60 // 7 días
+      });
+
+      return response;
+
+    } finally {
+      await connection.end();
+    }
 
   } catch (error) {
     console.error('❌ Error inesperado en registro:', error);
+    console.error('Stack trace:', error.stack);
     return NextResponse.json(
-      { error: 'Error interno del servidor' },
+      { error: 'Error interno del servidor', details: error.message },
       { status: 500 }
     );
   }

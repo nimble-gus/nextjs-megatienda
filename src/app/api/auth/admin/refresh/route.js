@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { jwtVerify, SignJWT } from 'jose';
-import prisma from '@/lib/prisma-production';
+import { executeQuery } from '@/lib/mysql-direct';
 
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'your-secret-key');
 
@@ -29,16 +29,22 @@ export async function POST(request) {
     }
 
     // Verificar que el usuario existe y es admin
-    const user = await prisma.usuarios.findUnique({
-      where: { id: payload.userId }
-    });
-
-    if (!user || user.rol !== 'admin') {
+    const userQuery = `
+      SELECT id, nombre, correo, rol
+      FROM usuarios
+      WHERE id = ? AND rol = 'admin'
+    `;
+    
+    const userResult = await executeQuery(userQuery, [payload.userId]);
+    
+    if (!userResult || userResult.length === 0) {
       return NextResponse.json(
         { error: 'Usuario no autorizado' },
         { status: 403 }
       );
     }
+    
+    const user = userResult[0];
 
     // Generar nuevos tokens
     const newAccessToken = await new SignJWT({

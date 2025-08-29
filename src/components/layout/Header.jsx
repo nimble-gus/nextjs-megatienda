@@ -39,13 +39,12 @@ const Header = () => {
     const loadUserCart = async (userId) => {
         try {
             console.log('🛒 Cargando carrito para usuario:', userId);
-            const token = localStorage.getItem('token');
             
             // Agregar timestamp para evitar caché del navegador
             const timestamp = new Date().getTime();
             const response = await fetch(`/api/cart/${userId}?_t=${timestamp}`, {
+                credentials: 'include', // Usar cookies automáticamente
                 headers: {
-                    'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json',
                     'Cache-Control': 'no-cache, no-store, must-revalidate',
                     'Pragma': 'no-cache',

@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma-production';
-import { executeWithRetry } from '@/lib/db-utils';
+import { executeQuery } from '@/lib/mysql-direct';
 
 // GET - Obtener un banner promocional específico
 export async function GET(request, { params }) {
@@ -15,13 +14,13 @@ export async function GET(request, { params }) {
       );
     }
 
-    const promoBanner = await executeWithRetry(async () => {
-      return await prisma.promo_banners.findUnique({
-        where: { id: promoId }
-      });
-    });
+    const promoBannerQuery = `
+      SELECT * FROM promo_banners WHERE id = ?
+    `;
+    
+    const promoBannerResult = await executeQuery(promoBannerQuery, [promoId]);
 
-    if (!promoBanner) {
+    if (!promoBannerResult || promoBannerResult.length === 0) {
       return NextResponse.json(
         { success: false, error: 'Banner promocional no encontrado' },
         { status: 404 }
@@ -30,7 +29,7 @@ export async function GET(request, { params }) {
 
     return NextResponse.json({
       success: true,
-      data: promoBanner
+      data: promoBannerResult[0]
     });
   } catch (error) {
     console.error('Error obteniendo banner promocional:', error);
@@ -64,21 +63,45 @@ export async function PUT(request, { params }) {
       );
     }
 
-    const promoBanner = await executeWithRetry(async () => {
-      return await prisma.promo_banners.update({
-        where: { id: promoId },
-        data: {
-          titulo,
-          descripcion: descripcion || null,
-          url_imagen,
-          cloudinary_id: cloudinary_id || null,
-          enlace: enlace || null,
-          orden: orden || 0,
-          activo: activo !== undefined ? activo : true,
-          fecha_actualizacion: new Date()
-        }
-      });
-    });
+    // Verificar que el banner existe
+    const checkBannerQuery = `
+      SELECT id FROM promo_banners WHERE id = ?
+    `;
+    
+    const bannerExists = await executeQuery(checkBannerQuery, [promoId]);
+    
+    if (!bannerExists || bannerExists.length === 0) {
+      return NextResponse.json(
+        { success: false, error: 'Banner promocional no encontrado' },
+        { status: 404 }
+      );
+    }
+
+    // Actualizar el banner
+    const updateQuery = `
+      UPDATE promo_banners 
+      SET titulo = ?, descripcion = ?, url_imagen = ?, cloudinary_id = ?, enlace = ?, orden = ?, activo = ?, fecha_actualizacion = NOW()
+      WHERE id = ?
+    `;
+    
+    await executeQuery(updateQuery, [
+      titulo,
+      descripcion || null,
+      url_imagen,
+      cloudinary_id || null,
+      enlace || null,
+      orden || 0,
+      activo !== undefined ? activo : true,
+      promoId
+    ]);
+
+    // Obtener el banner actualizado
+    const getBannerQuery = `
+      SELECT * FROM promo_banners WHERE id = ?
+    `;
+    
+    const promoBannerResult = await executeQuery(getBannerQuery, [promoId]);
+    const promoBanner = promoBannerResult[0];
 
     return NextResponse.json({
       success: true,
@@ -107,11 +130,26 @@ export async function DELETE(request, { params }) {
       );
     }
 
-    await executeWithRetry(async () => {
-      return await prisma.promo_banners.delete({
-        where: { id: promoId }
-      });
-    });
+    // Verificar que el banner existe
+    const checkBannerQuery = `
+      SELECT id FROM promo_banners WHERE id = ?
+    `;
+    
+    const bannerExists = await executeQuery(checkBannerQuery, [promoId]);
+    
+    if (!bannerExists || bannerExists.length === 0) {
+      return NextResponse.json(
+        { success: false, error: 'Banner promocional no encontrado' },
+        { status: 404 }
+      );
+    }
+
+    // Eliminar el banner
+    const deleteQuery = `
+      DELETE FROM promo_banners WHERE id = ?
+    `;
+    
+    await executeQuery(deleteQuery, [promoId]);
 
     return NextResponse.json({
       success: true,

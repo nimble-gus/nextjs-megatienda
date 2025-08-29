@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma-simple';
-import { executeWithRetry } from '@/lib/db-utils';
+import { getHeroImages } from '@/lib/mysql-direct';
 import { MultimediaCache } from '@/lib/redis';
 
 // GET - Obtener imágenes de Hero activas para el frontend
@@ -11,16 +10,7 @@ export async function GET() {
     if (cachedHeroImages) {
       return NextResponse.json(cachedHeroImages);
     }
-    const heroImages = await executeWithRetry(async () => {
-      return await prisma.hero_images.findMany({
-        where: {
-          activo: true
-        },
-        orderBy: {
-          orden: 'asc'
-        }
-      });
-    });
+    const heroImages = await getHeroImages();
     const responseData = {
       success: true,
       data: heroImages

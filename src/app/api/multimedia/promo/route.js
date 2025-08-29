@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma-simple';
-import { executeWithRetry } from '@/lib/db-utils';
+import { getPromoBanners } from '@/lib/mysql-direct';
 import { MultimediaCache } from '@/lib/redis';
 
 // GET - Obtener banners promocionales activos para el frontend
@@ -11,16 +10,7 @@ export async function GET() {
     if (cachedPromoBanners) {
       return NextResponse.json(cachedPromoBanners);
     }
-    const promoBanners = await executeWithRetry(async () => {
-      return await prisma.promo_banners.findMany({
-        where: {
-          activo: true
-        },
-        orderBy: {
-          orden: 'asc'
-        }
-      });
-    });
+    const promoBanners = await getPromoBanners();
     const responseData = {
       success: true,
       data: promoBanners

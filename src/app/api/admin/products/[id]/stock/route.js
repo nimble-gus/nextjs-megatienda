@@ -1,36 +1,55 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma-production';
-import { invalidateProductCache, invalidateOrderCache } from '@/lib/cache-manager';
+import { executeQuery } from '@/lib/mysql-direct';
 
 // GET - Obtener stock detallado de un producto
 export async function GET(request, { params }) {
   try {
     const { id } = params;
     
-    const stockItems = await prisma.stock_detalle.findMany({
-      where: {
-        producto_id: parseInt(id)
+    const stockQuery = `
+      SELECT 
+        s.id,
+        s.producto_id,
+        s.color_id,
+        s.cantidad,
+        s.precio,
+        c.nombre as color_nombre,
+        c.codigo_hex,
+        p.nombre as producto_nombre
+      FROM stock_detalle s
+      LEFT JOIN colores c ON s.color_id = c.id
+      LEFT JOIN productos p ON s.producto_id = p.id
+      WHERE s.producto_id = ?
+      ORDER BY s.id ASC
+    `;
+    
+    const stockItems = await executeQuery(stockQuery, [id]);
+    
+    // Formatear la respuesta para que coincida con el formato esperado
+    const formattedStockItems = stockItems.map(item => ({
+      id: item.id,
+      producto_id: item.producto_id,
+      color_id: item.color_id,
+      cantidad: item.cantidad,
+      precio: item.precio,
+      color: {
+        id: item.color_id,
+        nombre: item.color_nombre,
+        codigo_hex: item.codigo_hex
       },
-      include: {
-        color: true,
-        producto: {
-          select: {
-            id: true,
-            nombre: true
-          }
-        }
+      producto: {
+        id: item.producto_id,
+        nombre: item.producto_nombre
       }
-    });
+    }));
 
-    return NextResponse.json(stockItems);
+    return NextResponse.json(formattedStockItems);
   } catch (error) {
     console.error('Error obteniendo stock:', error);
     return NextResponse.json(
       { error: 'Error al obtener el stock del producto' },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }
 
@@ -39,74 +58,61 @@ export async function PUT(request, { params }) {
   try {
     const { id } = params;
     const { stockUpdates, newStockItems } = await request.json();
-    const operations = [];
     
     // Actualizar items de stock existentes
     if (stockUpdates && stockUpdates.length > 0) {
-      const updatePromises = stockUpdates.map(update => 
-        prisma.stock_detalle.update({
-          where: { id: update.id },
-          data: {
-            cantidad: update.cantidad,
-            precio: update.precio
-          }
-        })
-      );
-      operations.push(...updatePromises);
+      for (const update of stockUpdates) {
+        const updateQuery = `
+          UPDATE stock_detalle 
+          SET cantidad = ?, precio = ?
+          WHERE id = ?
+        `;
+        await executeQuery(updateQuery, [update.cantidad, update.precio, update.id]);
+      }
     }
     
     // Crear nuevos items de stock
     if (newStockItems && newStockItems.length > 0) {
       // Verificar que los colores existan
       const colorIds = newStockItems.map(item => item.color_id);
-      const existingColors = await prisma.colores.findMany({
-        where: { id: { in: colorIds } }
-      });
+      const colorIdsPlaceholders = colorIds.map(() => '?').join(',');
+      const existingColorsQuery = `
+        SELECT id FROM colores WHERE id IN (${colorIdsPlaceholders})
+      `;
+      const existingColors = await executeQuery(existingColorsQuery, colorIds);
       
       if (existingColors.length !== colorIds.length) {
         throw new Error('Algunos colores seleccionados no existen');
       }
       
       // Verificar que no existan duplicados
-      const existingStock = await prisma.stock_detalle.findMany({
-        where: {
-          producto_id: parseInt(id),
-          color_id: { in: colorIds }
-        }
-      });
+      const existingStockQuery = `
+        SELECT color_id FROM stock_detalle 
+        WHERE producto_id = ? AND color_id IN (${colorIdsPlaceholders})
+      `;
+      const existingStock = await executeQuery(existingStockQuery, [id, ...colorIds]);
       
       if (existingStock.length > 0) {
         const duplicateColors = existingStock.map(stock => stock.color_id);
         throw new Error(`Ya existen variantes para algunos colores seleccionados: ${duplicateColors.join(', ')}`);
       }
       
-      const createPromises = newStockItems.map(item =>
-        prisma.stock_detalle.create({
-          data: {
-            producto_id: parseInt(id),
-            color_id: item.color_id,
-            cantidad: item.cantidad,
-            precio: item.precio
-          }
-        })
-      );
-      operations.push(...createPromises);
+      // Crear nuevos items de stock
+      for (const item of newStockItems) {
+        const createQuery = `
+          INSERT INTO stock_detalle (producto_id, color_id, cantidad, precio)
+          VALUES (?, ?, ?, ?)
+        `;
+        await executeQuery(createQuery, [id, item.color_id, item.cantidad, item.precio]);
+      }
     }
     
-    if (operations.length === 0) {
+    if ((!stockUpdates || stockUpdates.length === 0) && (!newStockItems || newStockItems.length === 0)) {
       return NextResponse.json(
         { error: 'No hay cambios para aplicar' },
         { status: 400 }
       );
     }
-    
-    await Promise.all(operations);
-
-    // Invalidar caché de productos y relacionados
-    await Promise.all([
-      invalidateProductCache(),
-      invalidateOrderCache()
-    ]);
 
     return NextResponse.json({ 
       success: true, 
@@ -120,7 +126,5 @@ export async function PUT(request, { params }) {
       { error: error.message || 'Error al actualizar el stock' },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }

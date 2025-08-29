@@ -1,65 +1,52 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma-production';
-import { executeWithRetry } from '@/lib/db-utils';
-import { invalidateProductCache, invalidateOrderCache } from '@/lib/cache-manager';
+import { executeQuery } from '@/lib/mysql-direct';
 
 export async function GET() {
   try {
-    // Usar executeWithRetry para manejar reconexiones automáticas
-    const productCount = await executeWithRetry(async () => {
-      return await prisma.productos.count();
-    });
-    if (productCount === 0) {
-      return NextResponse.json([]);
-    }
+    // Obtener productos con categoría y stock usando SQL
+    const productsQuery = `
+      SELECT 
+        p.id,
+        p.sku,
+        p.nombre,
+        p.descripcion,
+        p.url_imagen,
+        p.featured,
+        c.nombre as categoria_nombre,
+        COALESCE(SUM(s.cantidad), 0) as total_stock,
+        COALESCE(MIN(s.precio), 0) as min_price,
+        COALESCE(MAX(s.precio), 0) as max_price
+      FROM productos p
+      LEFT JOIN categorias c ON p.categoria_id = c.id
+      LEFT JOIN stock_detalle s ON p.id = s.producto_id
+      GROUP BY p.id, p.sku, p.nombre, p.descripcion, p.url_imagen, p.featured, c.nombre
+      ORDER BY p.id DESC
+    `;
     
-    // Si hay productos, obtenerlos con relaciones usando retry
-    const products = await executeWithRetry(async () => {
-      return await prisma.productos.findMany({
-        include: {
-          categoria: true,
-          stock: {
-            include: {
-              color: true
-            }
-          }
-        },
-        orderBy: {
-          id: 'desc'
-        }
-      });
-    });
+    const products = await executeQuery(productsQuery);
+    
     // Formatear los productos para el admin
     const formattedProducts = products.map(product => {
-      const hasStock = product.stock.length > 0 && product.stock.some(item => item.cantidad > 0);
-      const totalStock = product.stock.reduce((total, item) => total + item.cantidad, 0);
-      
-      let minPrice = 0;
-      let maxPrice = 0;
-      
-      if (product.stock.length > 0) {
-        minPrice = Math.min(...product.stock.map(s => s.precio));
-        maxPrice = Math.max(...product.stock.map(s => s.precio));
-      }
+      const hasStock = product.total_stock > 0;
+      const minPrice = product.min_price || 0;
+      const maxPrice = product.max_price || 0;
 
-      const formattedProduct = {
+      return {
         id: product.id,
         sku: product.sku,
         nombre: product.nombre,
         descripcion: product.descripcion,
         url_imagen: product.url_imagen,
-        categoria: product.categoria?.nombre || 'Sin categoría',
+        categoria: product.categoria_nombre || 'Sin categoría',
         featured: product.featured,
-        stock: totalStock,
+        stock: product.total_stock,
         hasStock,
         minPrice,
         maxPrice,
         precio: minPrice > 0 ? minPrice : null
       };
-
-      // Debug: Log para verificar la imagen del producto en admin
-      return formattedProduct;
     });
+    
     return NextResponse.json(formattedProducts);
     
   } catch (error) {
@@ -81,22 +68,44 @@ export async function GET() {
 export async function POST(request) {
   try {
     const productData = await request.json();
-    // Crear el producto usando executeWithRetry
-    const newProduct = await executeWithRetry(async () => {
-      return await prisma.productos.create({
-        data: productData
-      });
-    });
     
-    // Invalidar caché de productos y relacionados
-    await Promise.all([
-      invalidateProductCache(),
-      invalidateOrderCache()
-    ]);
+    // Crear el producto usando SQL
+    const insertQuery = `
+      INSERT INTO productos (sku, nombre, descripcion, url_imagen, categoria_id, featured)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `;
+    
+    const insertParams = [
+      productData.sku,
+      productData.nombre,
+      productData.descripcion,
+      productData.url_imagen,
+      productData.categoria_id,
+      productData.featured || false
+    ];
+    
+    const result = await executeQuery(insertQuery, insertParams);
+    
+    // Obtener el producto creado
+    const newProductQuery = `
+      SELECT 
+        p.id,
+        p.sku,
+        p.nombre,
+        p.descripcion,
+        p.url_imagen,
+        p.featured,
+        c.nombre as categoria_nombre
+      FROM productos p
+      LEFT JOIN categorias c ON p.categoria_id = c.id
+      WHERE p.id = ?
+    `;
+    
+    const newProduct = await executeQuery(newProductQuery, [result.insertId]);
     
     return NextResponse.json({
       success: true,
-      product: newProduct,
+      product: newProduct[0],
       message: 'Producto creado exitosamente'
     });
     

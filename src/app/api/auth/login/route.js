@@ -1,28 +1,13 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcrypt';
-import { sessionManager } from '@/lib/session-manager';
-import prisma from '@/lib/prisma-production';
-import { CircuitBreakerManager } from '@/lib/circuit-breaker';
-import { applyGlobalRateLimit, getRateLimitHeaders } from '@/lib/global-rate-limiter';
-import { withDatabaseTimeout } from '@/lib/timeout-wrapper';
+import mysql from 'mysql2/promise';
+import { SignJWT } from 'jose';
+import failedLoginManager from '@/lib/failed-login-manager';
+
+const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'your-secret-key');
 
 export async function POST(req) {
   try {
-    // Aplicar rate limiting solo en producción
-    if (process.env.NODE_ENV === 'production') {
-      const rateLimitResult = await applyGlobalRateLimit(req, 'auth');
-      if (!rateLimitResult.success) {
-        const response = NextResponse.json(
-          { error: 'Demasiados intentos de login. Intenta de nuevo en unos minutos.' },
-          { status: 429 }
-        );
-        Object.entries(getRateLimitHeaders(rateLimitResult)).forEach(([key, value]) => {
-          response.headers.set(key, value);
-        });
-        return response;
-      }
-    }
-
     const { correo, contraseña } = await req.json();
 
     // Validar datos obligatorios
@@ -33,108 +18,154 @@ export async function POST(req) {
       );
     }
 
-    // Usar circuit breaker para la operación de login
-    const user = await CircuitBreakerManager.execute('login', async () => {
-      return await withDatabaseTimeout(async () => {
-        return await prisma.usuarios.findUnique({
-          where: { correo },
-        });
-      }, 'login_find_user');
-    }, { timeout: 10000 });
+    // Obtener IP y User Agent para protección contra ataques
+    const ipAddress = req.headers.get('x-forwarded-for') || 
+                     req.headers.get('x-real-ip') || 
+                     'unknown';
+    const userAgent = req.headers.get('user-agent') || 'unknown';
 
-    if (!user) {
+    // Verificar si el email/IP está bloqueado
+    const blockStatus = await failedLoginManager.isBlocked(correo, ipAddress);
+    
+    if (blockStatus.isBlocked) {
       return NextResponse.json(
-        { error: 'Usuario no encontrado' },
-        { status: 400 }
+        { 
+          error: `Cuenta temporalmente bloqueada. Intenta de nuevo en ${blockStatus.remainingMinutes} minutos.`,
+          attempts: blockStatus.attempts,
+          remainingMinutes: blockStatus.remainingMinutes
+        },
+        { status: 429 } // Too Many Requests
       );
     }
 
-    // Verificar contraseña
-    const validPassword = await bcrypt.compare(contraseña, user.password);
-    if (!validPassword) {
-      return NextResponse.json(
-        { error: 'Contraseña incorrecta' },
-        { status: 400 }
-      );
+    // Configuración de conexión
+    const databaseUrl = process.env.DATABASE_URL;
+    if (!databaseUrl) {
+      throw new Error('DATABASE_URL no está configurada');
     }
 
-    // Crear sesión con access y refresh tokens
-    const session = await sessionManager.createSession({
-      id: user.id,
-      nombre: user.nombre,
-      correo: user.correo,
-      rol: user.rol
-    });
+    const url = new URL(databaseUrl);
+    const connectionConfig = {
+      host: url.hostname,
+      port: parseInt(url.port) || 3306,
+      user: url.username,
+      password: url.password,
+      database: url.pathname.substring(1),
+      connectTimeout: 10000,
+      acquireTimeout: 10000,
+      timeout: 10000,
+      reconnect: false
+    };
 
-    // Crear respuesta con cookies seguras
-    const response = NextResponse.json({
-      success: true,
-      message: 'Login exitoso',
-      user: session.user,
-      expiresAt: session.expiresAt
-    });
+    // Crear conexión
+    const connection = await mysql.createConnection(connectionConfig);
 
-    // Configurar cookies HttpOnly seguras
-    response.cookies.set('accessToken', session.accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 60 * 60, // 1 hora
-      path: '/'
-    });
+    try {
+      // Buscar usuario por correo
+      const [users] = await connection.query(
+        'SELECT id, nombre, correo, contraseña, rol FROM usuarios WHERE correo = ?',
+        [correo]
+      );
 
-    response.cookies.set('refreshToken', session.refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60, // 7 días
-      path: '/'
-    });
+      if (users.length === 0) {
+        // Registrar intento fallido (usuario no existe)
+        await failedLoginManager.recordFailedAttempt(correo, ipAddress, userAgent);
+        
+        return NextResponse.json(
+          { error: 'Usuario no encontrado' },
+          { status: 400 }
+        );
+      }
 
-    return response;
+      const user = users[0];
+
+      // Verificar contraseña
+      const validPassword = await bcrypt.compare(contraseña, user.contraseña);
+      if (!validPassword) {
+        // Registrar intento fallido
+        await failedLoginManager.recordFailedAttempt(correo, ipAddress, userAgent);
+        
+        return NextResponse.json(
+          { error: 'Contraseña incorrecta' },
+          { status: 400 }
+        );
+      }
+
+      // Login exitoso - resetear intentos fallidos
+      await failedLoginManager.resetAttempts(correo, ipAddress);
+
+      // Generar sessionId único que incluya información del dispositivo
+      const userAgent = req.headers.get('user-agent') || 'unknown';
+      const deviceFingerprint = userAgent.substring(0, 50).replace(/[^a-zA-Z0-9]/g, '');
+      const sessionId = `${user.id}-${Date.now()}-${deviceFingerprint}-${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Crear tokens JWT con sessionId único
+      const accessToken = await new SignJWT({
+        id: user.id,
+        nombre: user.nombre,
+        correo: user.correo,
+        rol: user.rol,
+        sessionId: sessionId // Identificador único de sesión
+      })
+        .setProtectedHeader({ alg: 'HS256' })
+        .setExpirationTime('1h')
+        .sign(JWT_SECRET);
+
+      const refreshToken = await new SignJWT({
+        id: user.id,
+        nombre: user.nombre,
+        correo: user.correo,
+        rol: user.rol,
+        sessionId: sessionId // Mismo sessionId para ambos tokens
+      })
+        .setProtectedHeader({ alg: 'HS256' })
+        .setExpirationTime('7d')
+        .sign(JWT_SECRET);
+
+      // Crear respuesta con cookies
+      const response = NextResponse.json({
+        success: true,
+        message: 'Login exitoso',
+        user: {
+          id: user.id,
+          nombre: user.nombre,
+          correo: user.correo,
+          rol: user.rol
+        }
+      });
+
+      // Establecer cookies con configuración más estricta
+      response.cookies.set('accessToken', accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict', // Cambiar a 'strict' para mayor seguridad
+        maxAge: 60 * 60, // 1 hora
+        path: '/',
+        domain: process.env.NODE_ENV === 'production' ? '.lamegatiendagt.vercel.app' : undefined
+      });
+
+      response.cookies.set('refreshToken', refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict', // Cambiar a 'strict' para mayor seguridad
+        maxAge: 7 * 24 * 60 * 60, // 7 días
+        path: '/',
+        domain: process.env.NODE_ENV === 'production' ? '.lamegatiendagt.vercel.app' : undefined
+      });
+
+      return response;
+
+    } finally {
+      await connection.end();
+    }
 
   } catch (error) {
     console.error('❌ Error inesperado en login:', error);
-
-    // Manejar errores específicos de Prisma
-    if (error.name === 'PrismaClientInitializationError') {
-      return NextResponse.json(
-        { 
-          error: 'Error de conexión a la base de datos',
-          message: 'El servicio está temporalmente no disponible. Intenta de nuevo en unos minutos.',
-          retryAfter: 60
-        },
-        { status: 503 }
-      );
-    }
-
-    if (error.name === 'CircuitBreakerError') {
-      return NextResponse.json(
-        { 
-          error: 'Servicio temporalmente no disponible',
-          message: 'Demasiados errores recientes. Intenta de nuevo en unos minutos.',
-          retryAfter: 30
-        },
-        { status: 503 }
-      );
-    }
-
-    if (error.name === 'TimeoutError') {
-      return NextResponse.json(
-        { 
-          error: 'Tiempo de respuesta agotado',
-          message: 'La operación tardó demasiado. Intenta de nuevo.',
-          retryAfter: 10
-        },
-        { status: 408 }
-      );
-    }
-
-    // Error genérico
+    console.error('Stack trace:', error.stack);
     return NextResponse.json(
       { 
         error: 'Error interno del servidor',
-        message: 'Ocurrió un error inesperado. Intenta de nuevo más tarde.'
+        details: error.message
       },
       { status: 500 }
     );

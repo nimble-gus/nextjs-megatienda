@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma-production';
+import { executeQuery } from '@/lib/mysql-direct';
 import { jwtVerify } from 'jose';
 
 export async function GET(request) {
@@ -27,13 +27,14 @@ export async function GET(request) {
     }
 
     // Contar órdenes pendientes
-    const pendingCount = await prisma.ordenes.count({
-      where: {
-        estado: {
-          in: ['pendiente', 'nuevo', 'procesando']
-        }
-      }
-    });
+    const pendingCountQuery = `
+      SELECT COUNT(*) as count
+      FROM ordenes
+      WHERE estado IN ('pendiente', 'nuevo', 'procesando')
+    `;
+    
+    const pendingCountResult = await executeQuery(pendingCountQuery);
+    const pendingCount = pendingCountResult[0].count;
 
     
 

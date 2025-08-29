@@ -16,7 +16,7 @@ export async function GET() {
          // Intentar conexión a la base de datos
      let dbConnection = 'No intentado';
      try {
-               const prisma = (await import('@/lib/prisma-simple')).default;
+               const prisma = (await import('@/lib/prisma-basic')).default;
        
        // Intentar una consulta simple
        const result = await prisma.$queryRaw`SELECT 1 as test`;

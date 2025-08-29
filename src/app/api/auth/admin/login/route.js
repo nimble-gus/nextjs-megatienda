@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcrypt';
 import { SignJWT } from 'jose';
-import prisma from '@/lib/prisma-production';
+import { executeQuery } from '@/lib/mysql-direct';  
 
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'your-secret-key');
 
@@ -18,16 +18,22 @@ export async function POST(request) {
     }
 
     // Buscar usuario por email
-    const user = await prisma.usuarios.findUnique({
-      where: { correo: email }
-    });
-
-    if (!user) {
+    const userQuery = `
+      SELECT id, nombre, correo, contraseña as password, rol
+      FROM usuarios
+      WHERE correo = ?
+    `;
+    
+    const userResult = await executeQuery(userQuery, [email]);
+    
+    if (!userResult || userResult.length === 0) {
       return NextResponse.json(
         { error: 'Credenciales inválidas' },
         { status: 401 }
       );
     }
+    
+    const user = userResult[0];
 
     // Verificar que sea admin
     if (user.rol !== 'admin') {

@@ -1,159 +1,82 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma-production';
-import { executeWithRetry, checkDatabaseHealth } from '@/lib/db-utils';
-import { FilterCache } from '@/lib/redis';
-import { queueQuery } from '@/lib/query-queue';
-import 'dotenv/config';
+import { executeQuery } from '@/lib/mysql-direct';
 
 export async function GET() {
   try {
-         // Verificar caché Redis primero
-     const cachedFilters = await FilterCache.get();
-     if (cachedFilters) {
-       return NextResponse.json(cachedFilters);
-     }
-    // Verificar si DATABASE_URL está configurada
-    const databaseUrl = process.env.DATABASE_URL;
-    if (!databaseUrl) {
-      // Datos de prueba para filtros
-      return NextResponse.json({
-        categories: [
-          { id: 1, name: 'Ropa', productCount: 5 },
-          { id: 2, name: 'Electrónica', productCount: 3 },
-          { id: 3, name: 'Calzado', productCount: 2 },
-          { id: 4, name: 'Accesorios', productCount: 4 }
-        ],
-        colors: [
-          { id: 1, name: 'Negro', hex: '#000000', productCount: 8 },
-          { id: 2, name: 'Blanco', hex: '#FFFFFF', productCount: 6 },
-          { id: 3, name: 'Azul', hex: '#0000FF', productCount: 4 },
-          { id: 4, name: 'Rojo', hex: '#FF0000', productCount: 3 }
-        ],
-        priceRange: {
-          min: 10,
-          max: 500
-        }
-      });
-    }
+    // Obtener rango de precios real
+    const priceQuery = `
+      SELECT 
+        MIN(precio) as min_price,
+        MAX(precio) as max_price
+      FROM stock_detalle
+      WHERE precio > 0
+    `;
     
-    // Si DATABASE_URL está configurada, intentar usar Prisma
-    try {
-      const { prisma } = await import('@/lib/prisma');
-      const { executeWithRetry, checkDatabaseHealth } = await import('@/lib/db-utils');
-      // Verificar salud de la conexión
-      const health = await checkDatabaseHealth();
-             // Obtener todas las categorías con cola de consultas
-       const categories = await queueQuery(async () => {
-         return await executeWithRetry(async () => {
-           return await prisma.categorias.findMany({
-             select: {
-               id: true,
-               nombre: true,
-               _count: {
-                 select: {
-                   productos: true
-                 }
-               }
-             },
-             orderBy: {
-               nombre: 'asc'
-             }
-           });
-         });
-       });
+    // Obtener categorías con conteo de productos
+    const categoriesQuery = `
+      SELECT 
+        c.id,
+        c.nombre,
+        COUNT(p.id) as productos_count
+      FROM categorias c
+      LEFT JOIN productos p ON c.id = p.categoria_id
+      GROUP BY c.id, c.nombre
+      ORDER BY c.nombre ASC
+    `;
+    
+    // Obtener colores con conteo de productos
+    const colorsQuery = `
+      SELECT 
+        co.id,
+        co.nombre,
+        co.codigo_hex,
+        COUNT(DISTINCT s.producto_id) as productos_count
+      FROM colores co
+      LEFT JOIN stock_detalle s ON co.id = s.color_id
+      GROUP BY co.id, co.nombre, co.codigo_hex
+      ORDER BY co.nombre ASC
+    `;
 
-             // Obtener todos los colores con cola de consultas
-       const colors = await queueQuery(async () => {
-         return await executeWithRetry(async () => {
-           return await prisma.colores.findMany({
-             select: {
-               id: true,
-               nombre: true,
-               codigo_hex: true,
-               _count: {
-                 select: {
-                   stock: true
-                 }
-               }
-             },
-             orderBy: {
-               nombre: 'asc'
-             }
-           });
-         });
-       });
+    // Ejecutar todas las consultas
+    const [priceResult, categoriesResult, colorsResult] = await Promise.all([
+      executeQuery(priceQuery),
+      executeQuery(categoriesQuery),
+      executeQuery(colorsQuery)
+    ]);
 
-             // Obtener rangos de precios con cola de consultas
-       const priceStats = await queueQuery(async () => {
-         return await executeWithRetry(async () => {
-           return await prisma.stock_detalle.aggregate({
-             _min: {
-               precio: true
-             },
-             _max: {
-               precio: true
-             }
-           });
-         });
-       });
+    // Procesar resultados
+    const priceRange = {
+      min: priceResult[0]?.min_price || 0,
+      max: priceResult[0]?.max_price || 1000
+    };
 
-      // Formatear respuesta
-      const formattedCategories = categories.map(cat => ({
-        id: cat.id,
-        name: cat.nombre,
-        productCount: cat._count.productos
-      }));
+    const categories = categoriesResult.map(cat => ({
+      id: cat.id,
+      name: cat.nombre,
+      productCount: cat.productos_count
+    }));
 
-      const formattedColors = colors.map(color => ({
-        id: color.id,
-        name: color.nombre,
-        hex: color.codigo_hex,
-        productCount: color._count.stock
-      }));
-      const responseData = {
-        categories: formattedCategories,
-        colors: formattedColors,
-        priceRange: {
-          min: priceStats._min.precio || 0,
-          max: priceStats._max.precio || 1000
-        }
-      };
-      
-             // Almacenar en caché Redis para futuras consultas
-       await FilterCache.set(responseData);
-      return NextResponse.json(responseData);
-      
-    } catch (dbError) {
-      console.error('❌ Error de base de datos:', dbError);
-      
-      // Devolver datos de prueba si hay error de BD
-      return NextResponse.json({
-        categories: [
-          { id: 1, name: 'Ropa', productCount: 5 },
-          { id: 2, name: 'Electrónica', productCount: 3 },
-          { id: 3, name: 'Calzado', productCount: 2 },
-          { id: 4, name: 'Accesorios', productCount: 4 }
-        ],
-        colors: [
-          { id: 1, name: 'Negro', hex: '#000000', productCount: 8 },
-          { id: 2, name: 'Blanco', hex: '#FFFFFF', productCount: 6 },
-          { id: 3, name: 'Azul', hex: '#0000FF', productCount: 4 },
-          { id: 4, name: 'Rojo', hex: '#FF0000', productCount: 3 }
-        ],
-        priceRange: {
-          min: 10,
-          max: 500
-        }
-      });
-    }
+    const colors = colorsResult.map(color => ({
+      id: color.id,
+      name: color.nombre,
+      hex: color.codigo_hex,
+      productCount: color.productos_count
+    }));
+
+    return NextResponse.json({
+      success: true,
+      priceRange,
+      categories,
+      colors
+    });
 
   } catch (error) {
-    console.error('=== ERROR EN API /api/catalog/filters ===');
-    console.error('Error completo:', error);
+    console.error('Error obteniendo filtros del catálogo:', error);
     
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    );
+    return NextResponse.json({
+      success: false,
+      error: 'Error interno del servidor',
+      details: error.message
+    }, { status: 500 });
   }
 }

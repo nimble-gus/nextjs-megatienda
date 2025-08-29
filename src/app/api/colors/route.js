@@ -1,14 +1,21 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma-production';
-import { executeWithRetry } from '@/lib/db-utils';
+import { executeQuery } from '@/lib/mysql-direct';
 
 export async function GET() {
   try {
-    const colores = await executeWithRetry(async () => {
-      return await prisma.colores.findMany();
-    });
+    const coloresQuery = `
+      SELECT id, nombre, codigo_hex
+      FROM colores
+      ORDER BY nombre ASC
+    `;
+    
+    const colores = await executeQuery(coloresQuery);
     return NextResponse.json(colores);
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('Error obteniendo colores:', error);
+    return NextResponse.json({ 
+      error: 'Error obteniendo colores',
+      details: error.message 
+    }, { status: 500 });
   }
 }

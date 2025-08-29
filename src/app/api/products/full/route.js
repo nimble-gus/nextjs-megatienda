@@ -1,63 +1,51 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma-production';
+import { executeQuery } from '@/lib/mysql-direct';
 
 export async function POST(req) {
   try {
     const { sku, nombre, descripcion, url_imagen, categoria_id, stock, imagenes_adicionales } = await req.json();
-    // Verificar si DATABASE_URL está configurada
-    const databaseUrl = process.env.DATABASE_URL;
-    if (!databaseUrl) {
-      return NextResponse.json({ 
-        error: 'Base de datos no configurada',
-        message: 'Necesitas configurar DATABASE_URL en el archivo .env'
-      }, { status: 500 });
+    
+    // Crear el producto principal
+    const insertProductQuery = `
+      INSERT INTO productos (sku, nombre, descripcion, url_imagen, categoria_id)
+      VALUES (?, ?, ?, ?, ?)
+    `;
+    
+    const productParams = [sku, nombre, descripcion, url_imagen, categoria_id];
+    const productResult = await executeQuery(insertProductQuery, productParams);
+    const productId = productResult.insertId;
+    
+    // Crear el stock para cada color
+    if (stock && stock.length > 0) {
+      const stockQueries = stock.map(s => {
+        const stockQuery = `
+          INSERT INTO stock_detalle (producto_id, color_id, cantidad, precio)
+          VALUES (?, ?, ?, ?)
+        `;
+        return executeQuery(stockQuery, [productId, s.color_id, s.cantidad, s.precio]);
+      });
+      
+      await Promise.all(stockQueries);
     }
     
-    // Si DATABASE_URL está configurada, intentar usar Prisma
-    try {
-      // Crear el producto principal
-      const producto = await prisma.productos.create({
-        data: {
-          sku,
-          nombre,
-          descripcion,
-          url_imagen,
-          categoria_id,
-          stock: {
-            create: stock.map(s => ({
-              color_id: s.color_id,
-              cantidad: s.cantidad,
-              precio: s.precio
-            }))
-          }
-        }
-      });
-      // Si hay imágenes adicionales, guardarlas en la tabla imagenes_producto
-      if (imagenes_adicionales && imagenes_adicionales.length > 0) {
-        await prisma.imagenes_producto.createMany({
-          data: imagenes_adicionales.map(url => ({
-            producto_id: producto.id,
-            url_imagen: url
-          }))
-        });
-      }
-
-      await prisma.$disconnect();
-      
-      return NextResponse.json({ 
-        message: 'Producto, stock e imágenes creados correctamente', 
-        productId: producto.id,
-        imagenesGuardadas: imagenes_adicionales ? imagenes_adicionales.length : 0
+    // Si hay imágenes adicionales, guardarlas en la tabla imagenes_producto
+    if (imagenes_adicionales && imagenes_adicionales.length > 0) {
+      const imageQueries = imagenes_adicionales.map(url => {
+        const imageQuery = `
+          INSERT INTO imagenes_producto (producto_id, url_imagen)
+          VALUES (?, ?)
+        `;
+        return executeQuery(imageQuery, [productId, url]);
       });
       
-    } catch (dbError) {
-      console.error('❌ Error de base de datos:', dbError);
-      return NextResponse.json({ 
-        error: 'Error de conexión a la base de datos',
-        details: dbError.message,
-        message: 'Verifica que MySQL esté ejecutándose y la configuración sea correcta'
-      }, { status: 500 });
+      await Promise.all(imageQueries);
     }
+    
+    return NextResponse.json({ 
+      message: 'Producto, stock e imágenes creados correctamente', 
+      productId: productId,
+      imagenesGuardadas: imagenes_adicionales ? imagenes_adicionales.length : 0
+    });
     
   } catch (error) {
     console.error('=== ERROR EN API /api/products/full ===');

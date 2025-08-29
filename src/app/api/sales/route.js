@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma-production';
-import { SalesCache } from '@/lib/redis';
+import { executeQuery } from '@/lib/mysql-direct';
 
 export async function GET(req) {
   try {
@@ -8,44 +7,42 @@ export async function GET(req) {
     const start = searchParams.get('start');
     const end = searchParams.get('end');
     
-    // Crear filtros para el cache
-    const filters = { start, end };
+    // Construir filtros de fecha para SQL
+    let whereConditions = [];
+    let queryParams = [];
     
-    // Verificar caché Redis primero
-    const cachedSales = await SalesCache.get(filters);
-    if (cachedSales) {
-      return NextResponse.json(cachedSales);
+    if (start) {
+      whereConditions.push('o.fecha >= ?');
+      queryParams.push(start + ' 00:00:00');
     }
-
-    let where = {};
-    if (start || end) {
-      where.fecha = {};
-      
-      if (start) {
-        where.fecha.gte = new Date(start + 'T00:00:00.000Z');
-      }
-      
-      if (end) {
-        // Agregar un día completo hasta las 23:59:59
-        const endDate = new Date(end + 'T23:59:59.999Z');
-        where.fecha.lte = endDate;
-      }
+    
+    if (end) {
+      whereConditions.push('o.fecha <= ?');
+      queryParams.push(end + ' 23:59:59');
     }
+    
+    const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
 
-    const sales = await prisma.ordenes.findMany({
-      where,
-      include: {
-        usuario: {
-          select: { nombre: true }
-        }
-      },
-      orderBy: { fecha: 'desc' }
-    });
+    // Obtener ventas con filtros de fecha
+    const salesQuery = `
+      SELECT 
+        o.id,
+        o.fecha,
+        o.total,
+        o.nombre_cliente,
+        u.nombre as usuario_nombre
+      FROM ordenes o
+      LEFT JOIN usuarios u ON o.usuario_id = u.id
+      ${whereClause}
+      ORDER BY o.fecha DESC
+    `;
+    
+    const sales = await executeQuery(salesQuery, queryParams);
 
     const formattedSales = sales.map(s => ({
       id: s.id,
       fecha: s.fecha,
-      cliente: s.usuario?.nombre || s.nombre_cliente || 'Cliente no registrado',
+      cliente: s.usuario_nombre || s.nombre_cliente || 'Cliente no registrado',
       total: parseFloat(s.total) || 0
     }));
 
@@ -61,9 +58,6 @@ export async function GET(req) {
         fechaFin: end
       }
     };
-
-    // Almacenar en caché Redis para futuras consultas
-    await SalesCache.set(filters, responseData);
 
     return NextResponse.json(responseData);
   } catch (error) {

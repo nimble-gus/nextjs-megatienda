@@ -1,57 +1,68 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma-production';
+import { executeQuery } from '@/lib/mysql-direct';
 
 export async function GET() {
   try {
-    // Obtener productos con stock total menor a 10 unidades
-    const products = await prisma.productos.findMany({
-      include: {
-        categoria: true,
-        stock: {
-          include: {
-            color: true
-          }
-        }
-      },
-      orderBy: {
-        id: 'desc'
-      }
-    });
-
-    // Filtrar productos con stock bajo (menor a 10 unidades total) o agotados
-    const lowStockProducts = products
-      .map(product => {
-        const totalStock = product.stock.reduce((total, item) => total + item.cantidad, 0);
+    // Obtener productos con stock total menor a 10 unidades usando SQL
+    const lowStockQuery = `
+      SELECT 
+        p.id,
+        p.sku,
+        p.nombre,
+        p.descripcion,
+        p.url_imagen,
+        c.nombre as categoria_nombre,
+        COALESCE(SUM(s.cantidad), 0) as total_stock
+      FROM productos p
+      LEFT JOIN categorias c ON p.categoria_id = c.id
+      LEFT JOIN stock_detalle s ON p.id = s.producto_id
+      GROUP BY p.id, p.sku, p.nombre, p.descripcion, p.url_imagen, c.nombre
+      HAVING COALESCE(SUM(s.cantidad), 0) < 10
+      ORDER BY total_stock ASC, p.id DESC
+    `;
+    
+    const lowStockProducts = await executeQuery(lowStockQuery);
+    
+    // Para cada producto con bajo stock, obtener los detalles del stock
+    const formattedProducts = await Promise.all(
+      lowStockProducts.map(async (product) => {
+        const stockDetailsQuery = `
+          SELECT 
+            s.id,
+            s.cantidad,
+            s.precio,
+            co.id as color_id,
+            co.nombre as color_nombre,
+            co.codigo_hex
+          FROM stock_detalle s
+          LEFT JOIN colores co ON s.color_id = co.id
+          WHERE s.producto_id = ? AND s.cantidad > 0
+          ORDER BY s.cantidad ASC
+        `;
+        
+        const stockDetails = await executeQuery(stockDetailsQuery, [product.id]);
+        
         return {
-          ...product,
-          totalStock
+          id: product.id,
+          sku: product.sku,
+          nombre: product.nombre,
+          descripcion: product.descripcion,
+          url_imagen: product.url_imagen,
+          categoria: product.categoria_nombre || 'Sin categoría',
+          totalStock: product.total_stock,
+          stockDetails: stockDetails.map(stock => ({
+            id: stock.id,
+            cantidad: stock.cantidad,
+            precio: stock.precio,
+            color: {
+              id: stock.color_id,
+              nombre: stock.color_nombre,
+              codigo_hex: stock.codigo_hex
+            }
+          }))
         };
       })
-      .filter(product => product.totalStock < 10) // Incluir productos con stock bajo Y agotados
-      .sort((a, b) => a.totalStock - b.totalStock); // Ordenar por stock más bajo primero
-    // Formatear productos para el frontend
-    const formattedProducts = lowStockProducts.map(product => ({
-      id: product.id,
-      sku: product.sku,
-      nombre: product.nombre,
-      descripcion: product.descripcion,
-      url_imagen: product.url_imagen,
-      categoria: product.categoria?.nombre || 'Sin categoría',
-      totalStock: product.totalStock,
-      stockDetails: product.stock
-        .filter(stock => stock.cantidad > 0) // Solo colores con stock
-        .map(stock => ({
-          id: stock.id,
-          cantidad: stock.cantidad,
-          precio: stock.precio,
-          color: {
-            id: stock.color.id,
-            nombre: stock.color.nombre,
-            codigo_hex: stock.color.codigo_hex
-          }
-        }))
-        .sort((a, b) => a.cantidad - b.cantidad) // Ordenar por cantidad más baja
-    }));
+    );
 
     return NextResponse.json({
       success: true,

@@ -1,36 +1,42 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma-production';
+import { executeQuery } from '@/lib/mysql-direct';
 
 export async function GET() {
   try {
     // Contar pedidos pendientes (estado = 'pendiente')
-    const pedidosPendientes = await prisma.ordenes.count({
-      where: {
-        estado: 'pendiente'
-      }
-    });
+    const pedidosPendientesQuery = `
+      SELECT COUNT(*) as count 
+      FROM ordenes 
+      WHERE estado = 'pendiente'
+    `;
 
     // Contar pedidos contra entrega pendientes de enviar
-    const contraEntregaPendientes = await prisma.ordenes.count({
-      where: {
-        metodo_pago: 'contra_entrega',
-        estado: 'pendiente'
-      }
-    });
+    const contraEntregaPendientesQuery = `
+      SELECT COUNT(*) as count 
+      FROM ordenes 
+      WHERE metodo_pago = 'contra_entrega' AND estado = 'pendiente'
+    `;
 
     // Contar pedidos con transferencia pendientes de validar
-    const transferenciaPendientes = await prisma.ordenes.count({
-      where: {
-        metodo_pago: 'transferencia',
-        estado: 'pendiente'
-      }
-    });
+    const transferenciaPendientesQuery = `
+      SELECT COUNT(*) as count 
+      FROM ordenes 
+      WHERE metodo_pago = 'transferencia' AND estado = 'pendiente'
+    `;
+
+    // Ejecutar todas las consultas en paralelo
+    const [pedidosPendientesResult, contraEntregaResult, transferenciaResult] = await Promise.all([
+      executeQuery(pedidosPendientesQuery),
+      executeQuery(contraEntregaPendientesQuery),
+      executeQuery(transferenciaPendientesQuery)
+    ]);
 
     const kpis = {
-      pedidosPendientes,
-      contraEntregaPendientes,
-      transferenciaPendientes
+      pedidosPendientes: pedidosPendientesResult[0].count,
+      contraEntregaPendientes: contraEntregaResult[0].count,
+      transferenciaPendientes: transferenciaResult[0].count
     };
+    
     return NextResponse.json({
       success: true,
       data: kpis

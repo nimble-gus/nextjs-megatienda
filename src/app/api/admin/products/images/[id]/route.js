@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma-production';
-import { invalidateProductCache } from '@/lib/cache-manager';
+import { executeQuery } from '@/lib/mysql-direct';
 
 // DELETE - Eliminar una imagen específica
 export async function DELETE(request, { params }) {
@@ -8,11 +7,13 @@ export async function DELETE(request, { params }) {
     const { id } = params;
     
     // Verificar si la imagen existe
-    const image = await prisma.imagenes_producto.findUnique({
-      where: { id: parseInt(id) }
-    });
+    const checkImageQuery = `
+      SELECT id FROM imagenes_producto WHERE id = ?
+    `;
     
-    if (!image) {
+    const imageExists = await executeQuery(checkImageQuery, [id]);
+    
+    if (!imageExists || imageExists.length === 0) {
       return NextResponse.json(
         { error: 'Imagen no encontrada' },
         { status: 404 }
@@ -20,12 +21,11 @@ export async function DELETE(request, { params }) {
     }
     
     // Eliminar la imagen
-    await prisma.imagenes_producto.delete({
-      where: { id: parseInt(id) }
-    });
-
-    // Invalidar caché de productos
-    await invalidateProductCache();
+    const deleteQuery = `
+      DELETE FROM imagenes_producto WHERE id = ?
+    `;
+    
+    await executeQuery(deleteQuery, [id]);
     
     return NextResponse.json({ 
       success: true, 
@@ -37,7 +37,5 @@ export async function DELETE(request, { params }) {
       { error: 'Error al eliminar la imagen' },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }

@@ -9,7 +9,7 @@ const WhatsappButton = () => {
   // Determinar número y mensaje basado en la ruta
   const isAdminPage = pathname.startsWith('/admin');
   
-  const phoneNumber = isAdminPage ? '+50254164264' : '+50245053015';
+  const phoneNumber = isAdminPage ? '+50254164264' : '+50254844058';
   const message = isAdminPage 
     ? encodeURIComponent('Hola, necesito ayuda con el panel de administración')
     : encodeURIComponent('Hola, me interesa obtener información');

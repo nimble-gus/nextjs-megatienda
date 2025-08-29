@@ -1,6 +1,5 @@
 generator client {
   provider = "prisma-client-js"
-  binaryTargets = ["native", "rhel-openssl-3.0.x", "linux-musl", "debian-openssl-3.0.x"]
 }
 
 datasource db {
@@ -184,6 +183,82 @@ model promo_banners {
   activo              Boolean  @default(true)
   fecha_creacion      DateTime @default(now())
   fecha_actualizacion DateTime
+}
+
+model session_blacklist {
+  id             Int      @id @default(autoincrement())
+  session_id     String   @unique
+  invalidated_at DateTime @default(now())
+  usuario_id     Int?
+
+  @@index([session_id])
+  @@index([invalidated_at])
+}
+
+model failed_logins {
+  id              Int       @id @default(autoincrement())
+  email           String
+  ip_address      String
+  user_agent      String?   @db.Text
+  intentos        Int       @default(1)
+  bloqueado_hasta DateTime?
+  ultimo_intento  DateTime  @default(now())
+
+  @@index([email, ip_address])
+  @@index([ultimo_intento])
+}
+
+model password_reset_tokens {
+  id          Int       @id @default(autoincrement())
+  usuario_id  Int
+  token       String    @unique
+  expira_en   DateTime
+  usado       Boolean   @default(false)
+  creado_en   DateTime  @default(now())
+
+  @@index([token])
+  @@index([usuario_id])
+  @@index([expira_en])
+}
+
+model email_verification_tokens {
+  id          Int       @id @default(autoincrement())
+  usuario_id  Int
+  token       String    @unique
+  expira_en   DateTime
+  usado       Boolean   @default(false)
+  creado_en   DateTime  @default(now())
+
+  @@index([token])
+  @@index([usuario_id])
+  @@index([expira_en])
+}
+
+model account_activity_log {
+  id              Int       @id @default(autoincrement())
+  usuario_id      Int?
+  accion          String
+  detalles        String?   @db.Text
+  ip_address      String?
+  user_agent      String?   @db.Text
+  fecha           DateTime  @default(now())
+  exito           Boolean   @default(true)
+
+  @@index([usuario_id])
+  @@index([fecha])
+  @@index([accion])
+}
+
+model rate_limits {
+  id              Int       @id @default(autoincrement())
+  ip_address      String
+  endpoint        String
+  intentos        Int       @default(1)
+  bloqueado_hasta DateTime?
+  ultimo_intento  DateTime  @default(now())
+
+  @@index([ip_address, endpoint])
+  @@index([ultimo_intento])
 }
 
 enum Rol {

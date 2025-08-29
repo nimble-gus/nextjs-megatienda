@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { jwtVerify } from 'jose';
-import prisma from '@/lib/prisma-production';
+import { executeQuery } from '@/lib/mysql-direct';
 
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'your-secret-key');
 
@@ -40,11 +40,16 @@ export async function GET(request) {
         const { payload } = await jwtVerify(adminRefreshToken, JWT_SECRET);
         
         // Verificar que el usuario existe y es admin
-        const user = await prisma.usuarios.findUnique({
-          where: { id: payload.userId }
-        });
-
-        if (user && user.rol === 'admin') {
+        const userQuery = `
+          SELECT id, nombre, correo, rol
+          FROM usuarios
+          WHERE id = ? AND rol = 'admin'
+        `;
+        
+        const userResult = await executeQuery(userQuery, [payload.userId]);
+        
+        if (userResult && userResult.length > 0) {
+          const user = userResult[0];
           userData = {
             id: user.id,
             email: user.correo,

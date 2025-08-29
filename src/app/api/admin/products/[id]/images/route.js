@@ -1,20 +1,19 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma-production';
-import { invalidateProductCache } from '@/lib/cache-manager';
+import { executeQuery } from '@/lib/mysql-direct';
 
 // GET - Obtener imágenes de un producto
 export async function GET(request, { params }) {
   try {
     const { id } = params;
     
-    const images = await prisma.imagenes_producto.findMany({
-      where: {
-        producto_id: parseInt(id)
-      },
-      orderBy: {
-        id: 'asc'
-      }
-    });
+    const imagesQuery = `
+      SELECT id, producto_id, url_imagen
+      FROM imagenes_producto
+      WHERE producto_id = ?
+      ORDER BY id ASC
+    `;
+    
+    const images = await executeQuery(imagesQuery, [id]);
 
     return NextResponse.json(images);
   } catch (error) {
@@ -23,8 +22,6 @@ export async function GET(request, { params }) {
       { error: 'Error al obtener las imágenes del producto' },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }
 
@@ -41,15 +38,22 @@ export async function POST(request, { params }) {
       );
     }
 
-    const newImage = await prisma.imagenes_producto.create({
-      data: {
-        producto_id: parseInt(id),
-        url_imagen: url_imagen.trim()
-      }
-    });
-
-    // Invalidar caché de productos
-    await invalidateProductCache();
+    const insertQuery = `
+      INSERT INTO imagenes_producto (producto_id, url_imagen)
+      VALUES (?, ?)
+    `;
+    
+    const result = await executeQuery(insertQuery, [id, url_imagen.trim()]);
+    
+    // Obtener la imagen creada
+    const newImageQuery = `
+      SELECT id, producto_id, url_imagen
+      FROM imagenes_producto
+      WHERE id = ?
+    `;
+    
+    const newImageResult = await executeQuery(newImageQuery, [result.insertId]);
+    const newImage = newImageResult[0];
     
     return NextResponse.json({ 
       success: true, 
@@ -62,7 +66,55 @@ export async function POST(request, { params }) {
       { error: 'Error al agregar la imagen' },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
+  }
+}
+
+// DELETE - Eliminar una imagen específica
+export async function DELETE(request, { params }) {
+  try {
+    const { id } = params;
+    const { searchParams } = new URL(request.url);
+    const imageId = searchParams.get('imageId');
+    
+    if (!imageId) {
+      return NextResponse.json(
+        { error: 'ID de imagen es requerido' },
+        { status: 400 }
+      );
+    }
+    
+    // Verificar que la imagen existe y pertenece al producto
+    const checkImageQuery = `
+      SELECT id FROM imagenes_producto 
+      WHERE id = ? AND producto_id = ?
+    `;
+    
+    const imageExists = await executeQuery(checkImageQuery, [imageId, id]);
+    
+    if (!imageExists || imageExists.length === 0) {
+      return NextResponse.json(
+        { error: 'Imagen no encontrada' },
+        { status: 404 }
+      );
+    }
+    
+    // Eliminar la imagen
+    const deleteQuery = `
+      DELETE FROM imagenes_producto 
+      WHERE id = ? AND producto_id = ?
+    `;
+    
+    await executeQuery(deleteQuery, [imageId, id]);
+    
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Imagen eliminada exitosamente'
+    });
+  } catch (error) {
+    console.error('Error eliminando imagen:', error);
+    return NextResponse.json(
+      { error: 'Error al eliminar la imagen' },
+      { status: 500 }
+    );
   }
 }

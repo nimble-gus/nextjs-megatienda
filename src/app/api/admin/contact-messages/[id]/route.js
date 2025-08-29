@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { contactService } from '@/services/contactService';
+import { executeQuery } from '@/lib/mysql-direct';
 
 export async function PUT(request, { params }) {
   try {
@@ -7,12 +7,21 @@ export async function PUT(request, { params }) {
     const body = await request.json();
     const { action, respuesta } = body;
 
-    let result;
-
     switch (action) {
       case 'markAsRead':
-        result = await contactService.markAsRead(id);
-        break;
+        // Marcar mensaje como leído
+        const markAsReadQuery = `
+          UPDATE mensajes_contacto 
+          SET leido = true 
+          WHERE id = ?
+        `;
+        await executeQuery(markAsReadQuery, [id]);
+        
+        return NextResponse.json({
+          success: true,
+          message: 'Mensaje marcado como leído'
+        });
+        
       case 'respond':
         if (!respuesta) {
           return NextResponse.json(
@@ -20,19 +29,25 @@ export async function PUT(request, { params }) {
             { status: 400 }
           );
         }
-        result = await contactService.respondToMessage(id, respuesta);
-        break;
+        
+        // Responder al mensaje
+        const respondQuery = `
+          UPDATE mensajes_contacto 
+          SET respuesta = ?, respondido = true, fecha_respuesta = NOW()
+          WHERE id = ?
+        `;
+        await executeQuery(respondQuery, [respuesta, id]);
+        
+        return NextResponse.json({
+          success: true,
+          message: 'Respuesta enviada correctamente'
+        });
+        
       default:
         return NextResponse.json(
           { success: false, message: 'Acción no válida' },
           { status: 400 }
         );
-    }
-
-    if (result.success) {
-      return NextResponse.json(result);
-    } else {
-      return NextResponse.json(result, { status: 500 });
     }
 
   } catch (error) {
@@ -47,13 +62,32 @@ export async function PUT(request, { params }) {
 export async function DELETE(request, { params }) {
   try {
     const { id } = params;
-    const result = await contactService.deleteMessage(id);
-
-    if (result.success) {
-      return NextResponse.json(result);
-    } else {
-      return NextResponse.json(result, { status: 500 });
+    
+    // Verificar que el mensaje existe
+    const checkMessageQuery = `
+      SELECT id FROM mensajes_contacto WHERE id = ?
+    `;
+    
+    const messageExists = await executeQuery(checkMessageQuery, [id]);
+    
+    if (!messageExists || messageExists.length === 0) {
+      return NextResponse.json(
+        { success: false, message: 'Mensaje no encontrado' },
+        { status: 404 }
+      );
     }
+    
+    // Eliminar el mensaje
+    const deleteQuery = `
+      DELETE FROM mensajes_contacto WHERE id = ?
+    `;
+    
+    await executeQuery(deleteQuery, [id]);
+
+    return NextResponse.json({
+      success: true,
+      message: 'Mensaje eliminado correctamente'
+    });
 
   } catch (error) {
     console.error('Error eliminando mensaje:', error);

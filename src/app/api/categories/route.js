@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma-simple';
+import { getCategories } from '@/lib/mysql-direct';
 import { CategoryCache } from '@/lib/redis';
 
 export async function GET() {
@@ -10,26 +10,16 @@ export async function GET() {
       return NextResponse.json(cachedCategories);
     }
 
-    // Obtener categorías con conteo de productos
-    const categories = await prisma.categorias.findMany({
-      include: {
-        _count: {
-          select: {
-            productos: true
-          }
-        }
-      },
-      orderBy: {
-        nombre: 'asc'
-      }
-    });
+    // Obtener categorías usando conexión directa
+    const categories = await getCategories();
     
     // Formatear categorías para el frontend
     const formattedCategories = categories.map(category => ({
       id: category.id,
       nombre: category.nombre,
-      productos: category._count.productos,
-      descripcion: `Explora nuestra selección de ${category.nombre.toLowerCase()}`
+      productos: category.productos_count || 0,
+      descripcion: `Explora nuestra selección de ${category.nombre.toLowerCase()}`,
+      image: null // La tabla categorias no tiene url_imagen
     }));
 
     const responseData = {

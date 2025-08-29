@@ -1,31 +1,29 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma-production';
-import { KPICache } from '@/lib/redis';
+import { executeQuery } from '@/lib/mysql-direct';
 
 export async function GET() {
   try {
-    // Verificar caché Redis primero
-    const cachedKPIs = await KPICache.get();
-    if (cachedKPIs) {
-      return NextResponse.json(cachedKPIs);
-    }
-
-    // Consultas simples y directas
-    const pedidos = await prisma.ordenes.count();
-    const clientes = await prisma.usuarios.count();
+    // Consultas simples y directas usando MySQL
+    const pedidosQuery = `SELECT COUNT(*) as count FROM ordenes`;
+    const clientesQuery = `SELECT COUNT(*) as count FROM usuarios`;
+    const ventasQuery = `SELECT COALESCE(SUM(total), 0) as total FROM ordenes`;
     
-    // Para ventas totales, usar una consulta más simple
-    const ventasResult = await prisma.$queryRaw`SELECT COALESCE(SUM(total), 0) as total FROM ordenes`;
+    // Ejecutar todas las consultas en paralelo
+    const [pedidosResult, clientesResult, ventasResult] = await Promise.all([
+      executeQuery(pedidosQuery),
+      executeQuery(clientesQuery),
+      executeQuery(ventasQuery)
+    ]);
+    
+    const totalPedidos = pedidosResult[0].count;
+    const totalClientes = clientesResult[0].count;
     const totalVentas = parseFloat(ventasResult[0].total) || 0;
 
     const responseData = {
       totalVentas: totalVentas,
-      totalPedidos: pedidos,
-      totalClientes: clientes
+      totalPedidos: totalPedidos,
+      totalClientes: totalClientes
     };
-
-    // Almacenar en caché Redis para futuras consultas
-    await KPICache.set(responseData);
     
     return NextResponse.json(responseData);
     
