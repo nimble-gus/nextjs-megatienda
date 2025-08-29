@@ -1,15 +1,35 @@
 import { NextResponse } from 'next/server';
 import { jwtVerify, SignJWT } from 'jose';
 import mysql from 'mysql2/promise';
+import tokenBlacklist from '@/lib/token-blacklist';
 
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'your-secret-key');
 
 export async function POST(req) {
   try {
-    // Obtener refresh token de las cookies HttpOnly
-    const refreshToken = req.cookies.get('refreshToken')?.value;
+    console.log('🔄 Iniciando refresh de tokens...');
+    
+    // Obtener deviceId para identificar las cookies correctas
+    const deviceId = req.cookies.get('deviceId')?.value;
+    console.log('📱 DeviceId encontrado:', deviceId);
+    
+    let refreshToken = null;
+    
+    if (deviceId) {
+      // Usar cookies específicas del dispositivo
+      const refreshTokenCookieName = `refresh_${deviceId}`;
+      refreshToken = req.cookies.get(refreshTokenCookieName)?.value;
+      console.log('🔑 Refresh token específico del dispositivo:', !!refreshToken);
+    }
+    
+    if (!refreshToken) {
+      // Fallback a cookies legacy
+      refreshToken = req.cookies.get('refreshToken')?.value;
+      console.log('🔑 Refresh token legacy:', !!refreshToken);
+    }
 
     if (!refreshToken) {
+      console.log('❌ No hay refresh token disponible');
       return NextResponse.json(
         { error: 'Refresh token es requerido' },
         { status: 401 }
@@ -21,10 +41,20 @@ export async function POST(req) {
     try {
       const { payload: decodedPayload } = await jwtVerify(refreshToken, JWT_SECRET);
       payload = decodedPayload;
+      console.log('✅ Refresh token válido para usuario:', payload.id);
     } catch (error) {
       console.error('❌ Error verificando refresh token:', error);
       return NextResponse.json(
         { error: 'Refresh token inválido o expirado' },
+        { status: 401 }
+      );
+    }
+
+    // Verificar que la sesión no esté en blacklist
+    if (payload.sessionId && await tokenBlacklist.isSessionBlacklisted(payload.sessionId)) {
+      console.log('❌ Sesión invalidada en blacklist');
+      return NextResponse.json(
+        { error: 'Sesión invalidada' },
         { status: 401 }
       );
     }
@@ -57,6 +87,7 @@ export async function POST(req) {
       );
 
       if (users.length === 0) {
+        console.log('❌ Usuario no encontrado en base de datos:', payload.id);
         return NextResponse.json(
           { error: 'Usuario no encontrado' },
           { status: 401 }
@@ -64,6 +95,7 @@ export async function POST(req) {
       }
 
       const user = users[0];
+      console.log('✅ Usuario encontrado:', user.nombre);
 
       // Generar nuevos tokens
       const newAccessToken = await new SignJWT({
@@ -71,7 +103,7 @@ export async function POST(req) {
         nombre: user.nombre,
         correo: user.correo,
         rol: user.rol,
-        sessionId: payload.sessionId || Date.now().toString() // Mantener o crear sessionId
+        sessionId: payload.sessionId || Date.now().toString() // Mantener sessionId existente
       })
         .setProtectedHeader({ alg: 'HS256' })
         .setExpirationTime('1h')
@@ -82,7 +114,7 @@ export async function POST(req) {
         nombre: user.nombre,
         correo: user.correo,
         rol: user.rol,
-        sessionId: payload.sessionId || Date.now().toString() // Mantener o crear sessionId
+        sessionId: payload.sessionId || Date.now().toString() // Mantener sessionId existente
       })
         .setProtectedHeader({ alg: 'HS256' })
         .setExpirationTime('7d')
@@ -100,24 +132,48 @@ export async function POST(req) {
         message: 'Tokens refrescados exitosamente'
       });
 
-      // Establecer nuevos tokens como cookies HttpOnly
-      response.cookies.set('accessToken', newAccessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 60 * 60, // 1 hora
-        path: '/',
-        domain: process.env.NODE_ENV === 'production' ? '.lamegatiendagt.vercel.app' : undefined
-      });
+      if (deviceId) {
+        // Establecer cookies específicas del dispositivo
+        const accessTokenCookieName = `access_${deviceId}`;
+        const refreshTokenCookieName = `refresh_${deviceId}`;
+        
+        response.cookies.set(accessTokenCookieName, newAccessToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict',
+          maxAge: 60 * 60, // 1 hora
+          path: '/'
+        });
 
-      response.cookies.set('refreshToken', newRefreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 7 * 24 * 60 * 60, // 7 días
-        path: '/',
-        domain: process.env.NODE_ENV === 'production' ? '.lamegatiendagt.vercel.app' : undefined
-      });
+        response.cookies.set(refreshTokenCookieName, newRefreshToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict',
+          maxAge: 7 * 24 * 60 * 60, // 7 días
+          path: '/'
+        });
+        
+        console.log('✅ Nuevos tokens establecidos para dispositivo:', deviceId);
+      } else {
+        // Fallback a cookies legacy
+        response.cookies.set('accessToken', newAccessToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict',
+          maxAge: 60 * 60, // 1 hora
+          path: '/'
+        });
+
+        response.cookies.set('refreshToken', newRefreshToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict',
+          maxAge: 7 * 24 * 60 * 60, // 7 días
+          path: '/'
+        });
+        
+        console.log('✅ Nuevos tokens legacy establecidos');
+      }
 
       return response;
 
