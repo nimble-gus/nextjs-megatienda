@@ -151,7 +151,8 @@ export async function POST(req) {
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
         maxAge: 60 * 60, // 1 hora
-        path: '/'
+        path: '/',
+        domain: undefined // Forzar sin dominio para evitar compartir
       });
 
       response.cookies.set(refreshTokenCookieName, refreshToken, {
@@ -159,7 +160,8 @@ export async function POST(req) {
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
         maxAge: 7 * 24 * 60 * 60, // 7 días
-        path: '/'
+        path: '/',
+        domain: undefined // Forzar sin dominio para evitar compartir
       });
 
       // Cookie para identificar el dispositivo
@@ -168,7 +170,8 @@ export async function POST(req) {
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
         maxAge: 365 * 24 * 60 * 60, // 1 año
-        path: '/'
+        path: '/',
+        domain: undefined // Forzar sin dominio para evitar compartir
       });
 
       return response;
