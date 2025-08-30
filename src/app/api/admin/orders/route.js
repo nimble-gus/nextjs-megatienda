@@ -74,6 +74,7 @@ export async function GET(request) {
           o.telefono_cliente,
           o.direccion_cliente,
           o.municipio_cliente,
+          o.departamento_cliente,
           o.nit_cliente,
           o.nombre_quien_recibe,
           o.comprobante_transferencia,
@@ -140,6 +141,7 @@ export async function GET(request) {
               telefono: order.telefono_cliente,
               direccion: order.direccion_cliente,
               municipio: order.municipio_cliente,
+              departamento: order.departamento_cliente,
               nit: order.nit_cliente
             },
             
@@ -184,6 +186,7 @@ export async function GET(request) {
               telefono: order.telefono_cliente,
               direccion: order.direccion_cliente,
               municipio: order.municipio_cliente,
+              departamento: order.departamento_cliente,
               nit: order.nit_cliente
             },
             

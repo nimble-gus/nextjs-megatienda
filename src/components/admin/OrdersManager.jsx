@@ -343,7 +343,11 @@ const OrdersManager = () => {
                   <p><strong>Nombre:</strong> {order.cliente.nombre}</p>
                   <p><strong>Email:</strong> {order.cliente.email}</p>
                   <p><strong>Teléfono:</strong> {order.cliente.telefono}</p>
+                  <p><strong>Dirección:</strong> {order.cliente.direccion}</p>
                   <p><strong>Municipio:</strong> {order.cliente.municipio}</p>
+                  {order.cliente.departamento && (
+                    <p><strong>Departamento:</strong> {order.cliente.departamento}</p>
+                  )}
                   {order.nombre_quien_recibe && (
                     <p><strong>Quien Recibe:</strong> {order.nombre_quien_recibe}</p>
                   )}

@@ -54,6 +54,7 @@ export async function GET(request, { params }) {
           o.telefono_cliente,
           o.direccion_cliente,
           o.municipio_cliente,
+          o.departamento_cliente,
           o.codigo_postal_cliente,
           o.nombre_quien_recibe,
           o.nit_cliente,
@@ -134,6 +135,7 @@ export async function GET(request, { params }) {
           telefono: orden.telefono_cliente,
           direccion: orden.direccion_cliente,
           municipio: orden.municipio_cliente,
+          departamento: orden.departamento_cliente,
           codigo_postal: orden.codigo_postal_cliente,
           nombre_quien_recibe: orden.nombre_quien_recibe,
           nit: orden.nit_cliente

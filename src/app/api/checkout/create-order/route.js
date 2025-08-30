@@ -113,18 +113,18 @@ export async function POST(request) {
         INSERT INTO ordenes (
           codigo_orden, usuario_id, nombre_cliente, email_cliente, 
           telefono_cliente, direccion_cliente, municipio_cliente, 
-          codigo_postal_cliente, nit_cliente, nombre_quien_recibe,
-          fecha, total, subtotal, costo_envio, metodo_pago, 
-          estado, notas
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?, ?)
+          departamento_cliente, codigo_postal_cliente, nit_cliente, 
+          nombre_quien_recibe, fecha, total, subtotal, costo_envio, 
+          metodo_pago, estado, notas
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?, ?)
       `;
 
       const orderParams = [
         codigoOrden, null, cliente.nombre, cliente.email,
         cliente.telefono, cliente.direccion, cliente.ciudad,
-        cliente.codigoPostal, cliente.nit, cliente.nombreQuienRecibe,
-        total, subtotal, costoEnvio, metodoPago,
-        'pendiente', notas
+        cliente.departamento, cliente.codigoPostal, cliente.nit, 
+        cliente.nombreQuienRecibe, total, subtotal, costoEnvio, 
+        metodoPago, 'pendiente', notas
       ];
 
       const [orderResult] = await connection.query(orderQuery, orderParams);
