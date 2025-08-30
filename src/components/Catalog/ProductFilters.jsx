@@ -19,6 +19,42 @@ const ProductFilters = ({ filters, onFilterChange }) => {
   const [priceDebounceTimer, setPriceDebounceTimer] = useState(null);
   const [colorDebounceTimer, setColorDebounceTimer] = useState(null);
   const [categoryDebounceTimer, setCategoryDebounceTimer] = useState(null);
+  
+  // Estados para el filtro móvil
+  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detectar si es móvil
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Cerrar filtro móvil al cambiar el tamaño de pantalla
+  useEffect(() => {
+    if (!isMobile) {
+      setIsMobileFilterOpen(false);
+    }
+  }, [isMobile]);
+
+  // Prevenir scroll del body cuando el filtro móvil está abierto
+  useEffect(() => {
+    if (isMobileFilterOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isMobileFilterOpen]);
 
   // Sincronizar estado local con props
   useEffect(() => {
@@ -87,6 +123,13 @@ const ProductFilters = ({ filters, onFilterChange }) => {
       ...filters,
       priceRange: newRange
     });
+    
+    // Cerrar filtro móvil automáticamente
+    if (isMobile) {
+      setTimeout(() => {
+        setIsMobileFilterOpen(false);
+      }, 500);
+    }
   };
 
   const handleMinPriceChange = (value) => {
@@ -137,6 +180,13 @@ const ProductFilters = ({ filters, onFilterChange }) => {
       });
       // Resetear el estado de filtrado después de un momento
       setTimeout(() => setPriceFiltering(false), 1000);
+      
+      // Cerrar filtro móvil automáticamente
+      if (isMobile) {
+        setTimeout(() => {
+          setIsMobileFilterOpen(false);
+        }, 500);
+      }
     }, 2000); // Debounce de 2000ms para evitar saturación del motor de Prisma
     
     setPriceDebounceTimer(timer);
@@ -164,6 +214,13 @@ const ProductFilters = ({ filters, onFilterChange }) => {
       });
       // Resetear el estado de filtrado después de un momento
       setTimeout(() => setCategoryFiltering(false), 1000);
+      
+      // Cerrar filtro móvil automáticamente
+      if (isMobile) {
+        setTimeout(() => {
+          setIsMobileFilterOpen(false);
+        }, 500);
+      }
     }, 1500); // Debounce de 1500ms para evitar saturación del motor de Prisma
 
     setCategoryDebounceTimer(timer);
@@ -191,6 +248,13 @@ const ProductFilters = ({ filters, onFilterChange }) => {
       });
       // Resetear el estado de filtrado después de un momento
       setTimeout(() => setColorFiltering(false), 1000);
+      
+      // Cerrar filtro móvil automáticamente
+      if (isMobile) {
+        setTimeout(() => {
+          setIsMobileFilterOpen(false);
+        }, 500);
+      }
     }, 2000); // Debounce de 2000ms para evitar saturación del motor de Prisma
 
     setColorDebounceTimer(timer);
@@ -205,10 +269,26 @@ const ProductFilters = ({ filters, onFilterChange }) => {
       categories: [],
       colors: []
     });
+    
+    // Cerrar filtro móvil automáticamente
+    if (isMobile) {
+      setTimeout(() => {
+        setIsMobileFilterOpen(false);
+      }, 500);
+    }
   };
 
-  return (
-    <div className="product-filters">
+  const toggleMobileFilter = () => {
+    setIsMobileFilterOpen(!isMobileFilterOpen);
+  };
+
+  const closeMobileFilter = () => {
+    setIsMobileFilterOpen(false);
+  };
+
+  // Contenido del filtro
+  const FilterContent = () => (
+    <>
       {/* Header de filtros */}
       <div className="filters-header">
         <h3 className="filters-title">Filtros</h3>
@@ -228,36 +308,35 @@ const ProductFilters = ({ filters, onFilterChange }) => {
           <div className="loading-filters">Cargando filtros...</div>
         ) : (
           <div className="price-filter">
-                         <div className="price-range-display">
-               <span>Q{priceRange[0].toFixed(2)} - Q{priceRange[1].toFixed(2)}</span>
-               {priceFiltering && <span className="price-filtering-indicator">Aplicando...</span>}
-             </div>
-                         <div className="price-slider-container">
-               <div className="price-slider-track"></div>
-               <div className="price-slider-range" 
-                    style={{
-                      left: `${((priceRange[0] - priceRangeData.min) / (priceRangeData.max - priceRangeData.min)) * 100}%`,
-                      right: `${100 - ((priceRange[1] - priceRangeData.min) / (priceRangeData.max - priceRangeData.min)) * 100}%`
-                    }}>
-               </div>
-               <input
-                 type="range"
-                 min={priceRangeData.min}
-                 max={priceRangeData.max}
-                 value={priceRange[0]}
-                 onChange={(e) => handleRangeChange('min', e.target.value)}
-                 className="price-slider min-price"
-               />
-               <input
-                 type="range"
-                 min={priceRangeData.min}
-                 max={priceRangeData.max}
-                 value={priceRange[1]}
-                 onChange={(e) => handleRangeChange('max', e.target.value)}
-                 className="price-slider max-price"
-               />
-             </div>
-                         
+            <div className="price-range-display">
+              <span>Q{priceRange[0].toFixed(2)} - Q{priceRange[1].toFixed(2)}</span>
+              {priceFiltering && <span className="price-filtering-indicator">Aplicando...</span>}
+            </div>
+            <div className="price-slider-container">
+              <div className="price-slider-track"></div>
+              <div className="price-slider-range" 
+                   style={{
+                     left: `${((priceRange[0] - priceRangeData.min) / (priceRangeData.max - priceRangeData.min)) * 100}%`,
+                     right: `${100 - ((priceRange[1] - priceRangeData.min) / (priceRangeData.max - priceRangeData.min)) * 100}%`
+                   }}>
+              </div>
+              <input
+                type="range"
+                min={priceRangeData.min}
+                max={priceRangeData.max}
+                value={priceRange[0]}
+                onChange={(e) => handleRangeChange('min', e.target.value)}
+                className="price-slider min-price"
+              />
+              <input
+                type="range"
+                min={priceRangeData.min}
+                max={priceRangeData.max}
+                value={priceRange[1]}
+                onChange={(e) => handleRangeChange('max', e.target.value)}
+                className="price-slider max-price"
+              />
+            </div>
           </div>
         )}
       </div>
@@ -350,6 +429,71 @@ const ProductFilters = ({ filters, onFilterChange }) => {
           Aplicar Filtros
         </button>
       </div>
+    </>
+  );
+
+  // Botón de filtro móvil
+  const MobileFilterButton = () => (
+    <button 
+      className="mobile-filter-toggle"
+      onClick={toggleMobileFilter}
+      aria-label="Abrir filtros"
+    >
+      <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+        <path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/>
+      </svg>
+      <span>Filtros</span>
+      {(selectedCategories.length > 0 || selectedColors.length > 0 || 
+        (priceRange[0] !== priceRangeData.min || priceRange[1] !== priceRangeData.max)) && (
+        <span className="filter-badge">
+          {selectedCategories.length + selectedColors.length + 
+           (priceRange[0] !== priceRangeData.min || priceRange[1] !== priceRangeData.max ? 1 : 0)}
+        </span>
+      )}
+    </button>
+  );
+
+  // Overlay para móvil
+  const MobileFilterOverlay = () => (
+    <>
+      <div 
+        className={`mobile-filter-overlay ${isMobileFilterOpen ? 'active' : ''}`}
+        onClick={closeMobileFilter}
+      />
+      <div className={`mobile-filter-drawer ${isMobileFilterOpen ? 'open' : ''}`}>
+        <div className="mobile-filter-header">
+          <h3>Filtros</h3>
+          <button 
+            className="mobile-filter-close"
+            onClick={closeMobileFilter}
+            aria-label="Cerrar filtros"
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+              <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+            </svg>
+          </button>
+        </div>
+        <div className="mobile-filter-content">
+          <FilterContent />
+        </div>
+      </div>
+    </>
+  );
+
+  // Renderizado condicional
+  if (isMobile) {
+    return (
+      <>
+        <MobileFilterButton />
+        <MobileFilterOverlay />
+      </>
+    );
+  }
+
+  // Renderizado desktop
+  return (
+    <div className="product-filters">
+      <FilterContent />
     </div>
   );
 };
