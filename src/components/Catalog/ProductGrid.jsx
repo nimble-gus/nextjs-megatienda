@@ -31,7 +31,7 @@ const ProductGrid = ({
 
   const renderStars = (rating) => {
     return Array.from({ length: 5 }, (_, index) => (
-      <span key={index} className={`star ${index < rating ? 'filled' : 'empty'}`}>
+      <span key={index} className={`pg-star ${index < rating ? 'filled' : 'empty'}`}>
         ★
       </span>
     ));
@@ -58,7 +58,7 @@ const ProductGrid = ({
   };
 
   // Componente de imagen con manejo de errores
-  const ProductImage = ({ product, width = 250, height = 250, className = "product-image" }) => {
+  const ProductImage = ({ product, width = 250, height = 250, className = "pg-product-image" }) => {
     const [imageError, setImageError] = useState(false);
     const [retryCount, setRetryCount] = useState(0);
     const imageUrl = getProductImage(product);
@@ -75,7 +75,7 @@ const ProductGrid = ({
 
     if (imageError) {
       return (
-        <div className="product-image-placeholder">
+        <div className="pg-product-image-placeholder">
           <div className="placeholder-content">
             <svg viewBox="0 0 24 24" fill="currentColor" width="48" height="48">
               <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
@@ -105,13 +105,13 @@ const ProductGrid = ({
 
   // Componente de producto individual
   const ProductCard = ({ product }) => (
-    <div className="product-card">
+    <div className="pg-product-card">
       <Link href={`/product/${product.id}`} className="product-link">
-        <div className="product-image-container">
+        <div className="pg-product-image-container">
           <ProductImage product={product} />
-          <div className="product-overlay">
+          <div className="pg-product-overlay">
             <button 
-              className="quick-view-btn"
+              className="pg-quick-view-btn"
               title="Ver Detalles"
             >
               <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
@@ -121,16 +121,16 @@ const ProductGrid = ({
           </div>
         </div>
         
-        <div className="product-info">
-          <div className="product-brand">{product.categoria || 'Sin categoría'}</div>
-          <h3 className="product-name">{product.name || product.nombre || 'Producto sin nombre'}</h3>
-          <div className="product-rating">
+        <div className="pg-product-info">
+          <div className="pg-product-brand">{product.categoria || 'Sin categoría'}</div>
+          <h3 className="pg-product-name">{product.name || product.nombre || 'Producto sin nombre'}</h3>
+          <div className="pg-product-rating">
             {renderStars(product.rating || 0)}
           </div>
-          <div className="product-price">
-            <span className="current-price">{formatPrice(product.price || product.precio)}</span>
+          <div className="pg-product-price">
+            <span className="pg-current-price">{formatPrice(product.price || product.precio)}</span>
             {product.originalPrice && product.originalPrice > (product.price || product.precio) && (
-              <span className="original-price">{formatPrice(product.originalPrice)}</span>
+              <span className="pg-original-price">{formatPrice(product.originalPrice)}</span>
             )}
           </div>
         </div>
@@ -140,37 +140,37 @@ const ProductGrid = ({
 
   // Componente de producto en vista lista
   const ProductListItem = ({ product }) => (
-    <div className="product-list-item">
-      <div className="product-list-image-section">
+    <div className="pg-product-list-item">
+      <div className="pg-product-list-image-section">
         <Link href={`/product/${product.id}`} className="product-link">
-          <div className="product-image-container">
+          <div className="pg-product-image-container">
             <ProductImage product={product} width={120} height={120} />
           </div>
         </Link>
       </div>
       
-      <div className="product-list-info-section">
+      <div className="pg-product-list-info-section">
         <Link href={`/product/${product.id}`} className="product-link">
-          <div className="product-info">
-            <div className="product-brand">{product.categoria || 'Sin categoría'}</div>
-            <h3 className="product-name">{product.name || product.nombre || 'Producto sin nombre'}</h3>
-            <div className="product-rating">
+          <div className="pg-product-info">
+            <div className="pg-product-brand">{product.categoria || 'Sin categoría'}</div>
+            <h3 className="pg-product-name">{product.name || product.nombre || 'Producto sin nombre'}</h3>
+            <div className="pg-product-rating">
               {renderStars(product.rating || 0)}
-              <span className="rating-text">({product.rating || 0}/5)</span>
+              <span className="pg-rating-text">({product.rating || 0}/5)</span>
             </div>
-            <div className="product-price">
-              <span className="current-price">{formatPrice(product.price || product.precio)}</span>
+            <div className="pg-product-price">
+              <span className="pg-current-price">{formatPrice(product.price || product.precio)}</span>
               {product.originalPrice && product.originalPrice > (product.price || product.precio) && (
-                <span className="original-price">{formatPrice(product.originalPrice)}</span>
+                <span className="pg-original-price">{formatPrice(product.originalPrice)}</span>
               )}
             </div>
           </div>
         </Link>
       </div>
       
-      <div className="product-list-actions-section">
-        <div className="product-actions">
-          <Link href={`/product/${product.id}`} className="action-btn view-details-btn">
+      <div className="pg-product-list-actions-section">
+        <div className="pg-product-actions">
+          <Link href={`/product/${product.id}`} className="pg-action-btn pg-view-details-btn">
             <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
               <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
             </svg>
@@ -198,9 +198,9 @@ const ProductGrid = ({
     }
 
     return (
-      <div className="pagination">
+      <div className="pg-pagination">
         <button 
-          className="pagination-btn prev"
+          className="pg-pagination-btn prev"
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
         >
@@ -210,7 +210,7 @@ const ProductGrid = ({
         {pages.map(page => (
           <button
             key={page}
-            className={`pagination-btn ${page === currentPage ? 'active' : ''}`}
+            className={`pg-pagination-btn ${page === currentPage ? 'active' : ''}`}
             onClick={() => onPageChange(page)}
           >
             {page}
@@ -218,7 +218,7 @@ const ProductGrid = ({
         ))}
         
         <button 
-          className="pagination-btn next"
+          className="pg-pagination-btn next"
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
         >
@@ -230,7 +230,7 @@ const ProductGrid = ({
 
   if (loading) {
     return (
-      <div className="products-section">
+      <div className="pg-products-section">
         <div className="loading-container">
           <div className="loading-spinner"></div>
           <p>Cargando productos...</p>
@@ -240,12 +240,12 @@ const ProductGrid = ({
   }
 
   return (
-    <div className="product-grid-container">
+    <div className="pg-product-grid-container">
       {/* Barra superior con controles */}
-      <div className="products-header">
-        <div className="view-controls">
+      <div className="pg-products-header">
+        <div className="pg-view-controls">
           <button 
-            className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
+            className={`pg-view-btn ${viewMode === 'grid' ? 'active' : ''}`}
             onClick={() => onViewModeChange('grid')}
             title="Vista de cuadrícula"
           >
@@ -254,7 +254,7 @@ const ProductGrid = ({
             </svg>
           </button>
           <button 
-            className={`view-btn ${viewMode === 'list' ? 'active' : ''}`}
+            className={`pg-view-btn ${viewMode === 'list' ? 'active' : ''}`}
             onClick={() => onViewModeChange('list')}
             title="Vista de lista"
           >
@@ -264,15 +264,15 @@ const ProductGrid = ({
           </button>
         </div>
 
-        <div className="results-info">
+        <div className="pg-results-info">
           Mostrando {startIndex}-{endIndex} de {totalProducts} resultados
         </div>
 
-        <div className="sort-controls">
+        <div className="pg-sort-controls">
           <select 
             value={sortBy}
             onChange={(e) => onSortChange(e.target.value)}
-            className="sort-select"
+            className="pg-sort-select"
           >
             <option value="default">Ordenar por defecto</option>
             <option value="price-low">Precio: Menor a Mayor</option>
@@ -285,7 +285,7 @@ const ProductGrid = ({
           <select 
             value={itemsPerPage}
             onChange={(e) => onItemsPerPageChange(parseInt(e.target.value))}
-            className="items-select"
+            className="pg-items-select"
           >
             <option value={12}>12 por página</option>
             <option value={24}>24 por página</option>
@@ -295,7 +295,7 @@ const ProductGrid = ({
       </div>
 
       {/* Grid/Lista de productos */}
-      <div className={`products-grid ${viewMode === 'list' ? 'list-view' : ''}`}>
+      <div className={`pg-products-grid ${viewMode === 'list' ? 'list-view' : ''}`}>
         {products.map(product => (
           viewMode === 'list' ? (
             <ProductListItem key={product.id} product={product} />
