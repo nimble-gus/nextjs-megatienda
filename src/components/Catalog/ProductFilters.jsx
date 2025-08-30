@@ -1,9 +1,9 @@
 'use client';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { getCatalogFilters } from '@/services/catalogService';
 import '@/styles/ProductFilters.css';
 
-const ProductFilters = ({ filters, onFilterChange }) => {
+const ProductFilters = React.memo(({ filters, onFilterChange }) => {
   const [priceRange, setPriceRange] = useState(filters.priceRange);
   const [selectedCategories, setSelectedCategories] = useState(filters.categories);
   const [selectedColors, setSelectedColors] = useState(filters.colors);
@@ -16,6 +16,7 @@ const ProductFilters = ({ filters, onFilterChange }) => {
   const [priceFiltering, setPriceFiltering] = useState(false);
   const [categoryFiltering, setCategoryFiltering] = useState(false);
   const [colorFiltering, setColorFiltering] = useState(false);
+  const [isApplyingFilters, setIsApplyingFilters] = useState(false);
   const [priceDebounceTimer, setPriceDebounceTimer] = useState(null);
   const [colorDebounceTimer, setColorDebounceTimer] = useState(null);
   const [categoryDebounceTimer, setCategoryDebounceTimer] = useState(null);
@@ -27,7 +28,8 @@ const ProductFilters = ({ filters, onFilterChange }) => {
   // Detectar si es móvil
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 768);
+      const mobile = window.innerWidth <= 768;
+      setIsMobile(mobile);
     };
     
     checkMobile();
@@ -117,37 +119,44 @@ const ProductFilters = ({ filters, onFilterChange }) => {
     };
   }, [priceDebounceTimer, colorDebounceTimer, categoryDebounceTimer]);
 
-  const handlePriceChange = (newRange) => {
+  // Función para mostrar loader y aplicar filtros
+  const applyFiltersWithLoader = useCallback((filterFunction) => {
+    if (isMobile) {
+      setIsApplyingFilters(true);
+      // Mostrar loader por 1 segundo para dar feedback visual
+      setTimeout(() => {
+        setIsApplyingFilters(false);
+        // Cerrar el filtro móvil después del loader
+        setIsMobileFilterOpen(false);
+      }, 1000);
+    }
+    filterFunction();
+  }, [isMobile]);
+
+  const handlePriceChange = useCallback((newRange) => {
     setPriceRange(newRange);
     onFilterChange({
       ...filters,
       priceRange: newRange
     });
-    
-    // Cerrar filtro móvil automáticamente
-    if (isMobile) {
-      setTimeout(() => {
-        setIsMobileFilterOpen(false);
-      }, 500);
-    }
-  };
+  }, [filters, onFilterChange]);
 
-  const handleMinPriceChange = (value) => {
+  const handleMinPriceChange = useCallback((value) => {
     const newMin = parseInt(value);
     if (newMin <= priceRange[1]) {
       handlePriceChange([newMin, priceRange[1]]);
     }
-  };
+  }, [priceRange, handlePriceChange]);
 
-  const handleMaxPriceChange = (value) => {
+  const handleMaxPriceChange = useCallback((value) => {
     const newMax = parseInt(value);
     if (newMax >= priceRange[0]) {
       handlePriceChange([priceRange[0], newMax]);
     }
-  };
+  }, [priceRange, handlePriceChange]);
 
   // Función para manejar el cambio de rango completo con debounce
-  const handleRangeChange = (type, value) => {
+  const handleRangeChange = useCallback((type, value) => {
     const numValue = parseInt(value) || 0;
     
     // Limpiar el timer anterior
@@ -174,25 +183,20 @@ const ProductFilters = ({ filters, onFilterChange }) => {
     // Aplicar el filtro después de 2000ms de inactividad (más tiempo para evitar saturación)
     const timer = setTimeout(() => {
       setPriceFiltering(true);
-      onFilterChange({
-        ...filters,
-        priceRange: newRange
+      applyFiltersWithLoader(() => {
+        onFilterChange({
+          ...filters,
+          priceRange: newRange
+        });
       });
       // Resetear el estado de filtrado después de un momento
       setTimeout(() => setPriceFiltering(false), 1000);
-      
-      // Cerrar filtro móvil automáticamente
-      if (isMobile) {
-        setTimeout(() => {
-          setIsMobileFilterOpen(false);
-        }, 500);
-      }
     }, 2000); // Debounce de 2000ms para evitar saturación del motor de Prisma
     
     setPriceDebounceTimer(timer);
-  };
+  }, [priceRange, priceDebounceTimer, filters, onFilterChange, applyFiltersWithLoader]);
 
-  const handleCategoryChange = (categoryId) => {
+  const handleCategoryChange = useCallback((categoryId) => {
     // Limpiar el timer anterior
     if (categoryDebounceTimer) {
       clearTimeout(categoryDebounceTimer);
@@ -208,25 +212,20 @@ const ProductFilters = ({ filters, onFilterChange }) => {
     // Aplicar el filtro después de 1500ms de inactividad (más tiempo para evitar saturación)
     const timer = setTimeout(() => {
       setCategoryFiltering(true);
-      onFilterChange({
-        ...filters,
-        categories: updatedCategories
+      applyFiltersWithLoader(() => {
+        onFilterChange({
+          ...filters,
+          categories: updatedCategories
+        });
       });
       // Resetear el estado de filtrado después de un momento
       setTimeout(() => setCategoryFiltering(false), 1000);
-      
-      // Cerrar filtro móvil automáticamente
-      if (isMobile) {
-        setTimeout(() => {
-          setIsMobileFilterOpen(false);
-        }, 500);
-      }
     }, 1500); // Debounce de 1500ms para evitar saturación del motor de Prisma
 
     setCategoryDebounceTimer(timer);
-  };
+  }, [selectedCategories, categoryDebounceTimer, filters, onFilterChange, applyFiltersWithLoader]);
 
-  const handleColorChange = (colorId) => {
+  const handleColorChange = useCallback((colorId) => {
     // Limpiar el timer anterior
     if (colorDebounceTimer) {
       clearTimeout(colorDebounceTimer);
@@ -242,52 +241,42 @@ const ProductFilters = ({ filters, onFilterChange }) => {
     // Aplicar el filtro después de 2000ms de inactividad (más tiempo para evitar saturación)
     const timer = setTimeout(() => {
       setColorFiltering(true);
-      onFilterChange({
-        ...filters,
-        colors: updatedColors
+      applyFiltersWithLoader(() => {
+        onFilterChange({
+          ...filters,
+          colors: updatedColors
+        });
       });
       // Resetear el estado de filtrado después de un momento
       setTimeout(() => setColorFiltering(false), 1000);
-      
-      // Cerrar filtro móvil automáticamente
-      if (isMobile) {
-        setTimeout(() => {
-          setIsMobileFilterOpen(false);
-        }, 500);
-      }
     }, 2000); // Debounce de 2000ms para evitar saturación del motor de Prisma
 
     setColorDebounceTimer(timer);
-  };
+  }, [selectedColors, colorDebounceTimer, filters, onFilterChange, applyFiltersWithLoader]);
 
-  const clearAllFilters = () => {
+  const clearAllFilters = useCallback(() => {
     setPriceRange([priceRangeData.min, priceRangeData.max]);
     setSelectedCategories([]);
     setSelectedColors([]);
-    onFilterChange({
-      priceRange: [priceRangeData.min, priceRangeData.max],
-      categories: [],
-      colors: []
+    applyFiltersWithLoader(() => {
+      onFilterChange({
+        priceRange: [priceRangeData.min, priceRangeData.max],
+        categories: [],
+        colors: []
+      });
     });
-    
-    // Cerrar filtro móvil automáticamente
-    if (isMobile) {
-      setTimeout(() => {
-        setIsMobileFilterOpen(false);
-      }, 500);
-    }
-  };
+  }, [priceRangeData, onFilterChange, applyFiltersWithLoader]);
 
-  const toggleMobileFilter = () => {
+  const toggleMobileFilter = useCallback(() => {
     setIsMobileFilterOpen(!isMobileFilterOpen);
-  };
+  }, [isMobileFilterOpen]);
 
-  const closeMobileFilter = () => {
+  const closeMobileFilter = useCallback(() => {
     setIsMobileFilterOpen(false);
-  };
+  }, []);
 
   // Contenido del filtro
-  const FilterContent = () => (
+  const FilterContent = useMemo(() => (
     <>
       {/* Header de filtros */}
       <div className="filters-header">
@@ -430,10 +419,15 @@ const ProductFilters = ({ filters, onFilterChange }) => {
         </button>
       </div>
     </>
-  );
+  ), [
+    loading, priceRange, priceRangeData, priceFiltering, categoriesExpanded, 
+    categoryFiltering, categories, selectedCategories, colorsExpanded, 
+    colorFiltering, colors, selectedColors, handleRangeChange, handleCategoryChange, 
+    handleColorChange, clearAllFilters
+  ]);
 
   // Botón de filtro móvil
-  const MobileFilterButton = () => (
+  const MobileFilterButton = useMemo(() => (
     <button 
       className="mobile-filter-toggle"
       onClick={toggleMobileFilter}
@@ -451,10 +445,10 @@ const ProductFilters = ({ filters, onFilterChange }) => {
         </span>
       )}
     </button>
-  );
+  ), [selectedCategories, selectedColors, priceRange, priceRangeData, toggleMobileFilter]);
 
   // Overlay para móvil
-  const MobileFilterOverlay = () => (
+  const MobileFilterOverlay = useMemo(() => (
     <>
       <div 
         className={`mobile-filter-overlay ${isMobileFilterOpen ? 'active' : ''}`}
@@ -474,18 +468,30 @@ const ProductFilters = ({ filters, onFilterChange }) => {
           </button>
         </div>
         <div className="mobile-filter-content">
-          <FilterContent />
+          {FilterContent}
         </div>
       </div>
     </>
-  );
+  ), [isMobileFilterOpen, closeMobileFilter, FilterContent]);
 
   // Renderizado condicional
   if (isMobile) {
     return (
       <>
-        <MobileFilterButton />
-        <MobileFilterOverlay />
+        {MobileFilterButton}
+        {MobileFilterOverlay}
+        
+        {/* Loader para filtros móviles */}
+        {isApplyingFilters && (
+          <div className="mobile-filter-loader-overlay active">
+            <div className="mobile-filter-loader-content">
+              <div className="mobile-filter-loader-icon"></div>
+              <p className="mobile-filter-loader-message">
+                Aplicando filtros...
+              </p>
+            </div>
+          </div>
+        )}
       </>
     );
   }
@@ -493,9 +499,11 @@ const ProductFilters = ({ filters, onFilterChange }) => {
   // Renderizado desktop
   return (
     <div className="product-filters">
-      <FilterContent />
+      {FilterContent}
     </div>
   );
-};
+});
+
+ProductFilters.displayName = 'ProductFilters';
 
 export default ProductFilters;
