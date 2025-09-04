@@ -17,6 +17,7 @@ model usuarios {
   carrito      carrito[]
   ordenes      ordenes[]
   validaciones ordenes[] @relation("validaciones")
+  sesiones     sesiones_clientes[]
 }
 
 model categorias {
