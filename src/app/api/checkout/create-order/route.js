@@ -18,12 +18,14 @@ export async function POST(request) {
     let subtotal = body.subtotal;
     let total = body.total;
     let notas = body.notas;
+    let usuarioId = body.usuario_id; // Extraer usuario_id si está logueado
 
     console.log('🔍 Valores extraídos:');
     console.log('  - costoEnvio:', costoEnvio, '(tipo:', typeof costoEnvio, ')');
     console.log('  - subtotal:', subtotal, '(tipo:', typeof subtotal, ')');
     console.log('  - total:', total, '(tipo:', typeof total, ')');
     console.log('  - metodoPago:', metodoPago, '(tipo:', typeof metodoPago, ')');
+    console.log('  - usuarioId:', usuarioId, '(tipo:', typeof usuarioId, ')');
     
     // Asegurar que los valores numéricos no sean null
     if (costoEnvio === null || costoEnvio === undefined) {
@@ -118,7 +120,7 @@ export async function POST(request) {
       `;
 
       const orderParams = [
-        codigoOrden, null, cliente.nombre, cliente.email,
+        codigoOrden, usuarioId, cliente.nombre, cliente.email,
         cliente.telefono, cliente.direccion, cliente.ciudad,
         cliente.departamento, cliente.codigoPostal, cliente.nit, 
         cliente.nombreQuienRecibe, total, subtotal, costoEnvio, 
@@ -130,23 +132,57 @@ export async function POST(request) {
 
       console.log('✅ Orden creada con ID:', ordenId);
 
-      // Crear los items de la orden
-      console.log('📝 Creando items de la orden...');
+      // Crear los items de la orden y reducir stock
+      console.log('📝 Creando items de la orden y reduciendo stock...');
       for (const producto of productos) {
         console.log('📦 Procesando producto:', producto.nombre || producto.producto?.nombre);
         
+        const productoId = producto.producto_id || producto.id;
+        const colorId = producto.color_id || producto.color?.id;
+        const cantidad = producto.cantidad;
+        
+        // Verificar stock disponible antes de reducir
+        console.log('🔍 Verificando stock disponible...');
+        const stockQuery = `
+          SELECT cantidad FROM stock_detalle 
+          WHERE producto_id = ? AND color_id = ?
+        `;
+        
+        const [stockRows] = await connection.query(stockQuery, [productoId, colorId]);
+        
+        if (stockRows.length === 0) {
+          throw new Error(`No se encontró stock para el producto ${productoId} con color ${colorId}`);
+        }
+        
+        const stockActual = stockRows[0].cantidad;
+        console.log(`📊 Stock actual: ${stockActual}, Cantidad solicitada: ${cantidad}`);
+        
+        if (stockActual < cantidad) {
+          throw new Error(`Stock insuficiente. Disponible: ${stockActual}, Solicitado: ${cantidad}`);
+        }
+        
+        // Crear el detalle de la orden
         const detailQuery = `
           INSERT INTO orden_detalle (orden_id, producto_id, color_id, cantidad, precio_unitario)
           VALUES (?, ?, ?, ?, ?)
         `;
         
-        const productoId = producto.producto_id || producto.id;
-        const colorId = producto.color_id || producto.color?.id;
-        
         await connection.query(detailQuery, [
           ordenId, productoId, colorId, 
-          producto.cantidad, producto.precio
+          cantidad, producto.precio
         ]);
+        
+        // Reducir el stock
+        console.log('📉 Reduciendo stock...');
+        const updateStockQuery = `
+          UPDATE stock_detalle 
+          SET cantidad = cantidad - ? 
+          WHERE producto_id = ? AND color_id = ?
+        `;
+        
+        await connection.query(updateStockQuery, [cantidad, productoId, colorId]);
+        
+        console.log(`✅ Stock reducido: ${stockActual} → ${stockActual - cantidad}`);
       }
 
       // Confirmar transacción
