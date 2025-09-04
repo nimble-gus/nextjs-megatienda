@@ -3,7 +3,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import AuthButton from '@/components/auth/AuthButton';
-import CartButton from '@/components/cart/CartButton';
+import CartButton from '@/components/Cart/CartButton';
 import '@/styles/Header.css';
 
 const Header = ({ onLoginClick }) => {
