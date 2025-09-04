@@ -26,6 +26,8 @@ export async function POST(request) {
     console.log('  - total:', total, '(tipo:', typeof total, ')');
     console.log('  - metodoPago:', metodoPago, '(tipo:', typeof metodoPago, ')');
     console.log('  - usuarioId:', usuarioId, '(tipo:', typeof usuarioId, ')');
+    console.log('  - Body completo usuario_id:', body.usuario_id);
+    console.log('  - Body completo:', JSON.stringify(body, null, 2));
     
     // Asegurar que los valores numéricos no sean null
     if (costoEnvio === null || costoEnvio === undefined) {

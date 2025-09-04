@@ -270,6 +270,11 @@ function CheckoutPageContent() {
       const userData = savedUser ? JSON.parse(savedUser) : null;
       const userId = userData ? (userData.id || userData.usuario_id) : null;
       
+      console.log('🔍 [Checkout] Debug usuario:');
+      console.log('  - savedUser:', savedUser);
+      console.log('  - userData:', userData);
+      console.log('  - userId:', userId);
+      
       const orderData = {
         // Datos del usuario (si está logueado)
         usuario_id: userId,
@@ -295,6 +300,7 @@ function CheckoutPageContent() {
       };
 
       // Preparar los datos para enviar
+      console.log('📦 [Checkout] OrderData a enviar:', orderData);
       const requestData = JSON.stringify(orderData);
       const headers = {
         'Content-Type': 'application/json'
