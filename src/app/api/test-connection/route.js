@@ -25,8 +25,6 @@ export async function GET() {
       password: url.password,
       database: url.pathname.substring(1), // Remover el slash inicial
       connectTimeout: 10000,
-      acquireTimeout: 10000,
-      timeout: 10000,
       reconnect: false
     };
 

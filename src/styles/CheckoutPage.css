@@ -1,4 +1,4 @@
-/* CheckoutPage.css - Estilo consistente con el carrito */
+/* CheckoutPage.css - Estilo consistente con el carrito - Updated 2024 */
 
 /* Variables CSS para colores y efectos */
 :root {
@@ -140,7 +140,7 @@
 .billing-details-section {
   position: relative;
   z-index: 1;
-  min-width: 600px;
+  min-width: 480px;
   width: 100%;
   flex: 1;
   overflow: visible;
@@ -151,7 +151,7 @@
   position: relative;
   z-index: 2;
   min-width: 0;
-  width: 460px;
+  width: 350px;
   flex-shrink: 0;
 }
 
@@ -1068,7 +1068,7 @@
   }
   
   .order-summary-section {
-    width: 350px;
+    width: 320px;
   }
 }
 
@@ -1197,8 +1197,6 @@
     width: 100%;
   }
   
-
-  
   .order-item {
     flex-direction: column;
     align-items: flex-start;
@@ -1312,8 +1310,6 @@
     overflow: hidden;
     width: 100%;
   }
-  
-
   
   .place-order-btn {
     padding: 16px 20px;
@@ -1455,8 +1451,6 @@
     padding: 10px 12px;
     font-size: 0.75rem;
   }
-  
-
   
   .place-order-btn {
     padding: 14px 18px;

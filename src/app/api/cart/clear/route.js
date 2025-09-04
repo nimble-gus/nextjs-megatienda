@@ -1,51 +1,69 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma-production';
-import { jwtVerify } from 'jose';
+import mysql from 'mysql2/promise';
+import { verifyClientToken } from '@/lib/auth/verify-token';
 
-export async function DELETE(req) {
+// Configuración de conexión usando DATABASE_URL
+const getConnectionConfig = () => {
+  const databaseUrl = process.env.DATABASE_URL;
+  
+  if (!databaseUrl) {
+    throw new Error('DATABASE_URL no está configurada');
+  }
+
+  const url = new URL(databaseUrl);
+  return {
+    host: url.hostname,
+    port: parseInt(url.port) || 3306,
+    user: url.username,
+    password: url.password,
+    database: url.pathname.substring(1),
+    // Configuración válida para createConnection
+    connectTimeout: 60000,
+    // Configuraciones adicionales para estabilidad
+    supportBigNumbers: true,
+    bigNumberStrings: true,
+    dateStrings: false,
+    debug: false,
+    trace: false,
+    multipleStatements: false
+  };
+};
+
+export async function DELETE(request) {
   try {
-    // Obtener el token de autorización
-    const authHeader = req.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { error: 'Token de autorización requerido' },
-        { status: 401 }
-      );
+    // Verificar token del cliente
+    const token = request.cookies.get('clientAccessToken')?.value;
+    if (!token) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
-    const token = authHeader.substring(7);
-
-    // Verificar el token
-    let payload;
-    try {
-      const secret = new TextEncoder().encode(process.env.JWT_SECRET);
-      const { payload: decodedPayload } = await jwtVerify(token, secret);
-      payload = decodedPayload;
-    } catch (error) {
-      return NextResponse.json(
-        { error: 'Token inválido' },
-        { status: 401 }
-      );
+    const decoded = await verifyClientToken(token);
+    if (!decoded) {
+      return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
     }
 
-    const userId = payload.id;
+    const userId = decoded.userId;
 
-    // Eliminar todos los items del carrito del usuario
-    await prisma.carrito.deleteMany({
-      where: {
-        usuario_id: userId
-      }
-    });
+    // Conectar a la base de datos
+    const connection = await mysql.createConnection(getConnectionConfig());
 
-    return NextResponse.json({
-      success: true,
+    // Limpiar todos los items del carrito del usuario
+    await connection.execute(
+      'DELETE FROM carrito WHERE usuario_id = ?',
+      [userId]
+    );
+
+    await connection.end();
+
+    return NextResponse.json({ 
+      success: true, 
       message: 'Carrito limpiado exitosamente'
     });
 
   } catch (error) {
     console.error('Error limpiando carrito:', error);
     return NextResponse.json(
-      { error: 'Error interno del servidor' },
+      { error: 'Error interno del servidor' }, 
       { status: 500 }
     );
   }

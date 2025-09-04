@@ -15,10 +15,15 @@ const getConnectionConfig = () => {
     user: url.username,
     password: url.password,
     database: url.pathname.substring(1),
-    connectTimeout: 10000,
-    acquireTimeout: 10000,
-    timeout: 10000,
-    reconnect: false
+    // Configuración válida para createConnection
+    connectTimeout: 60000,
+    // Configuraciones adicionales para estabilidad
+    supportBigNumbers: true,
+    bigNumberStrings: true,
+    dateStrings: false,
+    debug: false,
+    trace: false,
+    multipleStatements: false
   };
 };
 

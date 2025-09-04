@@ -14,6 +14,17 @@ export function middleware(request) {
     }
   }
 
+  // Proteger rutas de cliente (opcional, para funcionalidades premium)
+  if (pathname.startsWith('/profile') || pathname.startsWith('/orders')) {
+    const clientAccessToken = request.cookies.get('clientAccessToken')?.value;
+    const clientRefreshToken = request.cookies.get('clientRefreshToken')?.value;
+
+    // Si no hay tokens de cliente, redirigir a home
+    if (!clientAccessToken && !clientRefreshToken) {
+      return NextResponse.redirect(new URL('/', request.url));
+    }
+  }
+
   return NextResponse.next();
 }
 

@@ -1,254 +1,153 @@
 import { NextResponse } from 'next/server';
 import mysql from 'mysql2/promise';
-import { jwtVerify } from 'jose';
+import { verifyClientToken } from '@/lib/auth/verify-token';
 
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'your-secret-key');
+// Configuración de conexión usando DATABASE_URL
+// Configuración de conexión usando DATABASE_URL
+const getConnectionConfig = () => {
+  const databaseUrl = process.env.DATABASE_URL;
+  
+  if (!databaseUrl) {
+    throw new Error('DATABASE_URL no está configurada');
+  }
 
-// POST - Agregar producto al carrito
+  const url = new URL(databaseUrl);
+  return {
+    host: url.hostname,
+    port: parseInt(url.port) || 3306,
+    user: url.username,
+    password: url.password,
+    database: url.pathname.substring(1),
+    // Configuración válida para createConnection
+    connectTimeout: 60000,
+    // Configuraciones adicionales para estabilidad
+    supportBigNumbers: true,
+    bigNumberStrings: true,
+    dateStrings: false,
+    debug: false,
+    trace: false,
+    multipleStatements: false
+  };
+};
+
 export async function POST(request) {
   try {
-    // Verificar autenticación desde cookies o Authorization header
-    let accessToken = request.cookies.get('accessToken')?.value;
-    
-    // Si no hay token en cookies, verificar Authorization header
-    if (!accessToken) {
-      const authHeader = request.headers.get('authorization');
-      if (authHeader && authHeader.startsWith('Bearer ')) {
-        accessToken = authHeader.substring(7);
-      }
-    }
-    
-    if (!accessToken) {
-      return NextResponse.json(
-        { error: 'Token de autenticación requerido' },
-        { status: 401 }
-      );
+    const token = request.cookies.get('clientAccessToken')?.value;
+    if (!token) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
-    let decoded;
-    
-    try {
-      const { payload } = await jwtVerify(accessToken, JWT_SECRET);
-      decoded = payload;
-    } catch (error) {
-      return NextResponse.json(
-        { error: 'Token inválido o expirado' },
-        { status: 401 }
-      );
+    const decoded = await verifyClientToken(token);
+    if (!decoded) {
+      return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
     }
 
-    const { usuario_id, producto_id, color_id, cantidad } = await request.json();
-    
-    // Validar que el usuario del token coincida con el usuario_id enviado
-    if (decoded.id !== parseInt(usuario_id)) {
-      return NextResponse.json(
-        { error: 'No autorizado para modificar este carrito' },
-        { status: 403 }
-      );
+    const userId = decoded.userId;
+    const { producto_id, color_id, cantidad } = await request.json();
+
+    if (!producto_id || !color_id || !cantidad) {
+      return NextResponse.json({ error: 'Faltan datos requeridos' }, { status: 400 });
     }
 
-    // Validaciones
-    if (!usuario_id || !producto_id || !color_id || !cantidad) {
-      return NextResponse.json(
-        { error: 'Todos los campos son requeridos' },
-        { status: 400 }
-      );
-    }
-
-    if (cantidad < 1) {
-      return NextResponse.json(
-        { error: 'La cantidad debe ser mayor a 0' },
-        { status: 400 }
-      );
-    }
-
-    console.log('Agregando al carrito:', { usuario_id, producto_id, color_id, cantidad });
-
-    // Configuración de conexión
-    const databaseUrl = process.env.DATABASE_URL;
-    if (!databaseUrl) {
-      throw new Error('DATABASE_URL no está configurada');
-    }
-
-    const url = new URL(databaseUrl);
-    const connectionConfig = {
-      host: url.hostname,
-      port: parseInt(url.port) || 3306,
-      user: url.username,
-      password: url.password,
-      database: url.pathname.substring(1),
-      connectTimeout: 10000,
-      acquireTimeout: 10000,
-      timeout: 10000,
-      reconnect: false
-    };
-
-    // Crear conexión
-    const connection = await mysql.createConnection(connectionConfig);
+    const connection = await mysql.createConnection(getConnectionConfig());
 
     try {
-      // Verificar si el producto existe y tiene stock
-      const stockQuery = `
-        SELECT id, cantidad, precio 
-        FROM stock_detalle 
-        WHERE producto_id = ? AND color_id = ?
-      `;
-      
-      const [stockItems] = await connection.query(stockQuery, [parseInt(producto_id), parseInt(color_id)]);
+      // 1. Verificar stock disponible (incluyendo items ya en carritos)
+      const [stockRows] = await connection.execute(`
+        SELECT sd.cantidad as stock_total,
+               COALESCE(SUM(c.cantidad), 0) as stock_en_carritos
+        FROM stock_detalle sd
+        LEFT JOIN carrito c ON sd.producto_id = c.producto_id 
+          AND sd.color_id = c.color_id
+        WHERE sd.producto_id = ? AND sd.color_id = ?
+        GROUP BY sd.producto_id, sd.color_id, sd.cantidad
+      `, [producto_id, color_id]);
 
-      if (stockItems.length === 0) {
-        return NextResponse.json(
-          { error: 'Producto o color no disponible' },
-          { status: 404 }
-        );
+      if (stockRows.length === 0) {
+        await connection.end();
+        return NextResponse.json({ error: 'Producto o color no encontrado' }, { status: 404 });
       }
 
-      const stockItem = stockItems[0];
+      const stock = stockRows[0];
+      const stockDisponible = stock.stock_total - stock.stock_en_carritos;
 
-      if (stockItem.cantidad < cantidad) {
-        return NextResponse.json(
-          { error: 'Stock insuficiente' },
-          { status: 400 }
-        );
+      if (stockDisponible < cantidad) {
+        await connection.end();
+        return NextResponse.json({ 
+          error: 'Stock insuficiente',
+          available: stockDisponible,
+          requested: cantidad
+        }, { status: 409 });
       }
 
-      // Verificar si ya existe el item en el carrito
-      const existingCartQuery = `
-        SELECT id, cantidad 
-        FROM carrito 
-        WHERE usuario_id = ? AND producto_id = ? AND color_id = ?
-      `;
-      
-      const [existingCartItems] = await connection.query(existingCartQuery, [
-        parseInt(usuario_id), 
-        parseInt(producto_id), 
-        parseInt(color_id)
-      ]);
+      // 3. Obtener información del producto y color
+      const [productoRows] = await connection.execute('SELECT id, nombre, sku, url_imagen FROM productos WHERE id = ?', [producto_id]);
+      const [colorRows] = await connection.execute('SELECT sd.id, sd.precio, c.nombre, c.codigo_hex FROM stock_detalle sd INNER JOIN colores c ON sd.color_id = c.id WHERE sd.producto_id = ? AND sd.color_id = ?', [producto_id, color_id]);
 
-      let cartItem;
-      let isUpdate = false;
+      if (productoRows.length === 0) {
+        await connection.end();
+        return NextResponse.json({ error: 'Producto no encontrado' }, { status: 404 });
+      }
+      if (colorRows.length === 0) {
+        await connection.end();
+        return NextResponse.json({ error: 'Color no disponible para este producto' }, { status: 404 });
+      }
 
-      if (existingCartItems.length > 0) {
-        // Actualizar cantidad si ya existe
-        const existingCartItem = existingCartItems[0];
-        const newQuantity = existingCartItem.cantidad + cantidad;
-        
-        if (stockItem.cantidad < newQuantity) {
-          return NextResponse.json(
-            { error: 'Stock insuficiente para la cantidad solicitada' },
-            { status: 400 }
-          );
-        }
+      const producto = productoRows[0];
+      const color = colorRows[0];
 
-        const updateQuery = `
-          UPDATE carrito 
-          SET cantidad = ? 
-          WHERE id = ?
-        `;
-        
-        await connection.query(updateQuery, [newQuantity, existingCartItem.id]);
-        
-        cartItem = {
-          id: existingCartItem.id,
-          cantidad: newQuantity
-        };
-        isUpdate = true;
+      // 3. Agregar al carrito
+      const [existingRows] = await connection.execute('SELECT id, cantidad FROM carrito WHERE usuario_id = ? AND producto_id = ? AND color_id = ?', [userId, producto_id, color_id]);
+
+      let itemId;
+      let newCantidad;
+
+      if (existingRows.length > 0) {
+        const existingItem = existingRows[0];
+        newCantidad = existingItem.cantidad + parseInt(cantidad);
+        await connection.execute('UPDATE carrito SET cantidad = ? WHERE id = ?', [newCantidad, existingItem.id]);
+        itemId = existingItem.id;
       } else {
-        // Crear nuevo item en el carrito
-        const insertQuery = `
-          INSERT INTO carrito (usuario_id, producto_id, color_id, cantidad)
-          VALUES (?, ?, ?, ?)
-        `;
-        
-        const [insertResult] = await connection.query(insertQuery, [
-          parseInt(usuario_id),
-          parseInt(producto_id),
-          parseInt(color_id),
-          parseInt(cantidad)
-        ]);
-        
-        cartItem = {
-          id: insertResult.insertId,
-          cantidad: parseInt(cantidad)
-        };
+        const [result] = await connection.execute('INSERT INTO carrito (usuario_id, producto_id, color_id, cantidad) VALUES (?, ?, ?, ?)', [userId, producto_id, color_id, cantidad]);
+        itemId = result.insertId;
+        newCantidad = parseInt(cantidad);
       }
 
-      // Obtener información completa del item del carrito
-      const cartItemQuery = `
-        SELECT 
-          c.id,
-          c.cantidad,
-          p.id as producto_id,
-          p.nombre as producto_nombre,
-          p.sku as producto_sku,
-          p.descripcion as producto_descripcion,
-          p.url_imagen as producto_imagen,
-          cat.id as categoria_id,
-          cat.nombre as categoria_nombre,
-          col.id as color_id,
-          col.nombre as color_nombre,
-          col.codigo_hex as color_hex,
-          s.precio
-        FROM carrito c
-        LEFT JOIN productos p ON c.producto_id = p.id
-        LEFT JOIN categorias cat ON p.categoria_id = cat.id
-        LEFT JOIN colores col ON c.color_id = col.id
-        LEFT JOIN stock_detalle s ON p.id = s.producto_id AND c.color_id = s.color_id
-        WHERE c.id = ?
-      `;
-      
-      const [cartItemDetails] = await connection.query(cartItemQuery, [cartItem.id]);
+      await connection.end();
 
-      if (cartItemDetails.length === 0) {
-        throw new Error('Error obteniendo detalles del carrito');
-      }
-
-      const itemDetail = cartItemDetails[0];
-
-      // Formatear la respuesta
-      const formattedItem = {
-        id: itemDetail.id,
-        cantidad: itemDetail.cantidad,
-        precio: itemDetail.precio,
+      const newItem = {
+        id: itemId,
+        producto_id: producto_id,
+        color_id: color_id,
+        cantidad: newCantidad,
+        precio: parseFloat(color.precio),
         producto: {
-          id: itemDetail.producto_id,
-          nombre: itemDetail.producto_nombre,
-          sku: itemDetail.producto_sku,
-          descripcion: itemDetail.producto_descripcion,
-          url_imagen: itemDetail.producto_imagen,
-          categoria: {
-            id: itemDetail.categoria_id,
-            nombre: itemDetail.categoria_nombre
-          }
+          id: producto.id,
+          nombre: producto.nombre,
+          sku: producto.sku,
+          url_imagen: producto.url_imagen
         },
         color: {
-          id: itemDetail.color_id,
-          nombre: itemDetail.color_nombre,
-          codigo_hex: itemDetail.color_hex
+          id: color.id,
+          nombre: color.nombre,
+          codigo_hex: color.codigo_hex
         }
       };
 
-      console.log('Producto agregado/actualizado en el carrito exitosamente');
-
-      return NextResponse.json({
-        success: true,
-        message: isUpdate ? 'Cantidad actualizada en el carrito' : 'Producto agregado al carrito',
-        item: formattedItem
+      return NextResponse.json({ 
+        success: true, 
+        message: 'Item agregado al carrito', 
+        item: newItem
       });
 
-    } finally {
+    } catch (sqlError) {
+      console.error('Error en SQL al agregar al carrito:', sqlError);
       await connection.end();
+      throw sqlError;
     }
 
   } catch (error) {
-    console.error('❌ Error agregando al carrito:', error);
-    console.error('Stack trace:', error.stack);
-    return NextResponse.json(
-      { 
-        error: 'Error al agregar al carrito',
-        details: error.message 
-      },
-      { status: 500 }
-    );
+    console.error('Error agregando al carrito:', error);
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }

@@ -1,6 +1,8 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import WhatsappButton from '@/components/common/WhatsappButton';
+import { ClientAuthProvider } from '@/contexts/ClientAuthContext';
+import { CartProvider } from '@/contexts/CartContext';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -54,8 +56,12 @@ export default function RootLayout({ children }) {
         <link rel="shortcut icon" href="/assets/logofav.png" />
       </head>
       <body suppressHydrationWarning>
-        {children}
-        <WhatsappButton />
+        <ClientAuthProvider>
+          <CartProvider>
+            {children}
+            <WhatsappButton />
+          </CartProvider>
+        </ClientAuthProvider>
       </body>
     </html>
   );

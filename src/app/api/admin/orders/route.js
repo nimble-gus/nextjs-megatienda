@@ -28,8 +28,6 @@ export async function GET(request) {
       password: url.password,
       database: url.pathname.substring(1),
       connectTimeout: 10000,
-      acquireTimeout: 10000,
-      timeout: 10000,
       reconnect: false
     };
 

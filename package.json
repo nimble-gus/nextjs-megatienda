@@ -22,7 +22,8 @@
     "next-auth": "^4.24.11",
     "node-fetch": "^3.3.2",
     "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react-dom": "19.1.0",
+    "sweetalert2": "^11.22.5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

@@ -7,12 +7,16 @@ import Image from 'next/image';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import WhatsAppCheckout from '@/components/Checkout/WhatsAppCheckout';
+import { useCart } from '@/contexts/CartContext';
 
 import '@/styles/CheckoutPage.css';
+import '@/styles/BillingDetails.css';
+import '@/styles/OrderSummary.css';
 
 function CheckoutPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { cartItems, clearCart } = useCart();
 
   
   // Estados para productos
@@ -37,14 +41,13 @@ function CheckoutPageContent() {
   });
   
   // Estados de opciones
-  const [metodoPago, setMetodoPago] = useState('contra_entrega');
   const [costoEnvio, setCostoEnvio] = useState(0); // Envío gratis por defecto
-  const [comprobanteTransferencia, setComprobanteTransferencia] = useState(null);
+  const [selectedShipping, setSelectedShipping] = useState('free_shipping');
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('contra_entrega');
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   
   // Estados de UI
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedShipping, setSelectedShipping] = useState('free_shipping');
 
   const [queuePosition, setQueuePosition] = useState(null);
   const [processingStatus, setProcessingStatus] = useState('');
@@ -60,14 +63,53 @@ function CheckoutPageContent() {
     const productoId = searchParams.get('producto');
     const colorId = searchParams.get('color');
     const cantidad = searchParams.get('cantidad');
+    const fromCart = searchParams.get('fromCart');
 
-    if (productoId && colorId && cantidad) {
+    if (fromCart === 'true') {
+      // Cargar productos desde el carrito
+      cargarProductosDelCarrito();
+    } else if (productoId && colorId && cantidad) {
+      // Cargar producto específico (compra rápida)
       cargarProductoEspecifico(productoId, colorId, parseInt(cantidad));
     } else {
       // Redirigir al catálogo si no hay productos
       router.push('/catalog');
     }
   }, [searchParams]);
+
+  // Cargar productos desde el carrito
+  const cargarProductosDelCarrito = async () => {
+    try {
+      setIsLoadingProducts(true);
+      setError('');
+      
+      if (cartItems && cartItems.length > 0) {
+        // Transformar los items del carrito al formato esperado por el checkout
+        const productosTransformados = cartItems.map(item => ({
+          id: item.producto.id,
+          nombre: item.producto.nombre,
+          url_imagen: item.producto.url_imagen,
+          cantidad: item.cantidad,
+          precio: item.precio,
+          color: {
+            id: item.color.id,
+            nombre: item.color.nombre,
+            hex: item.color.codigo_hex
+          },
+          stockId: item.color.id
+        }));
+        
+        setProductos(productosTransformados);
+      } else {
+        setError('Tu carrito está vacío');
+      }
+    } catch (error) {
+      console.error('Error cargando carrito:', error);
+      setError('Error cargando productos del carrito');
+    } finally {
+      setIsLoadingProducts(false);
+    }
+  };
 
   // Cargar producto específico (para "Comprar ahora")
   const cargarProductoEspecifico = async (productoId, colorId, cantidad) => {
@@ -123,12 +165,6 @@ function CheckoutPageContent() {
     }));
   };
 
-  // Manejar cambio de método de pago
-  const handlePaymentMethodChange = (method) => {
-    setMetodoPago(method);
-    setComprobanteTransferencia(null); // Limpiar comprobante al cambiar método
-  };
-
   // Manejar cambio de opción de envío
   const handleShippingChange = (option) => {
     setSelectedShipping(option);
@@ -144,13 +180,13 @@ function CheckoutPageContent() {
     }
   };
 
-  // Manejar archivo de comprobante
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setComprobanteTransferencia(file);
-    }
+  // Manejar cambio de método de pago
+  const handlePaymentMethodChange = (method) => {
+    setSelectedPaymentMethod(method);
   };
+
+
+
 
   // Calcular totales
   const subtotal = productos.reduce((total, producto) => {
@@ -208,10 +244,6 @@ function CheckoutPageContent() {
     // Validar NIT
     const isNITValid = validateNIT(formData.nit);
     
-    if (metodoPago === 'transferencia' && !comprobanteTransferencia) {
-      return false;
-    }
-    
     return hasRequiredFields && isNITValid && agreeToTerms;
   };
 
@@ -257,37 +289,16 @@ function CheckoutPageContent() {
         subtotal: subtotal,
         costo_envio: costoEnvio,
         total: total,
-        metodo_pago: metodoPago,
+        metodo_pago: selectedPaymentMethod,
         estado: 'pendiente',
-        notas: formData.orderNotes,
-        
-        // Para transferencias
-        comprobante_transferencia: comprobanteTransferencia ? comprobanteTransferencia.name : null
+        notas: formData.orderNotes
       };
 
       // Preparar los datos para enviar
-      let requestData;
-      let headers = {};
-
-      if (metodoPago === 'transferencia' && comprobanteTransferencia) {
-        // Si hay archivo de transferencia, usar FormData
-        const formData = new FormData();
-        
-        // Agregar el archivo
-        formData.append('comprobante_transferencia', comprobanteTransferencia);
-        
-        // Agregar todos los demás datos como JSON string
-        const orderDataWithoutFile = { ...orderData };
-        delete orderDataWithoutFile.comprobante_transferencia;
-        formData.append('orderData', JSON.stringify(orderDataWithoutFile));
-        
-        requestData = formData;
-        // No establecer Content-Type, dejar que el navegador lo establezca automáticamente para FormData
-      } else {
-        // Si no hay archivo, usar JSON normal
-        requestData = JSON.stringify(orderData);
-        headers['Content-Type'] = 'application/json';
-      }
+      const requestData = JSON.stringify(orderData);
+      const headers = {
+        'Content-Type': 'application/json'
+      };
 
       // Llamada a la API para crear la orden
       const response = await fetch('/api/checkout/create-order', {
@@ -305,6 +316,9 @@ function CheckoutPageContent() {
 
       if (response.ok) {
         // Orden creada exitosamente
+        // Limpiar el carrito después de una orden exitosa
+        clearCart();
+        
         // Disparar evento para actualizar el contador del carrito en el header
         window.dispatchEvent(new CustomEvent('cartUpdated'));
         
@@ -421,7 +435,7 @@ function CheckoutPageContent() {
               orderData={{
                 productos,
                 costoEnvio,
-                metodoPago,
+                metodoPago: selectedPaymentMethod,
                 notas: formData.orderNotes,
                 nit_cliente: formData.nit,
                 municipio_cliente: formData.state,
@@ -455,17 +469,13 @@ function CheckoutPageContent() {
         {/* Header de la página */}
         <div className="page-header">
           <div className="page-header-content">
-            <h1>Compra Rápida</h1>
+            <h1>{searchParams.get('fromCart') === 'true' ? 'Finalizar Compra' : 'Compra Rápida'}</h1>
             <div className="breadcrumb">
               <span>Inicio</span>
               <span>•</span>
-              <span>Producto</span>
+              <span>{searchParams.get('fromCart') === 'true' ? 'Carrito' : 'Producto'}</span>
               <span>•</span>
-              <span>Compra Rápida</span>
-            </div>
-            <div className="guest-notice">
-              <span className="guest-icon">👤</span>
-              <span>Compra sin cuenta - Completa tus datos para continuar</span>
+              <span>{searchParams.get('fromCart') === 'true' ? 'Checkout' : 'Compra Rápida'}</span>
             </div>
           </div>
         </div>
@@ -646,82 +656,98 @@ function CheckoutPageContent() {
                       </div>
                     </div>
 
-                                         {/* Opciones de envío */}
-                     <div className="form-group full-width">
-                       <label className="form-label">Opciones de Envío</label>
-                       <div className="shipping-options">
-                         <div 
-                           className={`shipping-option ${selectedShipping === 'local_pickup' ? 'selected' : ''}`}
-                           onClick={() => handleShippingChange('local_pickup')}
-                         >
-                           <input
-                             type="radio"
-                             name="shipping"
-                             value="local_pickup"
-                             checked={selectedShipping === 'local_pickup'}
-                             onChange={() => handleShippingChange('local_pickup')}
-                             className="shipping-radio"
-                           />
-                           <div className="shipping-label">Recoger en bodega</div>
-                           <div className="shipping-price">Q0.00</div>
-                         </div>
-                         
-                         <div 
-                           className={`shipping-option ${selectedShipping === 'free_shipping' ? 'selected' : ''}`}
-                           onClick={() => handleShippingChange('free_shipping')}
-                         >
-                           <input
-                             type="radio"
-                             name="shipping"
-                             value="free_shipping"
-                             checked={selectedShipping === 'free_shipping'}
-                             onChange={() => handleShippingChange('free_shipping')}
-                             className="shipping-radio"
-                           />
-                           <div className="shipping-label">Envío gratis</div>
-                           <div className="shipping-price">Q0.00</div>
-                         </div>
-                       </div>
-                     </div>
-
-                    {/* Métodos de pago */}
-                    <div className="form-group full-width">
-                      <label className="form-label">Método de Pago</label>
-                      <div className="payment-methods">
+                    {/* Sección de Opciones de Envío */}
+                    <div className="checkout-shipping-section">
+                      <div className="checkout-shipping-title">
+                        Opciones de Envío
+                      </div>
+                      <div className="checkout-shipping-options">
                         <div 
-                          className={`payment-method ${metodoPago === 'contra_entrega' ? 'selected' : ''}`}
+                          className={`checkout-shipping-option ${selectedShipping === 'local_pickup' ? 'selected' : ''}`}
+                          onClick={() => handleShippingChange('local_pickup')}
+                        >
+                          <input
+                            type="radio"
+                            name="shipping"
+                            value="local_pickup"
+                            checked={selectedShipping === 'local_pickup'}
+                            onChange={() => handleShippingChange('local_pickup')}
+                            className="checkout-shipping-radio"
+                          />
+                          <div className="checkout-shipping-content">
+                            <div className="checkout-shipping-label">Recoger en bodega</div>
+                            <div className="checkout-shipping-description">Retira tu pedido en nuestras instalaciones</div>
+                          </div>
+                          <div className="checkout-shipping-price">Q0.00</div>
+                        </div>
+                        
+                        <div 
+                          className={`checkout-shipping-option ${selectedShipping === 'free_shipping' ? 'selected' : ''}`}
+                          onClick={() => handleShippingChange('free_shipping')}
+                        >
+                          <input
+                            type="radio"
+                            name="shipping"
+                            value="free_shipping"
+                            checked={selectedShipping === 'free_shipping'}
+                            onChange={() => handleShippingChange('free_shipping')}
+                            className="checkout-shipping-radio"
+                          />
+                          <div className="checkout-shipping-content">
+                            <div className="checkout-shipping-label">Envío gratis</div>
+                            <div className="checkout-shipping-description">Entrega a domicilio sin costo adicional</div>
+                          </div>
+                          <div className="checkout-shipping-price">Q0.00</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Sección de Métodos de Pago */}
+                    <div className="checkout-payment-section">
+                      <div className="checkout-payment-title">
+                        Método de Pago
+                      </div>
+                      <div className="checkout-payment-methods">
+                        <div 
+                          className={`checkout-payment-method ${selectedPaymentMethod === 'contra_entrega' ? 'selected' : ''}`}
                           onClick={() => handlePaymentMethodChange('contra_entrega')}
                         >
                           <input
                             type="radio"
                             name="payment"
                             value="contra_entrega"
-                            checked={metodoPago === 'contra_entrega'}
+                            checked={selectedPaymentMethod === 'contra_entrega'}
                             onChange={() => handlePaymentMethodChange('contra_entrega')}
-                            className="payment-radio"
+                            className="checkout-payment-radio"
                           />
-                          <div className="payment-label">Pago contra entrega</div>
+                          <div className="checkout-payment-content">
+                            <div className="checkout-payment-label">Pago contra entrega</div>
+                            <div className="checkout-payment-description">Paga cuando recibas tu pedido en efectivo</div>
+                          </div>
                         </div>
                         
                         <div 
-                          className={`payment-method ${metodoPago === 'transferencia' ? 'selected' : ''}`}
+                          className={`checkout-payment-method ${selectedPaymentMethod === 'transferencia' ? 'selected' : ''}`}
                           onClick={() => handlePaymentMethodChange('transferencia')}
                         >
                           <input
                             type="radio"
                             name="payment"
                             value="transferencia"
-                            checked={metodoPago === 'transferencia'}
+                            checked={selectedPaymentMethod === 'transferencia'}
                             onChange={() => handlePaymentMethodChange('transferencia')}
-                            className="payment-radio"
+                            className="checkout-payment-radio"
                           />
-                          <div className="payment-label">Pago con transferencia</div>
+                          <div className="checkout-payment-content">
+                            <div className="checkout-payment-label">Pago con transferencia</div>
+                            <div className="checkout-payment-description">Transferencia bancaria - Continúa por WhatsApp</div>
+                          </div>
                         </div>
                       </div>
                     </div>
 
                     {/* WhatsApp Checkout para transferencias */}
-                    {metodoPago === 'transferencia' && (
+                    {selectedPaymentMethod === 'transferencia' && (
                       <div className="form-group full-width">
                         <div className="whatsapp-transfer-notice">
                           <div className="notice-icon">💬</div>
@@ -729,7 +755,7 @@ function CheckoutPageContent() {
                             <h4>Finalizar por WhatsApp</h4>
                             <p>Para proteger tu seguridad, los datos bancarios se proporcionan por WhatsApp. Haz clic en el botón para continuar.</p>
                             <button 
-                              type="button"
+                              type="button" 
                               className="btn-whatsapp-transfer"
                               onClick={() => {
                                 console.log('Botón WhatsApp clickeado');
@@ -769,6 +795,19 @@ function CheckoutPageContent() {
                          He leído y acepto los <Link href="/terms" style={{ color: 'var(--primary-orange)' }}>términos y condiciones</Link> *
                        </label>
                      </div>
+
+                     {/* Botón de completar compra */}
+                     <button
+                       type="submit"
+                       onClick={handleSubmit}
+                       disabled={!isFormValid() || isLoading}
+                       className="place-order-btn"
+                     >
+                       {isLoading 
+                         ? 'Procesando...' 
+                         : 'Completar Compra'
+                       }
+                     </button>
                   </form>
                 </div>
               </div>
@@ -829,18 +868,6 @@ function CheckoutPageContent() {
                      </div>
                   </div>
 
-                  {/* Botón de orden */}
-                  <button
-                    type="submit"
-                    onClick={handleSubmit}
-                    disabled={!isFormValid() || isLoading}
-                    className="place-order-btn"
-                  >
-                    {isLoading 
-                      ? 'Procesando...' 
-                      : 'Completar Compra'
-                    }
-                  </button>
                 </div>
               </div>
             </div>

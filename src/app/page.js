@@ -1,7 +1,7 @@
 // src/app/page.js
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Topbar from '@/components/layout/Topbar';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
@@ -9,12 +9,15 @@ import HeroSection from '@/components/Home/HeroSection';
 import CategoriesSection from '@/components/Home/CategoriesSection';
 import FeaturedProducts from '@/components/Home/FeaturedProducts';
 import PromoBanners from '@/components/Home/PromoBanners';
+import LoginModal from '@/components/auth/LoginModal';
 
 import { preloadHomeData } from '@/lib/home-cache';
 
 import '@/styles/HomePage.css';
 
 export default function Home() {
+  const [showLoginModal, setShowLoginModal] = useState(false);
+
   // Precargar datos de la página Home para optimizar rendimiento
   useEffect(() => {
     // Precargar datos en segundo plano
@@ -56,7 +59,7 @@ export default function Home() {
         </section>
 
         <section className="header-section">
-          <Header />
+          <Header onLoginClick={() => setShowLoginModal(true)} />
         </section>
       </div>
 
@@ -90,6 +93,12 @@ export default function Home() {
 
       {/* Footer */}
       <Footer />
+
+      {/* Modal de Login - Solo en Home */}
+      <LoginModal 
+        isOpen={showLoginModal} 
+        onClose={() => setShowLoginModal(false)} 
+      />
     </div>
   );
 }

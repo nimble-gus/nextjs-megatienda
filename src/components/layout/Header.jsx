@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import AuthButton from '@/components/auth/AuthButton';
+import CartButton from '@/components/cart/CartButton';
 import '@/styles/Header.css';
 
-const Header = () => {
+const Header = ({ onLoginClick }) => {
     const router = useRouter();
     const [searchFocused, setSearchFocused] = useState(false);
     const [headerVisible, setHeaderVisible] = useState(false);
@@ -186,7 +188,7 @@ const Header = () => {
                     </ul>
                 </nav>
 
-                {/* Acciones con animaciones */}
+                                {/* Acciones con animaciones */}
                 <div className="header-actions">
                     <div className={`search-container ${searchFocused ? 'search-focused' : ''}`}>
                         <form onSubmit={handleSearch} className="search-box">
@@ -250,9 +252,15 @@ const Header = () => {
                                     <div className="no-searches">
                                         <span>No hay búsquedas recientes</span>
                                     </div>
-                                )}
+                                    )}
                             </div>
                         )}
+                    </div>
+                    
+                    {/* Botones de usuario y carrito */}
+                    <div className="user-actions">
+                        <CartButton />
+                        <AuthButton showModal={false} onLoginClick={onLoginClick} />
                     </div>
                 </div>
 

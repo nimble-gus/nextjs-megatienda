@@ -261,6 +261,30 @@ model rate_limits {
   @@index([ultimo_intento])
 }
 
+// Tabla para tracking de sesiones de clientes
+model sesiones_clientes {
+  id              Int      @id @default(autoincrement())
+  usuario_id      Int      // Cambiado para coincidir con usuarios.id
+  session_token   String   @unique @db.VarChar(500)
+  device_id       String   @db.VarChar(255) // Identificador único del dispositivo
+  device_info     String?  @db.Text // Información del dispositivo (navegador, OS, etc.)
+  ip_address      String?  @db.VarChar(45) // IPv4 o IPv6
+  user_agent      String?  @db.Text // User agent del navegador
+  is_active       Boolean  @default(true)
+  created_at      DateTime @default(now())
+  last_activity   DateTime @default(now())
+  expires_at      DateTime // Cuándo expira la sesión
+  
+  // Relaciones
+  usuario         usuarios @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+  
+  @@index([usuario_id])
+  @@index([session_token])
+  @@index([device_id])
+  @@index([is_active])
+  @@index([expires_at])
+}
+
 enum Rol {
   cliente
   admin

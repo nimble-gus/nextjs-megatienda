@@ -8,7 +8,10 @@ const ProductInfo = ({
   onColorSelect, 
   quantity, 
   onQuantityChange, 
-  onBuyNow, 
+  onBuyNow,
+  onAddToCart,
+  isAuthenticated,
+  isAddingToCart,
   formatPrice, 
   renderStars
 }) => {
@@ -98,13 +101,23 @@ const ProductInfo = ({
 
       {/* Botones de acción */}
       <div className="action-buttons">
-        <button 
-          className="buy-now-btn"
-          onClick={onBuyNow}
-          disabled={selectedColor?.stock === 0}
-        >
-          Comprar Ahora
-        </button>
+        {isAuthenticated ? (
+          <button 
+            className="add-to-cart-btn"
+            onClick={onAddToCart}
+            disabled={selectedColor?.stock === 0 || isAddingToCart}
+          >
+            {isAddingToCart ? 'Agregando...' : 'Agregar al carrito'}
+          </button>
+        ) : (
+          <button 
+            className="buy-now-btn"
+            onClick={onBuyNow}
+            disabled={selectedColor?.stock === 0}
+          >
+            Comprar Ahora
+          </button>
+        )}
       </div>
 
       {/* Información del producto */}
