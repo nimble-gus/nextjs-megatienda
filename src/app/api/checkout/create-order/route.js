@@ -26,8 +26,6 @@ export async function POST(request) {
     console.log('  - total:', total, '(tipo:', typeof total, ')');
     console.log('  - metodoPago:', metodoPago, '(tipo:', typeof metodoPago, ')');
     console.log('  - usuarioId:', usuarioId, '(tipo:', typeof usuarioId, ')');
-    console.log('  - Body completo usuario_id:', body.usuario_id);
-    console.log('  - Body completo:', JSON.stringify(body, null, 2));
     
     // Asegurar que los valores numéricos no sean null
     if (costoEnvio === null || costoEnvio === undefined) {
@@ -128,6 +126,7 @@ export async function POST(request) {
         cliente.nombreQuienRecibe, total, subtotal, costoEnvio, 
         metodoPago, 'pendiente', notas
       ];
+      
 
       const [orderResult] = await connection.query(orderQuery, orderParams);
       const ordenId = orderResult.insertId;
@@ -143,38 +142,23 @@ export async function POST(request) {
         const cantidad = producto.cantidad;
         const stockId = producto.stockId; // Este es el ID de la tabla stock_detalle
         
-        console.log('🔍 [Producto Debug]:');
-        console.log('  - producto completo:', JSON.stringify(producto, null, 2));
-        console.log('  - productoId extraído:', productoId);
-        console.log('  - stockId extraído:', stockId);
-        console.log('  - cantidad:', cantidad);
+        console.log('🔍 Procesando producto:', productoId, 'cantidad:', cantidad);
         
         // Verificar stock disponible antes de reducir
-        console.log('🔍 Verificando stock disponible...');
-        console.log('🔍 Buscando stock por producto_id:', productoId, 'y color_id:', producto.color.id);
-        
-        // Debug: Ver todos los registros de stock_detalle para este producto
-        const debugQuery = `SELECT id, producto_id, color_id, cantidad FROM stock_detalle WHERE producto_id = ?`;
-        const [debugRows] = await connection.query(debugQuery, [productoId]);
-        console.log('🔍 [DEBUG] Registros de stock_detalle para producto_id', productoId, ':', debugRows);
         
         // Buscar el stock correcto por producto_id y color_id
         const stockQuery = `SELECT id, cantidad, color_id FROM stock_detalle WHERE producto_id = ? AND color_id = ?`;
         const stockParams = [productoId, producto.color.id];
         
         const [stockRows] = await connection.query(stockQuery, stockParams);
-        console.log('🔍 Resultado de consulta de stock:', stockRows);
         
         if (stockRows.length === 0) {
           throw new Error(`No se encontró stock para el producto ${productoId} con color ${producto.color.id}`);
         }
         
         const stockActual = stockRows[0].cantidad;
-        const realColorId = stockRows[0].color_id; // Obtener el color_id real de la tabla colores
-        const stockRecordId = stockRows[0].id; // ID del registro en stock_detalle
-        
-        console.log(`📊 Stock actual: ${stockActual}, Cantidad solicitada: ${cantidad}`);
-        console.log(`📊 Color ID real: ${realColorId}, Stock Record ID: ${stockRecordId}`);
+        const realColorId = stockRows[0].color_id;
+        const stockRecordId = stockRows[0].id;
         
         if (stockActual < cantidad) {
           throw new Error(`Stock insuficiente. Disponible: ${stockActual}, Solicitado: ${cantidad}`);
@@ -192,16 +176,14 @@ export async function POST(request) {
         ]);
         
         // Reducir el stock usando el ID del registro de stock_detalle
-        console.log('📉 Reduciendo stock...');
         const updateStockQuery = `
-          UPDATE stock_detalle 
+          UPDATE stock_detalle
           SET cantidad = cantidad - ? 
           WHERE id = ?
         `;
         
         await connection.query(updateStockQuery, [cantidad, stockRecordId]);
         
-        console.log(`✅ Stock reducido: ${stockActual} → ${stockActual - cantidad}`);
       }
 
       // Confirmar transacción
