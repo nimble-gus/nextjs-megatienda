@@ -8,6 +8,7 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import WhatsAppCheckout from '@/components/Checkout/WhatsAppCheckout';
 import { useCart } from '@/contexts/CartContext';
+import { useAuth } from '@/hooks/useAuth';
 
 import '@/styles/CheckoutPage.css';
 import '@/styles/BillingDetails.css';
@@ -17,6 +18,7 @@ function CheckoutPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { cartItems, clearCart } = useCart();
+  const { user, isAuthenticated } = useAuth();
 
   
   // Estados para productos
@@ -265,14 +267,12 @@ function CheckoutPageContent() {
     setIsLoading(true);
 
     try {
-      // Obtener usuario actual del localStorage
-      const savedUser = localStorage.getItem('user');
-      const userData = savedUser ? JSON.parse(savedUser) : null;
-      const userId = userData ? (userData.id || userData.usuario_id) : null;
+      // Obtener usuario actual del contexto de autenticación
+      const userId = user ? user.id : null;
       
       console.log('🔍 [Checkout] Debug usuario:');
-      console.log('  - savedUser:', savedUser);
-      console.log('  - userData:', userData);
+      console.log('  - isAuthenticated:', isAuthenticated);
+      console.log('  - user:', user);
       console.log('  - userId:', userId);
       
       const orderData = {
@@ -322,8 +322,10 @@ function CheckoutPageContent() {
 
       if (response.ok) {
         // Orden creada exitosamente
+        console.log('✅ [Checkout] Orden creada exitosamente, limpiando carrito...');
         // Limpiar el carrito después de una orden exitosa
         clearCart();
+        console.log('✅ [Checkout] Carrito limpiado');
         
         // Disparar evento para actualizar el contador del carrito en el header
         window.dispatchEvent(new CustomEvent('cartUpdated'));

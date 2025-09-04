@@ -260,23 +260,32 @@ export const CartProvider = ({ children }) => {
   // Limpiar carrito
   const clearCart = useCallback(async () => {
     try {
+      console.log('🧹 [CartContext] Iniciando limpieza del carrito...');
+      console.log('🧹 [CartContext] Usuario autenticado:', isAuthenticated);
+      
       if (isAuthenticated) {
         // Si está autenticado, limpiar en la base de datos
+        console.log('🧹 [CartContext] Limpiando carrito en base de datos...');
         const response = await fetch('/api/cart/clear', {
           method: 'DELETE',
           credentials: 'include'
         });
 
         if (response.ok) {
+          console.log('🧹 [CartContext] Carrito limpiado en BD, actualizando estado local...');
           setCartItems([]);
+        } else {
+          console.error('🧹 [CartContext] Error limpiando carrito en BD:', response.status);
         }
       } else {
         // Si no está autenticado, limpiar localStorage
+        console.log('🧹 [CartContext] Limpiando carrito en localStorage...');
         setCartItems([]);
         localStorage.removeItem('guestCart');
+        console.log('🧹 [CartContext] Carrito limpiado en localStorage');
       }
     } catch (error) {
-      console.error('Error limpiando carrito:', error);
+      console.error('🧹 [CartContext] Error limpiando carrito:', error);
     }
   }, [isAuthenticated]);
 
