@@ -35,6 +35,7 @@
 .main-header.header-visible {
     transform: translateY(0);
     opacity: 1;
+    
 }
 
 /* Logo con animaciones - CORREGIDO para Next.js Image */

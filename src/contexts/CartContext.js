@@ -274,6 +274,8 @@ export const CartProvider = ({ children }) => {
         if (response.ok) {
           console.log('🧹 [CartContext] Carrito limpiado en BD, actualizando estado local...');
           setCartItems([]);
+          // Forzar recarga del carrito para asegurar sincronización
+          await loadUserCart();
         } else {
           console.error('🧹 [CartContext] Error limpiando carrito en BD:', response.status);
         }
@@ -287,7 +289,7 @@ export const CartProvider = ({ children }) => {
     } catch (error) {
       console.error('🧹 [CartContext] Error limpiando carrito:', error);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, loadUserCart]);
 
   // Migrar carrito del localStorage a la base de datos al autenticarse
   const migrateGuestCart = useCallback(async () => {
@@ -321,6 +323,25 @@ export const CartProvider = ({ children }) => {
       migrateGuestCart();
     }
   }, [isAuthenticated, migrateGuestCart]);
+
+  // Escuchar evento de carrito limpiado para forzar recarga
+  useEffect(() => {
+    const handleCartCleared = async () => {
+      console.log('🔄 [CartContext] Evento cartCleared recibido, forzando recarga...');
+      if (isAuthenticated) {
+        await loadUserCart();
+      } else {
+        setCartItems([]);
+        localStorage.removeItem('guestCart');
+      }
+    };
+
+    window.addEventListener('cartCleared', handleCartCleared);
+    
+    return () => {
+      window.removeEventListener('cartCleared', handleCartCleared);
+    };
+  }, [isAuthenticated, loadUserCart]);
 
   const value = {
     // Estado

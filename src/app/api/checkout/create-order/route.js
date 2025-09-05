@@ -137,12 +137,14 @@ export async function POST(request) {
       console.log('📝 Creando items de la orden y reduciendo stock...');
       for (const producto of productos) {
         console.log('📦 Procesando producto:', producto.nombre || producto.producto?.nombre);
+        console.log('🔍 Datos completos del producto:', JSON.stringify(producto, null, 2));
         
         const productoId = producto.producto_id || producto.id;
         const cantidad = producto.cantidad;
         const stockId = producto.stockId; // Este es el ID de la tabla stock_detalle
         
         console.log('🔍 Procesando producto:', productoId, 'cantidad:', cantidad);
+        console.log('🔍 Color recibido:', producto.color);
         
         // Verificar stock disponible antes de reducir
         

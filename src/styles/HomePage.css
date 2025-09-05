@@ -21,6 +21,33 @@ html, body {
   background-color: #ffffff;
   position: relative;
   /* NO usar display: flex aquí - puede interferir con sticky */
+  margin: 0;
+  padding: 0;
+  border: none;
+  outline: none;
+}
+
+/* Estilos específicos para móviles - eliminar espacios en blanco */
+@media (max-width: 768px) {
+  .page-layout {
+    margin: 0;
+    padding: 0;
+  }
+  
+  .sticky-wrapper {
+    margin: 0;
+    padding: 0;
+  }
+  
+  .topbar-section {
+    margin: 0;
+    padding: 0;
+  }
+  
+  .header-section {
+    margin: 0;
+    padding: 0;
+  }
 }
 
 /* Sticky Wrapper: Agrupa Topbar + Header */
@@ -34,6 +61,10 @@ html, body {
   width: 100%;
   /* Asegurar que tenga contenido para que sticky funcione */
   min-height: auto;
+  margin: 0;
+  padding: 0;
+  border: none;
+  outline: none;
 }
 
 /* Sección del Topbar */
@@ -42,6 +73,10 @@ html, body {
   position: relative;
   z-index: 102;
   background-color: #ffffff;
+  margin: 0;
+  padding: 0;
+  border: none;
+  outline: none;
 }
 
 /* Sección del Header */

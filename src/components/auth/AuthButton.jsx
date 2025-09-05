@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { useClientAuth } from '@/contexts/ClientAuthContext';
 import { User, LogOut, ShoppingBag, Package, Settings } from 'lucide-react';
 import LoginModal from './LoginModal';
@@ -6,6 +7,7 @@ import '@/styles/AuthButton.css';
 
 const AuthButton = ({ showModal = true, onLoginClick }) => {
   const { user, isAuthenticated, logout } = useClientAuth();
+  const router = useRouter();
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
 
@@ -22,6 +24,11 @@ const AuthButton = ({ showModal = true, onLoginClick }) => {
   const handleLogout = async () => {
     await logout();
     setShowUserMenu(false);
+  };
+
+  const handleOrdersClick = () => {
+    setShowUserMenu(false);
+    router.push('/orders');
   };
 
   const toggleUserMenu = () => {
@@ -73,20 +80,12 @@ const AuthButton = ({ showModal = true, onLoginClick }) => {
             
             <div className="dropdown-divider"></div>
             
-            <button className="dropdown-item" onClick={() => setShowUserMenu(false)}>
-              <Settings size={16} />
-              <span>Mi Perfil</span>
-            </button>
             
-            <button className="dropdown-item" onClick={() => setShowUserMenu(false)}>
+            <button className="dropdown-item" onClick={handleOrdersClick}>
               <Package size={16} />
               <span>Historial de Pedidos</span>
             </button>
             
-            <button className="dropdown-item" onClick={() => setShowUserMenu(false)}>
-              <ShoppingBag size={16} />
-              <span>Favoritos</span>
-            </button>
             
             <div className="dropdown-divider"></div>
             

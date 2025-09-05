@@ -3,15 +3,23 @@ import { useCart } from '@/contexts/CartContext';
 import { useClientAuth } from '@/contexts/ClientAuthContext';
 import { ShoppingCart, Trash2, Plus, Minus, Package } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import Swal from 'sweetalert2';
 import '@/styles/CartButton.css';
 
 const CartButton = () => {
   const { cartItems, itemCount, cartTotal, updateQuantity, removeFromCart, clearCart } = useCart();
   const { isAuthenticated } = useClientAuth();
   const [showDropdown, setShowDropdown] = useState(false);
+  const router = useRouter();
 
   const toggleDropdown = () => {
     setShowDropdown(!showDropdown);
+  };
+
+  // Función para manejar click en móviles (redirigir a /cart)
+  const handleMobileClick = () => {
+    router.push('/cart');
   };
 
   // Cerrar dropdown cuando se hace click fuera
@@ -38,13 +46,39 @@ const CartButton = () => {
   };
 
   // Manejar cambio de cantidad
-  const handleQuantityChange = (itemId, newQuantity) => {
-    updateQuantity(itemId, newQuantity);
+  const handleQuantityChange = async (itemId, newQuantity) => {
+    try {
+      await updateQuantity(itemId, newQuantity);
+    } catch (error) {
+      console.error('Error actualizando cantidad:', error);
+      
+      // Mostrar SweetAlert con el error
+      await Swal.fire({
+        icon: 'warning',
+        title: 'Stock insuficiente',
+        text: error.message || 'No hay suficiente stock disponible para esta cantidad',
+        confirmButtonText: 'Entendido',
+        confirmButtonColor: '#f59e0b'
+      });
+    }
   };
 
   // Manejar eliminación de item
-  const handleRemoveItem = (itemId) => {
-    removeFromCart(itemId);
+  const handleRemoveItem = async (itemId) => {
+    try {
+      await removeFromCart(itemId);
+    } catch (error) {
+      console.error('Error removiendo item:', error);
+      
+      // Mostrar SweetAlert con el error
+      await Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Hubo un problema al remover el producto del carrito',
+        confirmButtonText: 'Entendido',
+        confirmButtonColor: '#ef4444'
+      });
+    }
   };
 
   // Manejar limpieza del carrito
@@ -62,8 +96,24 @@ const CartButton = () => {
 
   return (
     <div className="cart-button-container">
+      {/* Botón para móviles - redirige a /cart */}
       <button 
-        className="cart-button"
+        className="cart-button cart-button-mobile"
+        onClick={handleMobileClick}
+        title="Ver carrito de compras"
+      >
+        <ShoppingCart size={18} />
+        <span className="cart-text">Carrito</span>
+        
+        {/* Badge con cantidad de items - siempre visible */}
+        <span className="cart-badge">
+          {itemCount > 0 ? (itemCount > 99 ? '99+' : itemCount) : ''}
+        </span>
+      </button>
+
+      {/* Botón para desktop - muestra dropdown */}
+      <button 
+        className="cart-button cart-button-desktop"
         onClick={toggleDropdown}
         title="Ver carrito de compras"
       >
@@ -76,7 +126,7 @@ const CartButton = () => {
         </span>
       </button>
 
-      {/* Dropdown del carrito */}
+      {/* Dropdown del carrito (desktop) */}
       {showDropdown && (
         <div className="cart-dropdown">
           <div className="cart-dropdown-header">
@@ -105,67 +155,74 @@ const CartButton = () => {
               <div className="cart-items-list">
                 {cartItems.map((item) => (
                   <div key={item.id} className="cart-item">
-                    <div className="item-image">
-                      {item.producto.url_imagen ? (
-                        <img 
-                          src={item.producto.url_imagen} 
-                          alt={item.producto.nombre}
-                          width={40}
-                          height={40}
-                        />
-                      ) : (
-                        <div className="item-placeholder">
-                          <Package size={20} />
+                    {/* Contenido principal del item */}
+                    <div className="item-main-content">
+                      <div className="item-image">
+                        {item.producto.url_imagen ? (
+                          <img 
+                            src={item.producto.url_imagen} 
+                            alt={item.producto.nombre}
+                            width={40}
+                            height={40}
+                          />
+                        ) : (
+                          <div className="item-placeholder">
+                            <Package size={20} />
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="item-info-container">
+                        <div className="item-details">
+                          <div className="item-name">{item.producto.nombre}</div>
+                          <div className="item-sku">{item.producto.sku}</div>
+                          <div className="item-color">
+                            <span 
+                              className="color-swatch" 
+                              style={{ backgroundColor: item.color.codigo_hex }}
+                            ></span>
+                            <span>{item.color.nombre}</span>
+                          </div>
                         </div>
-                      )}
-                    </div>
-
-                    <div className="item-details">
-                      <div className="item-name">{item.producto.nombre}</div>
-                      <div className="item-sku">SKU: {item.producto.sku}</div>
-                      <div className="item-color">
-                        <span 
-                          className="color-swatch" 
-                          style={{ backgroundColor: item.color.codigo_hex }}
-                        ></span>
-                        <span>{item.color.nombre}</span>
+                        <div className="item-price">
+                          {formatPrice(item.precio)}
+                        </div>
                       </div>
                     </div>
 
-                    <div className="item-price">
-                      {formatPrice(item.precio)}
-                    </div>
-
-                    <div className="item-quantity">
-                      <div className="quantity-controls">
-                        <button
-                          className="quantity-btn"
-                          onClick={() => handleQuantityChange(item.id, item.cantidad - 1)}
-                          disabled={item.cantidad <= 1}
-                        >
-                          <Minus size={12} />
-                        </button>
-                        <span className="quantity-value">{item.cantidad}</span>
-                        <button
-                          className="quantity-btn"
-                          onClick={() => handleQuantityChange(item.id, item.cantidad + 1)}
-                        >
-                          <Plus size={12} />
-                        </button>
+                    {/* Controles del item */}
+                    <div className="item-controls-container">
+                      <div className="item-quantity">
+                        <div className="quantity-controls">
+                          <button
+                            className="quantity-btn"
+                            onClick={() => handleQuantityChange(item.id, item.cantidad - 1)}
+                            disabled={item.cantidad <= 1}
+                          >
+                            <Minus size={12} />
+                          </button>
+                          <span className="quantity-value">{item.cantidad}</span>
+                          <button
+                            className="quantity-btn"
+                            onClick={() => handleQuantityChange(item.id, item.cantidad + 1)}
+                          >
+                            <Plus size={12} />
+                          </button>
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="item-total">
-                      {formatPrice(item.precio * item.cantidad)}
-                    </div>
+                      <div className="item-total">
+                        {formatPrice(item.precio * item.cantidad)}
+                      </div>
 
-                    <button
-                      className="remove-item-btn"
-                      onClick={() => handleRemoveItem(item.id)}
-                      title="Eliminar item"
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                      <button
+                        className="remove-item-btn"
+                        onClick={() => handleRemoveItem(item.id)}
+                        title="Eliminar item"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -183,14 +240,12 @@ const CartButton = () => {
                 <Link href="/cart" className="view-cart-btn">
                   Ver Carrito Completo
                 </Link>
-                <Link href="/checkout" className="checkout-btn">
-                  Proceder al Pago
-                </Link>
               </div>
             </>
           )}
         </div>
       )}
+
     </div>
   );
 };

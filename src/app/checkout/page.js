@@ -94,11 +94,11 @@ function CheckoutPageContent() {
           cantidad: item.cantidad,
           precio: item.precio,
           color: {
-            id: item.color.id,
+            id: item.color_id, // Usar color_id del carrito, no el id del objeto color
             nombre: item.color.nombre,
             hex: item.color.codigo_hex
           },
-          stockId: item.color.id
+          stockId: item.id // Este es el ID del item del carrito, no del stock_detalle
         }));
         
         setProductos(productosTransformados);
@@ -324,11 +324,14 @@ function CheckoutPageContent() {
         // Orden creada exitosamente
         console.log('✅ [Checkout] Orden creada exitosamente, limpiando carrito...');
         // Limpiar el carrito después de una orden exitosa
-        clearCart();
+        await clearCart();
         console.log('✅ [Checkout] Carrito limpiado');
         
         // Disparar evento para actualizar el contador del carrito en el header
         window.dispatchEvent(new CustomEvent('cartUpdated'));
+        
+        // Disparar evento para forzar recarga del carrito en todos los componentes
+        window.dispatchEvent(new CustomEvent('cartCleared'));
         
         // Disparar evento de nueva orden creada para notificaciones en tiempo real
         window.dispatchEvent(new CustomEvent('newOrderCreated', {

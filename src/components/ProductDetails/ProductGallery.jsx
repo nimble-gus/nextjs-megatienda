@@ -1,22 +1,33 @@
 'use client';
 
+import { useState } from 'react';
 import Image from 'next/image';
+import { X, ZoomIn } from 'lucide-react';
 import '@/styles/ProductGallery.css';
 
 const ProductGallery = ({ images, selectedImage, onImageSelect }) => {
+  const [showZoomModal, setShowZoomModal] = useState(false);
   return (
     <div className="product-gallery">
       {/* Imagen principal */}
-      <div className="main-image-container">
+      <div 
+        className="main-image-container"
+        onClick={() => setShowZoomModal(true)}
+      >
         {images && images.length > 0 ? (
-          <Image 
-            src={images[selectedImage]} 
-            alt="Producto principal"
-            width={500}
-            height={500}
-            className="main-image"
-            priority
-          />
+          <>
+            <Image 
+              src={images[selectedImage]} 
+              alt="Producto principal"
+              width={500}
+              height={500}
+              className="main-image"
+              priority
+            />
+            <div className="zoom-indicator">
+              <ZoomIn size={20} />
+            </div>
+          </>
         ) : (
           <div className="main-image-placeholder">
             <span>Sin imagen disponible</span>
@@ -77,6 +88,34 @@ const ProductGallery = ({ images, selectedImage, onImageSelect }) => {
           />
         ))}
       </div>
+
+      {/* Modal de zoom */}
+      {showZoomModal && images && images.length > 0 && (
+        <div 
+          className="image-zoom-modal"
+          onClick={() => setShowZoomModal(false)}
+        >
+          <div className="zoom-modal-content" onClick={(e) => e.stopPropagation()}>
+            <button 
+              className="zoom-modal-close"
+              onClick={() => setShowZoomModal(false)}
+            >
+              <X size={20} />
+            </button>
+            <Image 
+              src={images[selectedImage]} 
+              alt="Producto en vista ampliada"
+              width={800}
+              height={800}
+              className="zoom-modal-image"
+              priority
+            />
+            <div className="zoom-modal-info">
+              Imagen {selectedImage + 1} de {images.length}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

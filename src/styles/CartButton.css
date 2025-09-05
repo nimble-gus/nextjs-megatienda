@@ -36,6 +36,15 @@
   font-weight: 500;
 }
 
+/* Botones específicos para desktop y mobile */
+.cart-button-desktop {
+  display: flex;
+}
+
+.cart-button-mobile {
+  display: none;
+}
+
 .cart-button:hover {
   background: #f3f4f6;
   color: #1f2937;
@@ -472,10 +481,23 @@
 
 /* Responsive */
 @media (max-width: 768px) {
+  /* Ocultar botón desktop y mostrar botón mobile */
+  .cart-button-desktop {
+    display: none;
+  }
+  
+  .cart-button-mobile {
+    display: flex;
+  }
+  
   .cart-dropdown {
-    width: 400px;
-    right: -20px;
-    max-height: 600px;
+    width: 320px;
+    max-width: 90vw;
+    right: 50%;
+    transform: translateX(50%);
+    max-height: 70vh;
+    top: 100%;
+    margin-top: 8px;
   }
   
   .cart-item {
@@ -552,9 +574,11 @@
 
 @media (max-width: 480px) {
   .cart-dropdown {
-    width: 350px;
-    right: -30px;
-    max-height: 500px;
+    width: 280px;
+    max-width: 95vw;
+    right: 50%;
+    transform: translateX(50%);
+    max-height: 60vh;
   }
   
   .cart-item {
@@ -631,6 +655,210 @@
     font-size: 10px;
     top: -6px;
     right: -6px;
+  }
+}
+
+@media (max-width: 375px) {
+  .cart-dropdown {
+    width: 260px;
+    max-width: 98vw;
+    right: 50%;
+    transform: translateX(50%);
+    max-height: 55vh;
+  }
+  
+  .cart-item {
+    padding: 8px 10px;
+    gap: 6px;
+  }
+  
+  .item-main-content {
+    gap: 6px;
+  }
+  
+  .item-image {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .item-name {
+    font-size: 0.7rem;
+    line-height: 1.1;
+  }
+  
+  .item-sku,
+  .item-color {
+    font-size: 0.6rem;
+  }
+  
+  .item-controls-container {
+    gap: 4px;
+    margin-top: 3px;
+  }
+  
+  .quantity-btn {
+    width: 20px;
+    height: 20px;
+    font-size: 10px;
+  }
+  
+  .quantity-value {
+    width: 24px;
+    height: 20px;
+    font-size: 0.7rem;
+  }
+  
+  .item-price,
+  .item-total {
+    font-size: 0.7rem;
+  }
+  
+  .remove-item-btn {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .cart-dropdown-header {
+    padding: 8px 10px;
+  }
+  
+  .cart-dropdown-header h3 {
+    font-size: 0.85rem;
+  }
+  
+  .cart-actions {
+    padding: 12px 10px;
+  }
+  
+  .cart-summary {
+    padding: 8px 10px;
+  }
+  
+  /* Badge más pequeño para pantallas extra pequeñas */
+  .cart-badge {
+    width: 16px;
+    height: 16px;
+    font-size: 9px;
+    top: -5px;
+    right: -5px;
+  }
+}
+
+@media (max-width: 320px) {
+  .cart-dropdown {
+    width: 240px;
+    max-width: 99vw;
+    right: 50%;
+    transform: translateX(50%);
+    max-height: 50vh;
+  }
+  
+  .cart-item {
+    padding: 6px 8px;
+    gap: 4px;
+  }
+  
+  .item-main-content {
+    gap: 4px;
+  }
+  
+  .item-image {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .item-name {
+    font-size: 0.65rem;
+    line-height: 1.0;
+  }
+  
+  .item-sku,
+  .item-color {
+    font-size: 0.55rem;
+  }
+  
+  .item-controls-container {
+    gap: 3px;
+    margin-top: 2px;
+  }
+  
+  .quantity-btn {
+    width: 18px;
+    height: 18px;
+    font-size: 9px;
+  }
+  
+  .quantity-value {
+    width: 20px;
+    height: 18px;
+    font-size: 0.65rem;
+  }
+  
+  .item-price,
+  .item-total {
+    font-size: 0.65rem;
+  }
+  
+  .remove-item-btn {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .cart-dropdown-header {
+    padding: 6px 8px;
+  }
+  
+  .cart-dropdown-header h3 {
+    font-size: 0.8rem;
+  }
+  
+  .cart-actions {
+    padding: 10px 8px;
+  }
+  
+  .cart-summary {
+    padding: 6px 8px;
+  }
+  
+  /* Badge más pequeño para pantallas muy pequeñas */
+  .cart-badge {
+    width: 14px;
+    height: 14px;
+    font-size: 8px;
+    top: -4px;
+    right: -4px;
+  }
+}
+
+/* Mejoras de usabilidad táctil para móviles */
+@media (max-width: 768px) {
+  .quantity-btn,
+  .remove-item-btn,
+  .clear-cart-btn {
+    min-height: 32px; /* Tamaño mínimo para touch */
+    min-width: 32px;
+  }
+  
+  .cart-button {
+    min-height: 40px;
+    min-width: 40px;
+  }
+  
+  /* Mejorar la legibilidad del texto */
+  .item-name {
+    font-weight: 600;
+  }
+  
+  .item-price,
+  .item-total {
+    font-weight: 700;
+  }
+  
+  /* Asegurar que los botones sean fácilmente tocables */
+  .view-cart-btn,
+  .checkout-btn {
+    min-height: 44px;
+    font-weight: 600;
   }
 }
 
