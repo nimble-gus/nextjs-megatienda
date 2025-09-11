@@ -7,7 +7,7 @@ export const useRealtimeNotifications = () => {
   const eventSourceRef = useRef(null);
   const reconnectTimeoutRef = useRef(null);
   const reconnectAttempts = useRef(0);
-  const maxReconnectAttempts = 5;
+  const maxReconnectAttempts = 10; // Aumentar intentos para producción
 
   // Función para reproducir sonido de notificación
   const playNotificationSound = useCallback((type = 'newOrder') => {
@@ -69,6 +69,10 @@ export const useRealtimeNotifications = () => {
 
           if (data.type === 'connected') {
             console.log('✅ Conectado al sistema de notificaciones en tiempo real');
+            // En producción, la conexión se cerrará automáticamente después de 25 segundos
+            if (data.maxConnectionTime && data.maxConnectionTime < 60000) {
+              console.log('⚠️ Conexión de producción: se reconectará automáticamente');
+            }
             return;
           }
 
@@ -120,7 +124,11 @@ export const useRealtimeNotifications = () => {
         
         // Intentar reconectar solo si no hemos alcanzado el máximo
         if (reconnectAttempts.current < maxReconnectAttempts) {
-          const delay = Math.min(Math.pow(2, reconnectAttempts.current) * 1000, 30000); // Max 30 segundos
+          // En producción, reconectar más rápido debido a los timeouts de 25 segundos
+          const isProduction = window.location.hostname !== 'localhost';
+          const baseDelay = isProduction ? 2000 : 1000; // 2 segundos en prod, 1 en dev
+          const delay = Math.min(baseDelay * Math.pow(1.5, reconnectAttempts.current), 10000); // Max 10 segundos
+          
           console.log(`🔄 Reintentando conexión en ${delay}ms... (intento ${reconnectAttempts.current + 1}/${maxReconnectAttempts})`);
           setConnectionError(`Reintentando conexión... (${reconnectAttempts.current + 1}/${maxReconnectAttempts})`);
           

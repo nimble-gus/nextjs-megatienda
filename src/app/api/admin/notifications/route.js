@@ -4,6 +4,10 @@ import { NextResponse } from 'next/server';
 const connections = new Set();
 
 export async function GET(request) {
+  // En producción, limitar el tiempo de conexión para evitar timeouts de Vercel
+  const isProduction = process.env.NODE_ENV === 'production';
+  const maxConnectionTime = isProduction ? 25 * 1000 : 5 * 60 * 1000; // 25 segundos en prod, 5 min en dev
+  
   const controller = new AbortController();
   const stream = new ReadableStream({
     start(controller) {
@@ -16,21 +20,24 @@ export async function GET(request) {
           }
         },
         controller,
-        isActive: true
+        isActive: true,
+        startTime: Date.now()
       };
       
       connections.add(connection);
 
       const keepAlive = () => {
         if (connection.isActive) {
+          // En producción, enviar ping más frecuente para detectar desconexiones
+          const pingInterval = isProduction ? 10000 : 30000; // 10 segundos en prod, 30 en dev
           connection.sendData({ type: 'ping', timestamp: new Date().toISOString() });
         }
       };
       
-      const pingInterval = setInterval(keepAlive, 30000);
+      const pingInterval = setInterval(keepAlive, isProduction ? 10000 : 30000);
       const maxLifetimeTimeout = setTimeout(() => {
         cleanup();
-      }, 5 * 60 * 1000); // 5 minutos
+      }, maxConnectionTime);
 
       const cleanup = () => {
         if (!connection.isActive) return; // Evitar limpieza múltiple
@@ -54,7 +61,8 @@ export async function GET(request) {
       connection.sendData({ 
         type: 'connected', 
         message: 'Conexión establecida',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        maxConnectionTime: maxConnectionTime
       });
 
       // Detectar cuando se cierra la conexión
@@ -75,7 +83,10 @@ export async function GET(request) {
       'Cache-Control': 'no-cache',
       'Connection': 'keep-alive',
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Headers': 'Cache-Control'
+      'Access-Control-Allow-Headers': 'Cache-Control',
+      // Agregar headers para optimizar en Vercel
+      'X-Accel-Buffering': 'no',
+      'Transfer-Encoding': 'chunked'
     }
   });
 }
