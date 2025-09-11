@@ -52,7 +52,11 @@ export const useRealtimeNotifications = () => {
       eventSourceRef.current = eventSource;
 
       eventSource.onopen = () => {
-        console.log('🔗 Conexión SSE establecida');
+        // Solo mostrar log de conexión en desarrollo
+        const isProduction = window.location.hostname !== 'localhost';
+        if (!isProduction) {
+          console.log('🔗 Conexión SSE establecida');
+        }
         setIsConnected(true);
         setConnectionError(null);
         reconnectAttempts.current = 0;
@@ -68,10 +72,10 @@ export const useRealtimeNotifications = () => {
           }
 
           if (data.type === 'connected') {
-            console.log('✅ Conectado al sistema de notificaciones en tiempo real');
-            // En producción, la conexión se cerrará automáticamente después de 25 segundos
-            if (data.maxConnectionTime && data.maxConnectionTime < 60000) {
-              console.log('⚠️ Conexión de producción: se reconectará automáticamente');
+            // Solo mostrar log de conexión en desarrollo
+            const isProduction = window.location.hostname !== 'localhost';
+            if (!isProduction) {
+              console.log('✅ Conectado al sistema de notificaciones en tiempo real');
             }
             return;
           }
@@ -113,7 +117,7 @@ export const useRealtimeNotifications = () => {
       };
 
       eventSource.onerror = (error) => {
-        console.error('❌ Error en conexión SSE:', error);
+        // No mostrar error en consola ya que es comportamiento normal en producción
         setIsConnected(false);
         
         // Cerrar la conexión actual
@@ -129,7 +133,10 @@ export const useRealtimeNotifications = () => {
           const baseDelay = isProduction ? 2000 : 1000; // 2 segundos en prod, 1 en dev
           const delay = Math.min(baseDelay * Math.pow(1.5, reconnectAttempts.current), 10000); // Max 10 segundos
           
-          console.log(`🔄 Reintentando conexión en ${delay}ms... (intento ${reconnectAttempts.current + 1}/${maxReconnectAttempts})`);
+          // Solo mostrar log de reconexión en desarrollo
+          if (!isProduction) {
+            console.log(`🔄 Reintentando conexión en ${delay}ms... (intento ${reconnectAttempts.current + 1}/${maxReconnectAttempts})`);
+          }
           setConnectionError(`Reintentando conexión... (${reconnectAttempts.current + 1}/${maxReconnectAttempts})`);
           
           reconnectTimeoutRef.current = setTimeout(() => {
