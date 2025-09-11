@@ -11,6 +11,7 @@ const OrdersManager = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [updating, setUpdating] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [showTransferViewer, setShowTransferViewer] = useState(false);
   const [selectedTransfer, setSelectedTransfer] = useState(null);
   
@@ -57,9 +58,13 @@ const OrdersManager = () => {
     setPage(1);
   }, [searchOrder]);
 
-  const fetchOrders = async () => {
+  const fetchOrders = async (isRefresh = false) => {
     try {
-      setLoading(true);
+      if (isRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
       setError('');
       
       const params = new URLSearchParams({
@@ -77,6 +82,7 @@ const OrdersManager = () => {
         setOrders(data.orders);
         setTotalPages(data.pagination.totalPages);
         setTotalOrders(data.pagination.total);
+        console.log('✅ Lista de órdenes actualizada:', data.orders.length, 'órdenes');
       } else {
         setError(data.error || 'Error cargando pedidos');
       }
@@ -85,7 +91,13 @@ const OrdersManager = () => {
       setError('Error de conexión');
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
+  };
+
+  const handleRefresh = () => {
+    console.log('🔄 Refrescando lista de órdenes...');
+    fetchOrders(true);
   };
 
   const handleStatusUpdate = async () => {
@@ -188,6 +200,43 @@ const OrdersManager = () => {
     setNotes(order.notas || '');
     setTransferVerified(false); // Resetear checkbox
     setShowModal(true);
+  };
+
+  const handleDeleteOrder = async (order) => {
+    const confirmDelete = confirm(
+      `¿Estás seguro de que quieres ELIMINAR PERMANENTEMENTE el pedido #${order.codigo_orden}?\n\n` +
+      '⚠️ Esta acción no se puede deshacer.\n' +
+      '📦 El stock será regresado automáticamente al inventario.'
+    );
+    
+    if (!confirmDelete) {
+      return;
+    }
+
+    try {
+      setUpdating(true);
+      
+      const response = await fetch(`/api/admin/orders/${order.id}`, {
+        method: 'DELETE'
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Remover la orden de la lista
+        setOrders(orders.filter(o => o.id !== order.id));
+        setTotalOrders(prev => prev - 1);
+        
+        alert(`✅ Orden ${order.codigo_orden} eliminada exitosamente`);
+      } else {
+        alert(data.error || 'Error eliminando pedido');
+      }
+    } catch (error) {
+      console.error('Error deleting order:', error);
+      alert('Error de conexión');
+    } finally {
+      setUpdating(false);
+    }
   };
 
   const getStatusColor = (status) => {
@@ -311,6 +360,15 @@ const OrdersManager = () => {
             <option value="contra_entrega">Contra entrega</option>
             <option value="transferencia">Transferencia</option>
           </select>
+          
+          <button 
+            onClick={handleRefresh}
+            disabled={refreshing || loading}
+            className="refresh-btn"
+            title="Refrescar lista de órdenes"
+          >
+            {refreshing ? '🔄' : '🔄'} {refreshing ? 'Actualizando...' : 'Refrescar'}
+          </button>
         </div>
       </div>
 
@@ -421,6 +479,13 @@ const OrdersManager = () => {
                   className="action-btn edit-btn"
                 >
                   ✏️ Editar Estado
+                </button>
+                <button 
+                  onClick={() => handleDeleteOrder(order)}
+                  className="action-btn delete-btn"
+                  disabled={updating}
+                >
+                  🗑️ Eliminar
                 </button>
               </div>
             </div>

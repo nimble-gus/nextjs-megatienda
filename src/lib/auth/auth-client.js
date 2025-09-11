@@ -14,13 +14,11 @@ export class AuthClient {
    */
   async login(email, password) {
     try {
-      console.log('🔐 [AuthClient] Iniciando login...');
       
       // Generar información del dispositivo
       const deviceId = generateDeviceId();
       const deviceInfo = getDeviceInfo();
       
-      console.log('📱 [AuthClient] Device ID generado:', deviceId);
       
       const response = await fetch(`${this.baseUrl}/login`, {
         method: 'POST',
@@ -39,7 +37,6 @@ export class AuthClient {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        console.log('✅ [AuthClient] Login exitoso para usuario:', data.user.nombre);
         return {
           success: true,
           user: data.user,
@@ -67,7 +64,6 @@ export class AuthClient {
    */
   async logout() {
     try {
-      console.log('🚪 [AuthClient] Iniciando logout...');
       
       const response = await fetch(`${this.baseUrl}/logout`, {
         method: 'POST',
@@ -75,7 +71,6 @@ export class AuthClient {
       });
 
       if (response.ok) {
-        console.log('✅ [AuthClient] Logout exitoso');
         return { success: true };
       } else {
         console.warn('⚠️ [AuthClient] Logout falló en el servidor');
@@ -95,7 +90,6 @@ export class AuthClient {
    */
   async register(userData) {
     try {
-      console.log('📝 [AuthClient] Iniciando registro...');
       
       const response = await fetch(`${this.baseUrl}/register`, {
         method: 'POST',
@@ -109,7 +103,6 @@ export class AuthClient {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        console.log('✅ [AuthClient] Registro exitoso para usuario:', data.user.nombre);
         return {
           success: true,
           user: data.user,
@@ -136,7 +129,6 @@ export class AuthClient {
    */
   async checkStatus() {
     try {
-      console.log('🔍 [AuthClient] Verificando estado de autenticación...');
       
       const response = await fetch(`${this.baseUrl}/status`, {
         credentials: 'include'
@@ -144,7 +136,6 @@ export class AuthClient {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ [AuthClient] Estado verificado:', data.isAuthenticated ? 'Autenticado' : 'No autenticado');
         return data;
       } else {
         console.warn('⚠️ [AuthClient] Error verificando estado:', response.status);
@@ -169,7 +160,6 @@ export class AuthClient {
    */
   async refreshToken() {
     try {
-      console.log('🔄 [AuthClient] Refrescando token...');
       
       const response = await fetch(`${this.baseUrl}/refresh`, {
         method: 'POST',
@@ -177,7 +167,6 @@ export class AuthClient {
       });
 
       if (response.ok) {
-        console.log('✅ [AuthClient] Token refrescado exitosamente');
         return { success: true };
       } else {
         console.warn('⚠️ [AuthClient] Refresh falló:', response.status);
@@ -197,7 +186,6 @@ export class AuthClient {
    */
   async validateCredentials(email, password) {
     try {
-      console.log('🔍 [AuthClient] Validando credenciales...');
       
       // Simular validación sin hacer login real
       const response = await fetch(`${this.baseUrl}/validate`, {
@@ -263,6 +251,5 @@ export class AuthClient {
    * Limpiar recursos al destruir
    */
   destroy() {
-    console.log('🗑️ [AuthClient] Recursos limpiados');
   }
 }

@@ -55,10 +55,6 @@ function CheckoutPageContent() {
   const [processingStatus, setProcessingStatus] = useState('');
   const [showWhatsAppCheckout, setShowWhatsAppCheckout] = useState(false);
 
-  // Debug: verificar cuando cambia el estado
-  useEffect(() => {
-    console.log('showWhatsAppCheckout cambió a:', showWhatsAppCheckout);
-  }, [showWhatsAppCheckout]);
 
   // Cargar productos al montar el componente
   useEffect(() => {
@@ -285,6 +281,7 @@ function CheckoutPageContent() {
         telefono_cliente: formData.phone,
         direccion_cliente: `${formData.streetAddress}${formData.apartment ? `, ${formData.apartment}` : ''}`,
         municipio_cliente: formData.city,
+        departamento_cliente: formData.state,
         codigo_postal_cliente: formData.postcode,
         nit_cliente: formData.nit,
         nombre_quien_recibe: formData.nombreQuienRecibe,
@@ -449,7 +446,8 @@ function CheckoutPageContent() {
                 metodoPago: selectedPaymentMethod,
                 notas: formData.orderNotes,
                 nit_cliente: formData.nit,
-                municipio_cliente: formData.state,
+                municipio_cliente: formData.city,
+                departamento_cliente: formData.state,
                 codigo_postal_cliente: formData.postcode,
                 nombre_quien_recibe: formData.nombreQuienRecibe,
                 usuario_id: null

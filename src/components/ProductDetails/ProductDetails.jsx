@@ -70,7 +70,6 @@ const ProductDetails = ({ product }) => {
 
     // Timeout de seguridad para evitar loader infinito
     const safetyTimeout = setTimeout(() => {
-      console.warn('Timeout de seguridad: ocultando loader');
       setIsAddingToCart(false);
     }, 10000); // 10 segundos máximo
 
@@ -97,7 +96,7 @@ const ProductDetails = ({ product }) => {
       }).then((result) => {
         if (result.dismiss === Swal.DismissReason.cancel) {
           // Redirigir al carrito (cuando esté implementado)
-          console.log('Redirigir al carrito');
+          // TODO: Implementar redirección al carrito
         }
       });
       

@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { executeQuery } from '@/lib/mysql-direct';
+import { notifyOrderProcessed } from '../../notifications/route';
+import { CacheManager } from '@/lib/cache-manager';
 
 export async function PUT(request, { params }) {
   try {
@@ -180,6 +182,32 @@ export async function PUT(request, { params }) {
     const updatedOrderResult = await executeQuery(updatedOrderQuery, [id]);
     const updatedOrder = updatedOrderResult[0];
 
+    // Enviar notificación en tiempo real si se cambió el estado
+    if (estado) {
+      try {
+        notifyOrderProcessed({
+          id: updatedOrder.id,
+          codigo_orden: updatedOrder.codigo_orden,
+          estado: updatedOrder.estado
+        });
+        console.log('📢 Notificación de orden procesada enviada');
+      } catch (notificationError) {
+        console.error('⚠️ Error enviando notificación de orden procesada:', notificationError);
+        // No fallar la actualización por error de notificación
+      }
+      
+      // Limpiar caché relacionado con órdenes cuando se actualiza el estado
+      try {
+        await CacheManager.invalidatePattern('megatienda:orders:*');
+        await CacheManager.invalidatePattern('megatienda:sales:*');
+        await CacheManager.invalidatePattern('megatienda:kpis:*');
+        console.log('✅ Caché de órdenes limpiado después de actualización');
+      } catch (cacheError) {
+        console.error('⚠️ Error limpiando caché:', cacheError);
+        // No fallar la actualización por error de caché
+      }
+    }
+
     return NextResponse.json({
       success: true,
       message: isBeingCancelled 
@@ -281,6 +309,116 @@ export async function GET(request, { params }) {
     console.error('❌ Error obteniendo pedido:', error);
     return NextResponse.json(
       { error: 'Error interno del servidor' },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE - Eliminar una orden completamente
+export async function DELETE(request, { params }) {
+  try {
+    const { id } = await params;
+    
+    console.log(`🗑️ Eliminando orden ID: ${id}`);
+    
+    // Verificar que la orden existe
+    const orderExistsQuery = `SELECT id, codigo_orden, estado FROM ordenes WHERE id = ?`;
+    const orderExists = await executeQuery(orderExistsQuery, [id]);
+    
+    if (!orderExists || orderExists.length === 0) {
+      return NextResponse.json(
+        { error: 'Orden no encontrada' },
+        { status: 404 }
+      );
+    }
+    
+    const order = orderExists[0];
+    console.log(`📋 Orden a eliminar: ${order.codigo_orden} (Estado: ${order.estado})`);
+    
+    // Si la orden no está cancelada, regresar el stock antes de eliminar
+    if (order.estado !== 'cancelado') {
+      console.log('📦 Regresando stock antes de eliminar...');
+      
+      // Obtener detalles de la orden
+      const orderDetailsQuery = `
+        SELECT 
+          od.cantidad,
+          od.producto_id,
+          od.color_id,
+          p.nombre as producto_nombre,
+          c.nombre as color_nombre
+        FROM orden_detalle od
+        LEFT JOIN productos p ON od.producto_id = p.id
+        LEFT JOIN colores c ON od.color_id = c.id
+        WHERE od.orden_id = ?
+      `;
+      
+      const orderDetails = await executeQuery(orderDetailsQuery, [id]);
+      
+      // Regresar stock para cada item
+      for (const item of orderDetails) {
+        const stockQuery = `
+          SELECT id, cantidad
+          FROM stock_detalle
+          WHERE producto_id = ? AND color_id = ?
+        `;
+        
+        const stockResult = await executeQuery(stockQuery, [item.producto_id, item.color_id]);
+        
+        if (stockResult && stockResult.length > 0) {
+          const currentStock = stockResult[0];
+          const newQuantity = currentStock.cantidad + item.cantidad;
+          
+          const updateStockQuery = `
+            UPDATE stock_detalle
+            SET cantidad = ?
+            WHERE id = ?
+          `;
+          
+          await executeQuery(updateStockQuery, [newQuantity, currentStock.id]);
+          console.log(`✅ Stock regresado: ${item.producto_nombre} (${item.color_nombre}): +${item.cantidad}`);
+        }
+      }
+    }
+    
+    // Eliminar registros relacionados en el orden correcto
+    console.log('🗑️ Eliminando registros relacionados...');
+    
+    // 1. Eliminar detalles de la orden
+    const deleteOrderDetailsQuery = `DELETE FROM orden_detalle WHERE orden_id = ?`;
+    await executeQuery(deleteOrderDetailsQuery, [id]);
+    console.log('✅ Detalles de orden eliminados');
+    
+    // 2. Eliminar la orden principal
+    const deleteOrderQuery = `DELETE FROM ordenes WHERE id = ?`;
+    await executeQuery(deleteOrderQuery, [id]);
+    console.log('✅ Orden eliminada');
+    
+    // 3. Limpiar caché relacionado con órdenes
+    try {
+      await CacheManager.invalidatePattern('megatienda:orders:*');
+      await CacheManager.invalidatePattern('megatienda:sales:*');
+      await CacheManager.invalidatePattern('megatienda:kpis:*');
+      console.log('✅ Caché de órdenes limpiado');
+    } catch (cacheError) {
+      console.error('⚠️ Error limpiando caché:', cacheError);
+      // No fallar la eliminación por error de caché
+    }
+    
+    return NextResponse.json({
+      success: true,
+      message: `Orden ${order.codigo_orden} eliminada exitosamente`,
+      deletedOrder: {
+        id: order.id,
+        codigo_orden: order.codigo_orden,
+        estado: order.estado
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Error eliminando orden:', error);
+    return NextResponse.json(
+      { error: 'Error interno del servidor', details: error.message },
       { status: 500 }
     );
   }

@@ -15,6 +15,7 @@ const Footer = () => {
                 width={120} 
                 height={40}
                 className="logo-image"
+                style={{ width: 'auto', height: 'auto' }}
                 priority
               />
             </div>

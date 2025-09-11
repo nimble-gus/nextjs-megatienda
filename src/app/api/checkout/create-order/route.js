@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { notifyNewOrder } from '../../admin/notifications/route';
 import mysql from 'mysql2/promise';
 
 
@@ -192,6 +193,21 @@ export async function POST(request) {
       await connection.commit();
 
       console.log('✅ Orden completada exitosamente');
+
+      // Enviar notificación en tiempo real a los admins
+      try {
+        notifyNewOrder({
+          id: ordenId,
+          codigo_orden: codigoOrden,
+          nombre_cliente: cliente.nombre,
+          total: total,
+          metodo_pago: metodoPago
+        });
+        console.log('📢 Notificación enviada a admins');
+      } catch (notificationError) {
+        console.error('⚠️ Error enviando notificación:', notificationError);
+        // No fallar la orden por error de notificación
+      }
 
       return NextResponse.json({
         success: true,

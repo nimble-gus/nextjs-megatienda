@@ -15,7 +15,6 @@ export class SessionManager {
    */
   async startSession(userData, tokens, deviceId) {
     try {
-      console.log('🚀 [SessionManager] Iniciando nueva sesión...');
       
       // Guardar datos en localStorage
       localStorage.setItem('clientUser', JSON.stringify(userData));
@@ -28,7 +27,6 @@ export class SessionManager {
       // Configurar verificación de sesión
       this.setupSessionCheck();
       
-      console.log('✅ [SessionManager] Sesión iniciada correctamente');
       return true;
     } catch (error) {
       console.error('❌ [SessionManager] Error iniciando sesión:', error);
@@ -41,7 +39,6 @@ export class SessionManager {
    */
   async endSession() {
     try {
-      console.log('🔄 [SessionManager] Cerrando sesión...');
       
       // Limpiar timers
       this.clearTimers();
@@ -54,7 +51,6 @@ export class SessionManager {
       // Limpiar cookies del lado del cliente
       this.clearClientCookies();
       
-      console.log('✅ [SessionManager] Sesión cerrada correctamente');
       return true;
     } catch (error) {
       console.error('❌ [SessionManager] Error cerrando sesión:', error);
@@ -77,7 +73,6 @@ export class SessionManager {
       }
     }, 14 * 60 * 1000);
 
-    console.log('🔄 [SessionManager] Refresh automático configurado');
   }
 
   /**
@@ -93,7 +88,6 @@ export class SessionManager {
       await this.checkSessionStatus();
     }, 5 * 60 * 1000);
 
-    console.log('🔍 [SessionManager] Verificación de sesión configurada');
   }
 
   /**
@@ -102,7 +96,6 @@ export class SessionManager {
   async performTokenRefresh() {
     try {
       this.isRefreshing = true;
-      console.log('🔄 [SessionManager] Iniciando refresh de token...');
 
       const response = await fetch('/api/auth/client/refresh', {
         method: 'POST',
@@ -110,7 +103,6 @@ export class SessionManager {
       });
 
       if (response.ok) {
-        console.log('✅ [SessionManager] Token refrescado correctamente');
         // El refresh endpoint ya actualiza las cookies
       } else {
         console.warn('⚠️ [SessionManager] Refresh falló, sesión expirada');
@@ -132,7 +124,6 @@ export class SessionManager {
    */
   async checkSessionStatus() {
     try {
-      console.log('🔍 [SessionManager] Verificando estado de sesión...');
 
       const response = await fetch('/api/auth/client/status', {
         credentials: 'include'
@@ -141,7 +132,6 @@ export class SessionManager {
       if (response.ok) {
         const data = await response.json();
         if (data.isAuthenticated) {
-          console.log('✅ [SessionManager] Sesión válida');
           return true;
         } else {
           console.warn('⚠️ [SessionManager] Sesión no válida');
@@ -171,7 +161,6 @@ export class SessionManager {
       clearInterval(this.sessionCheckInterval);
       this.sessionCheckInterval = null;
     }
-    console.log('🧹 [SessionManager] Timers limpiados');
   }
 
   /**
@@ -181,7 +170,6 @@ export class SessionManager {
     document.cookie = 'clientAccessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
     document.cookie = 'clientRefreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
     document.cookie = 'clientDeviceId=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-    console.log('🍪 [SessionManager] Cookies del cliente limpiadas');
   }
 
   /**
@@ -222,6 +210,5 @@ export class SessionManager {
    */
   destroy() {
     this.clearTimers();
-    console.log('🗑️ [SessionManager] Recursos limpiados');
   }
 }

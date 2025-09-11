@@ -110,6 +110,7 @@ ${itemsList}
         telefono_cliente: customerData.telefono,
         direccion_cliente: customerData.direccion,
         municipio_cliente: orderData?.municipio_cliente || '',
+        departamento_cliente: orderData?.departamento_cliente || '',
         codigo_postal_cliente: orderData?.codigo_postal_cliente || '',
         nit_cliente: orderData?.nit_cliente || '',
         nombre_quien_recibe: orderData?.nombre_quien_recibe || customerData.nombre,

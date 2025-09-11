@@ -17,7 +17,6 @@ export class TokenManager {
     this.refreshToken = refreshToken;
     this.deviceId = deviceId;
     
-    console.log('🔑 [TokenManager] Tokens establecidos');
   }
 
   /**
@@ -28,7 +27,6 @@ export class TokenManager {
     this.refreshToken = null;
     this.deviceId = null;
     
-    console.log('🧹 [TokenManager] Tokens limpiados');
   }
 
   /**
@@ -189,6 +187,5 @@ export class TokenManager {
    */
   destroy() {
     this.clearTokens();
-    console.log('🗑️ [TokenManager] Recursos limpiados');
   }
 }

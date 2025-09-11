@@ -29,26 +29,19 @@ export const useAuth = () => {
       setIsLoading(true);
       setError(null);
 
-      console.log('🚀 [useAuth] Inicializando autenticación...');
-
       // Verificar si hay sesión local
       if (sessionManager.hasActiveSession()) {
         const session = sessionManager.getCurrentSession();
-        console.log('📱 [useAuth] Sesión local encontrada:', session.user.nombre);
         
         setUser(session.user);
         setIsAuthenticated(true);
         
         // Verificar estado en el servidor
         const serverStatus = await authClient.checkStatus();
-        if (serverStatus.isAuthenticated) {
-          console.log('✅ [useAuth] Sesión confirmada en el servidor');
-        } else {
-          console.warn('⚠️ [useAuth] Sesión local no válida en el servidor');
+        if (!serverStatus.isAuthenticated) {
           await handleLogout();
         }
       } else {
-        console.log('❌ [useAuth] No hay sesión local activa');
         setIsAuthenticated(false);
         setUser(null);
       }
