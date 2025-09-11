@@ -79,8 +79,8 @@ export default function FeaturedProducts() {
                   <div 
                     className="featured-img-placeholder"
                     style={{
-                      width: '300px',
-                      height: '300px',
+                      width: '100%',
+                      height: '100%',
                       backgroundColor: '#f8f9fa',
                       display: !prod.thumbnailImage && !prod.image ? 'flex' : 'none',
                       alignItems: 'center',
@@ -89,7 +89,7 @@ export default function FeaturedProducts() {
                       borderRadius: '8px'
                     }}
                   >
-                    <span style={{ color: '#495057', fontSize: '14px', textAlign: 'center' }}>
+                    <span style={{ color: '#495057', fontSize: '14px', textAlign: 'center', padding: '10px' }}>
                       {prod.name}
                     </span>
                   </div>

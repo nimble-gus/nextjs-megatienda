@@ -158,15 +158,23 @@
 
 @media (max-width: 768px) {
   .hero-container {
-    width: calc(100% - 40px);
-    height: 350px;
-    border-radius: 30px;
+    width: calc(100% - 30px);
+    /* Mantener proporción 2.4:1 como desktop pero en miniatura */
+    height: calc((100vw - 30px) / 2.4); /* Altura basada en ancho para mantener proporción */
+    max-height: 280px; /* Límite máximo para no ser demasiado alto */
+    min-height: 140px; /* Límite mínimo para no ser demasiado pequeño */
+    border-radius: 20px;
   }
   
   .image-wrapper,
   .hero-image,
   .image-wrapper::before {
-    border-radius: 30px;
+    border-radius: 20px;
+  }
+  
+  .hero-image {
+    object-fit: cover; /* Mantener cover para llenar el espacio */
+    object-position: center center;
   }
   
   .hero-content {
@@ -199,15 +207,23 @@
 
 @media (max-width: 480px) {
   .hero-container {
-    width: calc(100% - 30px);
-    height: 300px;
-    border-radius: 25px;
+    width: calc(100% - 20px);
+    /* Mantener proporción 2.4:1 como desktop pero en miniatura */
+    height: calc((100vw - 20px) / 2.4); /* Altura basada en ancho para mantener proporción */
+    max-height: 200px; /* Límite máximo para móviles pequeños */
+    min-height: 120px; /* Límite mínimo para móviles pequeños */
+    border-radius: 16px;
   }
   
   .image-wrapper,
   .hero-image,
   .image-wrapper::before {
-    border-radius: 25px;
+    border-radius: 16px;
+  }
+  
+  .hero-image {
+    object-fit: cover; /* Mantener cover para llenar el espacio */
+    object-position: center center;
   }
   
   .hero-content {
@@ -236,6 +252,82 @@
     border-radius: 18px;
     top: 12px;
     right: 12px;
+  }
+}
+
+/* Pantallas muy pequeñas (iPhone SE, etc.) */
+@media (max-width: 375px) {
+  .hero-container {
+    width: calc(100% - 16px);
+    /* Mantener proporción 2.4:1 como desktop pero en miniatura */
+    height: calc((100vw - 16px) / 2.4); /* Altura basada en ancho para mantener proporción */
+    max-height: 160px; /* Límite máximo para pantallas muy pequeñas */
+    min-height: 100px; /* Límite mínimo para pantallas muy pequeñas */
+    border-radius: 14px;
+  }
+  
+  .image-wrapper,
+  .hero-image,
+  .image-wrapper::before {
+    border-radius: 14px;
+  }
+  
+  .hero-image {
+    object-fit: cover; /* Mantener cover para llenar el espacio */
+    object-position: center center;
+  }
+  
+  .hero-titulo {
+    font-size: 1.4rem;
+  }
+  
+  .hero-subtitulo {
+    font-size: 0.85rem;
+  }
+  
+  .hero-cta {
+    padding: 8px 20px;
+    font-size: 0.85rem;
+  }
+}
+
+/* Pantallas móviles en modo landscape (horizontal) */
+@media (max-width: 768px) and (orientation: landscape) {
+  .hero-container {
+    width: calc(100% - 20px);
+    /* En landscape, usar altura fija más pequeña */
+    height: 120px;
+    border-radius: 12px;
+  }
+  
+  .image-wrapper,
+  .hero-image,
+  .image-wrapper::before {
+    border-radius: 12px;
+  }
+  
+  .hero-image {
+    object-fit: cover;
+    object-position: center center;
+  }
+  
+  .hero-content {
+    padding: 10px;
+    border-radius: 8px;
+  }
+  
+  .hero-titulo {
+    font-size: 1.2rem;
+  }
+  
+  .hero-subtitulo {
+    font-size: 0.8rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .hero-cta {
+    padding: 6px 15px;
+    font-size: 0.8rem;
   }
 }
 
