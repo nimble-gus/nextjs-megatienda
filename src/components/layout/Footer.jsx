@@ -79,7 +79,7 @@ const Footer = () => {
           <h3 className="section-title">¡Estamos Para Servirte!</h3>
           <div className="contact-info">
             <p className="contact-text">¿Tienes dudas? ¡Llámanos!</p>
-            <a href="Tel: 45053015" className="phone-number">4505-3015</a>
+            <a href="Tel: 5484-4058" className="phone-number">5484-4058</a>
             
             <div className="contact-item">
               <svg viewBox="0 0 24 24" fill="currentColor" className="contact-icon">
