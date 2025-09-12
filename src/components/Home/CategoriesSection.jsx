@@ -89,7 +89,19 @@ const CategoriesSection = ({
   };
 
   // Usar categorías de props si están disponibles, sino usar las del hook
-  const displayCategories = categories.length > 0 ? categories : categoriesData;
+  // Limitar a 6 categorías para el diseño visual en home
+  const allCategories = categories.length > 0 ? categories : categoriesData;
+  const displayCategories = allCategories.slice(0, 6);
+
+  // Debug: Log para identificar diferencias en el renderizado
+  console.log('🔍 CategoriesSection Debug:', {
+    loading,
+    categoriesFromProps: categories.length,
+    categoriesFromHook: categoriesData.length,
+    allCategories: allCategories.length,
+    displayCategories: displayCategories.length,
+    categoriesData: categoriesData
+  });
 
   if (loading) {
     return (
