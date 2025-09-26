@@ -75,14 +75,14 @@ export default function Home() {
         <HeroSection />
       </section>
 
-      <section className="promo-section">
-          <PromoBanners />
-        </section>
-
       {/* Contenido adicional */}
       <main className="main-content">
         <section className="categories-section">
           <CategoriesSection />
+        </section>
+
+        <section className="promo-section">
+          <PromoBanners />
         </section>
 
         <section className="featured-products-section">

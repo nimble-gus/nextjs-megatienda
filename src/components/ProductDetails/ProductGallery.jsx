@@ -8,40 +8,44 @@ import '@/styles/ProductGallery.css';
 const ProductGallery = ({ images, selectedImage, onImageSelect }) => {
   const [showZoomModal, setShowZoomModal] = useState(false);
   return (
-    <div className="product-gallery">
-      {/* Imagen principal */}
-      <div 
-        className="main-image-container"
-        onClick={() => setShowZoomModal(true)}
-      >
-        {images && images.length > 0 ? (
-          <>
-            <Image 
-              src={images[selectedImage]} 
-              alt="Producto principal"
-              width={500}
-              height={500}
-              className="main-image"
-              priority
-            />
-            <div className="zoom-indicator">
-              <ZoomIn size={20} />
+    <div className="product-gallery-modern">
+      {/* Imagen principal moderna */}
+      <div className="gallery-main-modern">
+        <div 
+          className="main-image-modern"
+          onClick={() => setShowZoomModal(true)}
+        >
+          {images && images.length > 0 ? (
+            <>
+              <Image 
+                src={images[selectedImage]} 
+                alt="Producto principal"
+                width={600}
+                height={600}
+                className="main-image-content"
+                priority
+              />
+              <div className="zoom-overlay-modern">
+                <ZoomIn size={24} />
+                <span>Haz clic para ampliar</span>
+              </div>
+            </>
+          ) : (
+            <div className="image-placeholder-modern">
+              <div className="placeholder-icon">📷</div>
+              <span>Sin imagen disponible</span>
             </div>
-          </>
-        ) : (
-          <div className="main-image-placeholder">
-            <span>Sin imagen disponible</span>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
-      {/* Thumbnails */}
-      <div className="thumbnails-container">
-        {images && images.length > 0 ? (
-          images.map((image, index) => (
-            <div 
+      {/* Thumbnails modernos */}
+      {images && images.length > 1 && (
+        <div className="gallery-thumbnails-modern">
+          {images.map((image, index) => (
+            <button
               key={index}
-              className={`thumbnail ${index === selectedImage ? 'active' : ''}`}
+              className={`thumbnail-modern ${index === selectedImage ? 'active' : ''}`}
               onClick={() => onImageSelect(index)}
             >
               <Image 
@@ -49,45 +53,25 @@ const ProductGallery = ({ images, selectedImage, onImageSelect }) => {
                 alt={`Vista ${index + 1}`}
                 width={80}
                 height={80}
-                className="thumbnail-image"
+                className="thumbnail-image-modern"
               />
-            </div>
-          ))
-        ) : (
-          <div className="thumbnail-placeholder">
-            <span>Sin imágenes</span>
-          </div>
-        )}
-      </div>
+            </button>
+          ))}
+        </div>
+      )}
 
-      {/* Controles de navegación */}
-      <div className="gallery-controls">
-        <button 
-          className="nav-btn prev"
-          onClick={() => onImageSelect(Math.max(0, selectedImage - 1))}
-          disabled={selectedImage === 0}
-        >
-          ‹
-        </button>
-        <button 
-          className="nav-btn next"
-          onClick={() => onImageSelect(Math.min(images.length - 1, selectedImage + 1))}
-          disabled={selectedImage === images.length - 1}
-        >
-          ›
-        </button>
-      </div>
-
-      {/* Indicadores */}
-      <div className="image-indicators">
-        {images.map((_, index) => (
-          <button
-            key={index}
-            className={`indicator ${index === selectedImage ? 'active' : ''}`}
-            onClick={() => onImageSelect(index)}
-          />
-        ))}
-      </div>
+      {/* Indicadores minimalistas */}
+      {images && images.length > 1 && (
+        <div className="gallery-indicators-modern">
+          {images.map((_, index) => (
+            <button
+              key={index}
+              className={`indicator-modern ${index === selectedImage ? 'active' : ''}`}
+              onClick={() => onImageSelect(index)}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Modal de zoom */}
       {showZoomModal && images && images.length > 0 && (

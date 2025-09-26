@@ -1,4 +1,5 @@
 /* ProductGallery.css - Estilos para la galería de imágenes */
+@import './ProductGalleryModern.css';
 
 .product-gallery {
   position: relative;

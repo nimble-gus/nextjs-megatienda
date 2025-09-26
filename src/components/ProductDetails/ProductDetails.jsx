@@ -137,62 +137,67 @@ const ProductDetails = ({ product }) => {
   };
 
   return (
-    <div className="product-details-container">
-      {/* Breadcrumb */}
-      <div className="breadcrumb">
-        <span>Inicio</span>
-        <span>›</span>
-        <span>{product.category}</span>
-        <span>›</span>
-        <span>{product.name}</span>
-      </div>
+    <div className="product-details-modern">
+      {/* Hero Section */}
+      <div className="product-hero">
+        <div className="product-hero-content">
+          {/* Breadcrumb minimalista */}
+          <nav className="breadcrumb-minimal">
+            <a href="/" className="breadcrumb-link">Inicio</a>
+            <span className="breadcrumb-separator">/</span>
+            <a href={`/catalog?category=${product.categoryId}`} className="breadcrumb-link">{product.category}</a>
+            <span className="breadcrumb-separator">/</span>
+            <span className="breadcrumb-current">{product.name}</span>
+          </nav>
 
-      {/* Contenido principal */}
-      <div className="product-details-content">
-        {/* Columna izquierda - Galería de imágenes */}
-        <div className="product-gallery-section">
-          <ProductGallery 
-            images={product.images}
-            selectedImage={selectedImage}
-            onImageSelect={setSelectedImage}
-          />
-        </div>
-
-        {/* Columna derecha - Información del producto */}
-        <div className="product-info-section">
-          {selectedColor ? (
-            <ProductInfo 
-              product={product}
-              selectedColor={selectedColor}
-              onColorSelect={setSelectedColor}
-              quantity={quantity}
-              onQuantityChange={handleQuantityChange}
-              onBuyNow={handleBuyNow}
-              onAddToCart={handleAddToCart}
-              isAuthenticated={isAuthenticated}
-              isAddingToCart={isAddingToCart}
-              formatPrice={formatPrice}
-              renderStars={renderStars}
-            />
-          ) : (
-            <div className="no-colors-available">
-              <p>No hay colores disponibles para este producto</p>
+          {/* Layout principal */}
+          <div className="product-layout">
+            {/* Galería de imágenes */}
+            <div className="product-gallery-modern">
+              <ProductGallery 
+                images={product.images}
+                selectedImage={selectedImage}
+                onImageSelect={setSelectedImage}
+              />
             </div>
-          )}
+
+            {/* Información del producto */}
+            <div className="product-info-modern">
+              {selectedColor ? (
+                <ProductInfo 
+                  product={product}
+                  selectedColor={selectedColor}
+                  onColorSelect={setSelectedColor}
+                  quantity={quantity}
+                  onQuantityChange={handleQuantityChange}
+                  onBuyNow={handleBuyNow}
+                  onAddToCart={handleAddToCart}
+                  isAuthenticated={isAuthenticated}
+                  isAddingToCart={isAddingToCart}
+                  formatPrice={formatPrice}
+                  renderStars={renderStars}
+                />
+              ) : (
+                <div className="no-colors-available">
+                  <p>No hay colores disponibles para este producto</p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Descripción del producto */}
-      <div className="product-description-section">
+      {/* Descripción expandida */}
+      <div className="product-description-modern">
         <ProductDescription product={product} />
       </div>
 
       {/* Productos relacionados */}
-      <div className="related-products-section">
+      <div className="related-products-modern">
         <RelatedProducts products={product.relatedProducts} formatPrice={formatPrice} />
       </div>
 
-      {/* Modal de loading para agregar al carrito */}
+      {/* Modal de loading */}
       {isAddingToCart && (
         <div className="loading-modal-overlay">
           <div className="loading-modal-content">

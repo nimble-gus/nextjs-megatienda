@@ -25,9 +25,10 @@ const RelatedProducts = ({ products, formatPrice }) => {
                 <Image 
                   src={product.thumbnailImage || product.mainImage} 
                   alt={product.name}
-                  width={200}
-                  height={200}
+                  width={300}
+                  height={300}
                   className="related-image"
+                  style={{ objectFit: 'cover' }}
                 />
               ) : (
                 <div className="image-placeholder">

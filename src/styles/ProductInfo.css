@@ -1,4 +1,5 @@
 /* ProductInfo.css - Estilos para la información del producto */
+@import './ProductInfoModern.css';
 
 .product-info {
   padding: 30px;

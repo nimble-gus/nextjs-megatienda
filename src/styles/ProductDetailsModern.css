@@ -1,0 +1,229 @@
+/* ProductDetails Modern - Diseño Minimalista y Cool */
+
+/* Variables CSS para el diseño moderno */
+:root {
+  --product-bg: #ffffff;
+  --product-surface: #fafbfc;
+  --product-border: #e5e7eb;
+  --product-text-primary: #111827;
+  --product-text-secondary: #6b7280;
+  --product-text-muted: #9ca3af;
+  --product-accent: #3b82f6;
+  --product-accent-hover: #2563eb;
+  --product-success: #10b981;
+  --product-warning: #f59e0b;
+  --product-error: #ef4444;
+  --product-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --product-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --product-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --product-radius: 12px;
+  --product-radius-lg: 16px;
+  --product-spacing: 1.5rem;
+  --product-spacing-lg: 2rem;
+  --product-spacing-xl: 3rem;
+}
+
+/* Contenedor principal */
+.product-details-modern {
+  background: var(--product-bg);
+  min-height: 100vh;
+}
+
+/* Hero Section */
+.product-hero {
+  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+  border-bottom: 1px solid var(--product-border);
+  padding: var(--product-spacing-lg) 0;
+}
+
+.product-hero-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 var(--product-spacing);
+}
+
+/* Breadcrumb minimalista */
+.breadcrumb-minimal {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: var(--product-spacing-lg);
+  font-size: 0.875rem;
+  color: var(--product-text-secondary);
+}
+
+.breadcrumb-link {
+  color: var(--product-text-secondary);
+  text-decoration: none;
+  transition: color 0.2s ease;
+  font-weight: 500;
+}
+
+.breadcrumb-link:hover {
+  color: var(--product-accent);
+}
+
+.breadcrumb-separator {
+  color: var(--product-text-muted);
+  font-weight: 300;
+}
+
+.breadcrumb-current {
+  color: var(--product-text-primary);
+  font-weight: 600;
+}
+
+/* Layout principal */
+.product-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--product-spacing-xl);
+  align-items: start;
+}
+
+/* Galería moderna */
+.product-gallery-modern {
+  position: sticky;
+  top: calc(80px + var(--product-spacing-lg));
+  height: fit-content;
+}
+
+/* Información del producto moderna */
+.product-info-modern {
+  background: var(--product-bg);
+  border-radius: var(--product-radius-lg);
+  padding: var(--product-spacing-lg);
+  box-shadow: var(--product-shadow-sm);
+  border: 1px solid var(--product-border);
+}
+
+/* Descripción moderna */
+.product-description-modern {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: var(--product-spacing-xl) var(--product-spacing);
+  background: var(--product-surface);
+}
+
+/* Productos relacionados modernos */
+.related-products-modern {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 var(--product-spacing) var(--product-spacing-xl);
+  background: var(--product-bg);
+}
+
+/* Estados de error */
+.no-colors-available {
+  text-align: center;
+  padding: var(--product-spacing-lg);
+  color: var(--product-text-secondary);
+  background: var(--product-surface);
+  border-radius: var(--product-radius);
+  border: 1px solid var(--product-border);
+}
+
+/* Modal de loading */
+.loading-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.loading-modal-content {
+  background: var(--product-bg);
+  padding: var(--product-spacing-xl);
+  border-radius: var(--product-radius-lg);
+  box-shadow: var(--product-shadow-lg);
+  text-align: center;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .product-layout {
+    gap: var(--product-spacing-lg);
+  }
+  
+  .product-gallery-modern {
+    position: static;
+  }
+}
+
+@media (max-width: 768px) {
+  .product-hero {
+    padding: var(--product-spacing) 0;
+  }
+  
+  .product-hero-content {
+    padding: 0 var(--product-spacing);
+  }
+  
+  .product-layout {
+    grid-template-columns: 1fr;
+    gap: var(--product-spacing);
+  }
+  
+  .product-info-modern {
+    padding: var(--product-spacing);
+  }
+  
+  .product-description-modern,
+  .related-products-modern {
+    padding: var(--product-spacing);
+  }
+}
+
+@media (max-width: 480px) {
+  .product-hero-content {
+    padding: 0 1rem;
+  }
+  
+  .breadcrumb-minimal {
+    font-size: 0.8rem;
+    margin-bottom: var(--product-spacing);
+  }
+  
+  .product-info-modern {
+    padding: 1rem;
+    border-radius: var(--product-radius);
+  }
+  
+  .product-description-modern,
+  .related-products-modern {
+    padding: 1rem;
+  }
+}
+
+/* Animaciones sutiles */
+.product-details-modern * {
+  transition: all 0.2s ease;
+}
+
+/* Efectos de hover mejorados */
+.breadcrumb-link:hover {
+  transform: translateY(-1px);
+}
+
+/* Scroll suave */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Mejoras de accesibilidad */
+@media (prefers-reduced-motion: reduce) {
+  .product-details-modern * {
+    transition: none;
+  }
+  
+  html {
+    scroll-behavior: auto;
+  }
+}

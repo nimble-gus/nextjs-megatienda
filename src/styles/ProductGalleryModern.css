@@ -1,0 +1,322 @@
+/* ProductGallery Modern - Diseño Minimalista */
+
+/* Galería principal */
+.product-gallery-modern {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Imagen principal */
+.gallery-main-modern {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: var(--product-radius-lg);
+  overflow: hidden;
+  background: var(--product-surface);
+  border: 1px solid var(--product-border);
+}
+
+.main-image-modern {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  cursor: zoom-in;
+  transition: transform 0.3s ease;
+}
+
+.main-image-modern:hover {
+  transform: scale(1.02);
+}
+
+.main-image-content {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: var(--product-radius-lg);
+}
+
+.zoom-overlay-modern {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: white;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: var(--product-radius-lg);
+}
+
+.main-image-modern:hover .zoom-overlay-modern {
+  opacity: 1;
+}
+
+.zoom-overlay-modern span {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* Placeholder para imagen */
+.image-placeholder-modern {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--product-text-muted);
+  background: var(--product-surface);
+}
+
+.placeholder-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.image-placeholder-modern span {
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+/* Thumbnails modernos */
+.gallery-thumbnails-modern {
+  display: flex;
+  gap: 0.75rem;
+  overflow-x: auto;
+  padding: 0.5rem 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--product-border) transparent;
+}
+
+.gallery-thumbnails-modern::-webkit-scrollbar {
+  height: 4px;
+}
+
+.gallery-thumbnails-modern::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.gallery-thumbnails-modern::-webkit-scrollbar-thumb {
+  background: var(--product-border);
+  border-radius: 2px;
+}
+
+.thumbnail-modern {
+  flex-shrink: 0;
+  width: 80px;
+  height: 80px;
+  border: 2px solid var(--product-border);
+  border-radius: var(--product-radius);
+  background: var(--product-bg);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  overflow: hidden;
+  position: relative;
+}
+
+.thumbnail-modern:hover {
+  border-color: var(--product-accent);
+  transform: scale(1.05);
+}
+
+.thumbnail-modern.active {
+  border-color: var(--product-accent);
+  border-width: 3px;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.thumbnail-image-modern {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: calc(var(--product-radius) - 2px);
+  transition: transform 0.2s ease;
+}
+
+.thumbnail-modern:hover .thumbnail-image-modern {
+  transform: scale(1.1);
+}
+
+/* Indicadores minimalistas */
+.gallery-indicators-modern {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+}
+
+.indicator-modern {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: none;
+  background: var(--product-border);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.indicator-modern:hover {
+  background: var(--product-text-muted);
+  transform: scale(1.2);
+}
+
+.indicator-modern.active {
+  background: var(--product-accent);
+  transform: scale(1.3);
+}
+
+/* Modal de zoom moderno */
+.image-zoom-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(8px);
+  animation: fadeIn 0.3s ease;
+}
+
+.zoom-modal-content {
+  position: relative;
+  max-width: 90vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.zoom-modal-close {
+  position: absolute;
+  top: -3rem;
+  right: 0;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+}
+
+.zoom-modal-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
+}
+
+.zoom-modal-image {
+  max-width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
+  border-radius: var(--product-radius);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.zoom-modal-info {
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .gallery-main-modern {
+    aspect-ratio: 4/3;
+  }
+  
+  .thumbnail-modern {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .gallery-thumbnails-modern {
+    gap: 0.5rem;
+  }
+  
+  .zoom-modal-content {
+    max-width: 95vw;
+    max-height: 95vh;
+  }
+  
+  .zoom-modal-image {
+    max-height: 60vh;
+  }
+}
+
+@media (max-width: 480px) {
+  .gallery-main-modern {
+    aspect-ratio: 1;
+  }
+  
+  .thumbnail-modern {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .gallery-thumbnails-modern {
+    gap: 0.25rem;
+  }
+  
+  .indicator-modern {
+    width: 6px;
+    height: 6px;
+  }
+  
+  .zoom-overlay-modern span {
+    font-size: 0.75rem;
+  }
+}
+
+/* Mejoras de accesibilidad */
+@media (prefers-reduced-motion: reduce) {
+  .main-image-modern,
+  .thumbnail-modern,
+  .indicator-modern,
+  .zoom-overlay-modern {
+    transition: none;
+  }
+  
+  .main-image-modern:hover {
+    transform: none;
+  }
+  
+  .thumbnail-modern:hover {
+    transform: none;
+  }
+  
+  .thumbnail-modern:hover .thumbnail-image-modern {
+    transform: none;
+  }
+}

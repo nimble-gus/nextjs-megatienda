@@ -167,7 +167,14 @@
   }
   
   .promo-large {
-    height: 300px;
+    height: 200px; /* Altura ajustada para mostrar solo el anuncio */
+  }
+  
+  /* En móviles, mostrar versión miniatura completa del banner */
+  .promo-large .promo-image {
+    object-fit: contain; /* Mostrar imagen completa en lugar de recortar */
+    background: #f8f9fa; /* Fondo para espacios vacíos */
+    height: 100%; /* Asegurar que la imagen ocupe toda la altura */
   }
   
   .promo-title {
@@ -195,7 +202,14 @@
   }
   
   .promo-large {
-    height: 400px;
+    height: 160px; /* Altura más compacta para móviles pequeños */
+  }
+  
+  /* En móviles pequeños, mantener versión miniatura completa */
+  .promo-large .promo-image {
+    object-fit: contain; /* Mostrar imagen completa en lugar de recortar */
+    background: #f8f9fa; /* Fondo para espacios vacíos */
+    height: 100%; /* Asegurar que la imagen ocupe toda la altura */
   }
   
   .promo-title {
