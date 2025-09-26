@@ -4,6 +4,27 @@
   right: 20px;
   z-index: 999;
   transition: transform 0.3s ease;
+  max-width: 50px;
+  max-height: 50px;
+}
+
+/* Asegurar que el botón se vea correctamente en móviles */
+@media (max-width: 768px) {
+  .whatsapp-float {
+    bottom: 15px;
+    right: 15px;
+    max-width: 45px;
+    max-height: 45px;
+  }
+}
+
+@media (max-width: 480px) {
+  .whatsapp-float {
+    bottom: 10px;
+    right: 10px;
+    max-width: 40px;
+    max-height: 40px;
+  }
 }
 
 .whatsapp-float:hover {

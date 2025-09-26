@@ -77,6 +77,26 @@ body {
   overflow-x: hidden;
   margin: 0;
   padding: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Asegurar que todos los elementos respeten el ancho del viewport */
+* {
+  box-sizing: border-box;
+}
+
+/* Prevenir overflow horizontal en móviles */
+@media (max-width: 768px) {
+  html, body {
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+  
+  * {
+    max-width: 100%;
+  }
 }
 
 body {

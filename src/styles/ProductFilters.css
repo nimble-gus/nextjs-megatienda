@@ -634,9 +634,11 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 4px 16px rgba(30, 58, 138, 0.3);
   position: relative;
-  margin-bottom: 16px;
-  width: 100%;
+  margin: 16px;
+  width: calc(100% - 32px);
+  max-width: 100%;
   justify-content: center;
+  box-sizing: border-box;
 }
 
 .mobile-filter-toggle:hover {

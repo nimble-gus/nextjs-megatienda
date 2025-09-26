@@ -49,6 +49,8 @@
   grid-template-columns: 320px 1fr;
   gap: 0;
   min-height: calc(100vh - 140px);
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* Los estilos del sidebar se han movido a ProductFilters.css */
@@ -205,30 +207,41 @@
   .catalog-container {
     grid-template-columns: 1fr;
     gap: 20px;
+    max-width: 100%;
+    padding: 0 15px;
   }
   
   .products-section {
     order: 1;
+    width: 100%;
+    overflow-x: hidden;
   }
   
   .catalog-main {
     padding: 15px 0;
+    width: 100%;
+    overflow-x: hidden;
   }
 }
 
 @media (max-width: 768px) {
   .catalog-main {
-    padding: 15px 0;
+    padding: 0;
+    width: 100%;
+    overflow-x: hidden;
   }
   
   .catalog-container {
-    padding: 0 15px;
-    gap: 15px;
+    padding: 0;
+    gap: 0;
+    max-width: 100%;
+    width: 100%;
   }
   
   .filters-sidebar,
   .products-section {
-    padding: 15px;
+    padding: 0;
+    width: 100%;
   }
   
   .search-results-header {
@@ -242,12 +255,15 @@
 
 @media (max-width: 480px) {
   .catalog-container {
-    padding: 0 10px;
+    padding: 0;
+    max-width: 100%;
+    width: 100%;
   }
   
   .filters-sidebar,
   .products-section {
-    padding: 10px;
+    padding: 0;
+    width: 100%;
   }
   
   .search-results-header {
