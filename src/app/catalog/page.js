@@ -161,11 +161,32 @@ function CatalogPageContent() {
 
           {/* Área de productos */}
           <section className="products-section">
+            {/* Breadcrumbs */}
+            <div className="breadcrumbs">
+              <a href="/">Inicio</a>
+              <span>›</span>
+              <span>Catálogo</span>
+              {searchQuery && (
+                <>
+                  <span>›</span>
+                  <span>Búsqueda</span>
+                </>
+              )}
+            </div>
+
             {/* Mostrar término de búsqueda si existe */}
             {searchQuery && (
               <div className="search-results-header">
                 <h2>Resultados de búsqueda para: &quot;{searchQuery}&quot;</h2>
                 <p>{totalProducts} producto{totalProducts !== 1 ? 's' : ''} encontrado{totalProducts !== 1 ? 's' : ''}</p>
+              </div>
+            )}
+
+            {/* Header de categoría cuando no hay búsqueda */}
+            {!searchQuery && (
+              <div className="category-header">
+                <h1>Catálogo de Productos</h1>
+                <p>Descubre nuestra amplia selección de productos de calidad</p>
               </div>
             )}
             

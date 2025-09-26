@@ -47,7 +47,7 @@
 }
 
 .promo-large {
-  height: 250px;
+  height: 375px;
   grid-column: 1 / -1;
 }
 
@@ -145,7 +145,7 @@
   }
   
   .promo-large {
-    height: 220px;
+    height: 330px;
   }
 }
 
@@ -167,7 +167,7 @@
   }
   
   .promo-large {
-    height: 200px;
+    height: 300px;
   }
   
   .promo-title {
@@ -195,7 +195,7 @@
   }
   
   .promo-large {
-    height: 160px;
+    height: 400px;
   }
   
   .promo-title {

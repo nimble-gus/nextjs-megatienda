@@ -37,6 +37,12 @@ const ProductGrid = ({
     ));
   };
 
+  const calculateDiscount = (originalPrice, currentPrice) => {
+    if (!originalPrice || !currentPrice || originalPrice <= currentPrice) return null;
+    const discount = Math.round(((originalPrice - currentPrice) / originalPrice) * 100);
+    return discount;
+  };
+
   // Función para obtener la imagen del producto
   const getProductImage = (product) => {
     // Priorizar la imagen principal
@@ -104,39 +110,53 @@ const ProductGrid = ({
   };
 
   // Componente de producto individual
-  const ProductCard = ({ product }) => (
-    <div className="pg-product-card">
-      <Link href={`/product/${product.id}`} className="product-link">
-        <div className="pg-product-image-container">
-          <ProductImage product={product} />
-          <div className="pg-product-overlay">
-            <button 
-              className="pg-quick-view-btn"
-              title="Ver Detalles"
-            >
-              <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-                <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
-              </svg>
-            </button>
+  const ProductCard = ({ product }) => {
+    const currentPrice = product.price || product.precio;
+    const originalPrice = product.originalPrice;
+    const discount = calculateDiscount(originalPrice, currentPrice);
+    
+    return (
+      <div className="pg-product-card">
+        <Link href={`/product/${product.id}`} className="product-link">
+          <div className="pg-product-image-container">
+            <ProductImage product={product} />
+            <div className="pg-product-overlay">
+              <button 
+                className="pg-quick-view-btn"
+                title="Ver Detalles"
+              >
+                <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                  <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                </svg>
+              </button>
+            </div>
           </div>
-        </div>
-        
-        <div className="pg-product-info">
-          <div className="pg-product-brand">{product.categoria || 'Sin categoría'}</div>
-          <h3 className="pg-product-name">{product.name || product.nombre || 'Producto sin nombre'}</h3>
-          <div className="pg-product-rating">
-            {renderStars(product.rating || 0)}
+          
+          <div className="pg-product-info">
+            <div className="pg-product-brand">{product.categoria || 'Sin categoría'}</div>
+            <h3 className="pg-product-name">{product.name || product.nombre || 'Producto sin nombre'}</h3>
+            <div className="pg-product-rating">
+              <div className="pg-rating-stars">
+                {renderStars(product.rating || 0)}
+              </div>
+              <span className="pg-rating-count">({product.ratingCount || Math.floor(Math.random() * 100) + 1})</span>
+            </div>
+            <div className="pg-product-price">
+              <span className="pg-current-price">{formatPrice(currentPrice)}</span>
+              {originalPrice && originalPrice > currentPrice && (
+                <>
+                  <span className="pg-original-price">{formatPrice(originalPrice)}</span>
+                  {discount && (
+                    <span className="pg-savings-badge">Ahorra {discount}%</span>
+                  )}
+                </>
+              )}
+            </div>
           </div>
-          <div className="pg-product-price">
-            <span className="pg-current-price">{formatPrice(product.price || product.precio)}</span>
-            {product.originalPrice && product.originalPrice > (product.price || product.precio) && (
-              <span className="pg-original-price">{formatPrice(product.originalPrice)}</span>
-            )}
-          </div>
-        </div>
-      </Link>
-    </div>
-  );
+        </Link>
+      </div>
+    );
+  };
 
   // Componente de producto en vista lista
   const ProductListItem = ({ product }) => (
@@ -230,10 +250,33 @@ const ProductGrid = ({
 
   if (loading) {
     return (
-      <div className="pg-products-section">
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
-          <p>Cargando productos...</p>
+      <div className="pg-product-grid-container">
+        {/* Header de productos con skeleton */}
+        <div className="pg-products-header">
+          <div className="pg-view-controls">
+            <div className="skeleton-btn"></div>
+            <div className="skeleton-btn"></div>
+          </div>
+          <div className="skeleton-info"></div>
+          <div className="pg-sort-controls">
+            <div className="skeleton-select"></div>
+            <div className="skeleton-select"></div>
+          </div>
+        </div>
+
+        {/* Grid de productos skeleton */}
+        <div className="pg-products-grid">
+          {Array.from({ length: 12 }).map((_, index) => (
+            <div key={index} className="skeleton-product-card">
+              <div className="skeleton-image"></div>
+              <div className="skeleton-content">
+                <div className="skeleton-line short"></div>
+                <div className="skeleton-line long"></div>
+                <div className="skeleton-line medium"></div>
+                <div className="skeleton-line price"></div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     );

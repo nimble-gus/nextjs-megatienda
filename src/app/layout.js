@@ -1,17 +1,30 @@
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, Poppins, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import WhatsappButton from '@/components/common/WhatsappButton';
 import { ClientAuthProvider } from '@/contexts/ClientAuthContext';
 import { CartProvider } from '@/contexts/CartContext';
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Fuente principal para textos generales
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+// Fuente para títulos y elementos destacados
+const poppins = Poppins({
+  variable: "--font-poppins",
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800"],
+  display: "swap",
+});
+
+// Fuente para elementos técnicos y códigos
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-space-grotesk",
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  display: "swap",
 });
 
 export const metadata = {
@@ -49,7 +62,7 @@ export const viewport = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="es" className={`${geistSans.variable} ${geistMono.variable}`}>
+    <html lang="es" className={`${inter.variable} ${poppins.variable} ${spaceGrotesk.variable}`}>
       <head>
         <link rel="icon" href="/assets/logofav.png" sizes="any" />
         <link rel="icon" href="/assets/logofav.png" type="image/png" />
