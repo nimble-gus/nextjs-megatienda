@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect , Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import Topbar from '@/components/layout/Topbar';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
@@ -163,7 +164,7 @@ function CatalogPageContent() {
           <section className="products-section">
             {/* Breadcrumbs */}
             <div className="breadcrumbs">
-              <a href="/">Inicio</a>
+              <Link href="/">Inicio</Link>
               <span>›</span>
               <span>Catálogo</span>
               {searchQuery && (
