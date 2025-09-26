@@ -16,6 +16,7 @@ import MultimediaManager from './MultimediaManager';
 import OrdersManager from './OrdersManager';
 import CacheManager from './CacheManager';
 import OrderNotifications from './OrderNotifications';
+import CategoryImagesManager from './CategoryImagesManager';
 import '@/styles/AdminDashboard.css';
 
 export default function AdminDashboard() {
@@ -231,6 +232,8 @@ export default function AdminDashboard() {
         return <OrdersManager />;
       case 'cache':
         return <CacheManager />;
+      case 'category-images':
+        return <CategoryImagesManager />;
       default:
         return <div>Sección no encontrada</div>;
     }
@@ -315,6 +318,14 @@ export default function AdminDashboard() {
             <span className="nav-icon">🔄</span>
             <span className="nav-text">Caché</span>
           </button>
+          
+          <button 
+            className={`nav-item ${activeTab === 'category-images' ? 'active' : ''}`}
+            onClick={() => setActiveTab('category-images')}
+          >
+            <span className="nav-icon">🖼️</span>
+            <span className="nav-text">Imágenes Categorías</span>
+          </button>
         </nav>
       </aside>
 
@@ -360,6 +371,8 @@ function getPageTitle(tab) {
     case 'sales': return 'Reportes de Ventas';
     case 'multimedia': return 'Gestión de Multimedia';
     case 'orders': return 'Gestión de Pedidos';
+    case 'cache': return 'Gestión de Caché';
+    case 'category-images': return 'Imágenes de Categorías';
     default: return 'Admin Panel';
   }
 }
