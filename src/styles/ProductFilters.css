@@ -209,6 +209,7 @@
   border-radius: 2px;
   outline: none;
   -webkit-appearance: none;
+  appearance: none;
   pointer-events: auto;
   z-index: 2;
   top: 50%;
@@ -240,6 +241,7 @@
 
 .price-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
+  appearance: none;
   appearance: none;
   width: 24px;
   height: 24px;
@@ -329,11 +331,13 @@
 .price-input::-webkit-outer-spin-button,
 .price-input::-webkit-inner-spin-button {
   -webkit-appearance: none;
+  appearance: none;
   margin: 0;
 }
 
 .price-input[type=number] {
   -moz-appearance: textfield;
+  appearance: textfield;
 }
 
 .price-separator {
@@ -407,18 +411,20 @@
   transform: scale(1.1);
 }
 
-.category-name {
+.product-filters .category-item .category-name {
   flex: 1;
   font-family: var(--font-primary);
   font-size: var(--text-sm);
   font-weight: var(--font-medium);
-  color: var(--text-dark);
+  color: #000000 !important;
   line-height: var(--leading-normal);
+  text-shadow: none !important;
 }
 
-.category-count {
+.product-filters .category-item .category-count {
   font-size: 12px;
-  color: var(--text-muted);
+  color: #000000 !important;
+  text-shadow: none !important;
 }
 
 /* Filtro de Colores */
@@ -488,35 +494,6 @@
   color: var(--text-muted);
 }
 
-/* Botones de acción */
-.filters-actions {
-  margin-top: 24px;
-  padding-top: 20px;
-  border-top: 1px solid var(--border-light);
-}
-
-.apply-filters-btn {
-  width: 100%;
-  padding: 14px 20px;
-  background: #1f2937;
-  color: white;
-  border: none;
-  border-radius: 10px;
-  font-family: var(--font-heading);
-  font-size: var(--text-base);
-  font-weight: var(--font-semibold);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  position: relative;
-  overflow: hidden;
-  line-height: var(--leading-normal);
-}
-
-.apply-filters-btn:hover {
-  background: #111827;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(31, 41, 55, 0.3);
-}
 
 /* Estados de carga */
 .loading-filters {
@@ -825,18 +802,6 @@
   height: 28px;
 }
 
-.mobile-filter-content .apply-filters-btn {
-  position: fixed;
-  bottom: 20px;
-  left: 24px;
-  right: 24px;
-  width: auto;
-  padding: 18px 24px;
-  font-size: 18px;
-  border-radius: 20px;
-  box-shadow: 0 8px 24px rgba(30, 58, 138, 0.4);
-  z-index: 20;
-}
 
 /* Mostrar botón de filtro móvil solo en pantallas pequeñas */
 @media (max-width: 768px) {

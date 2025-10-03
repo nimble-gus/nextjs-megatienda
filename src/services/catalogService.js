@@ -18,7 +18,9 @@ export const getProducts = async (filters = {}) => {
       if (filters.maxPrice !== undefined) params.append('maxPrice', filters.maxPrice);
       
       // Agregar filtros de categoría
-      if (filters.category) params.append('category', filters.category);
+      if (filters.categories && filters.categories.length > 0) {
+        filters.categories.forEach(category => params.append('categories', category));
+      }
       
       // Agregar filtros de color
       if (filters.colors && filters.colors.length > 0) {

@@ -412,12 +412,6 @@ const ProductFilters = React.memo(({ filters, onFilterChange }) => {
         )}
       </div>
 
-      {/* Botón aplicar filtros */}
-      <div className="filters-actions">
-        <button className="apply-filters-btn" suppressHydrationWarning>
-          Aplicar Filtros
-        </button>
-      </div>
     </>
   ), [
     loading, priceRange, priceRangeData, priceFiltering, categoriesExpanded, 

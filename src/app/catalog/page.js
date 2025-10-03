@@ -96,7 +96,7 @@ function CatalogPageContent() {
           minPrice: filters.priceRange[0],
           maxPrice: filters.priceRange[1],
           colors: filters.colors,
-          category: filters.categories.length > 0 ? filters.categories[0] : null,
+          categories: filters.categories,
           search: searchQuery // Agregar el término de búsqueda
         };
         const response = await getProducts(apiFilters);

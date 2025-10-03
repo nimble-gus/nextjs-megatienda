@@ -997,6 +997,7 @@
   .pg-product-list-image-section .pg-product-image-container:active {
     transform: scale(0.95);
   }
+
 }
 
 .pg-product-list-image-section .pg-product-image-container::after {
@@ -1159,7 +1160,6 @@
     transform: translateY(0);
   }
 }
-
 /* Mantener compatibilidad con clases existentes para evitar roturas */
 .product-grid-container { @extend .pg-product-grid-container; }
 .products-header { @extend .pg-products-header; }
@@ -1196,3 +1196,4 @@
 .rating-text { @extend .pg-rating-text; }
 .pagination { @extend .pg-pagination; }
 .pagination-btn { @extend .pg-pagination-btn; }
+

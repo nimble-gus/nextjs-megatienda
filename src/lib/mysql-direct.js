@@ -113,7 +113,7 @@ export const getCatalogProducts = async (filters = {}) => {
     sortBy = 'default',
     minPrice = 0,
     maxPrice = 999999,
-    category,
+    categories = [],
     colors = [],
     search = ''
   } = filters;
@@ -148,10 +148,11 @@ export const getCatalogProducts = async (filters = {}) => {
     queryParams.push(minPrice.toString(), maxPrice.toString());
   }
 
-  // Filtro de categoría
-  if (category) {
-    whereConditions.push('p.categoria_id = ?');
-    queryParams.push(category.toString());
+  // Filtro de categorías
+  if (categories && categories.length > 0) {
+    const placeholders = categories.map(() => '?').join(',');
+    whereConditions.push(`p.categoria_id IN (${placeholders})`);
+    queryParams.push(...categories.map(cat => cat.toString()));
   }
 
   // Filtro de búsqueda
@@ -202,7 +203,7 @@ export const getCatalogProductsCount = async (filters = {}) => {
   const {
     minPrice = 0,
     maxPrice = 999999,
-    category,
+    categories = [],
     search = ''
   } = filters;
 
@@ -220,10 +221,11 @@ export const getCatalogProductsCount = async (filters = {}) => {
     queryParams.push(minPrice.toString(), maxPrice.toString());
   }
 
-  // Filtro de categoría
-  if (category) {
-    whereConditions.push('p.categoria_id = ?');
-    queryParams.push(category.toString());
+  // Filtro de categorías
+  if (categories && categories.length > 0) {
+    const placeholders = categories.map(() => '?').join(',');
+    whereConditions.push(`p.categoria_id IN (${placeholders})`);
+    queryParams.push(...categories.map(cat => cat.toString()));
   }
 
   // Filtro de búsqueda
