@@ -320,6 +320,43 @@ function CheckoutPageContent() {
       if (response.ok) {
         // Orden creada exitosamente
         console.log('✅ [Checkout] Orden creada exitosamente, limpiando carrito...');
+        
+        // Enviar email de confirmación
+        try {
+          const emailData = {
+            orderId: result.orden.codigo_orden,
+            customerEmail: formData.email,
+            customerName: `${formData.firstName} ${formData.lastName}`,
+            items: productos.map(producto => ({
+              name: producto.nombre,
+              sku: producto.sku,
+              quantity: producto.cantidad,
+              price: producto.precio
+            })),
+            total: total,
+            shippingAddress: `${formData.streetAddress}${formData.apartment ? `, ${formData.apartment}` : ''}, ${formData.city}, ${formData.state} ${formData.postcode}`,
+            paymentMethod: selectedPaymentMethod === 'contra_entrega' ? 'Contra Entrega' : 
+                          selectedPaymentMethod === 'transferencia' ? 'Transferencia Bancaria' : 
+                          selectedPaymentMethod
+          };
+
+          const emailResponse = await fetch('/api/email/send-order-confirmation', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(emailData)
+          });
+
+          if (emailResponse.ok) {
+            console.log('✅ [Checkout] Email de confirmación enviado');
+          } else {
+            console.warn('⚠️ [Checkout] Error enviando email de confirmación');
+          }
+        } catch (emailError) {
+          console.warn('⚠️ [Checkout] Error enviando email:', emailError);
+          // No bloquear el flujo si falla el email
+        }
+
+        
         // Limpiar el carrito después de una orden exitosa
         await clearCart();
         console.log('✅ [Checkout] Carrito limpiado');
