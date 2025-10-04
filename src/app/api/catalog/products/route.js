@@ -13,7 +13,7 @@ export async function GET(request) {
     // Filtros
     const minPrice = parseFloat(searchParams.get('minPrice')) || 0;
     const maxPrice = parseFloat(searchParams.get('maxPrice')) || 999999;
-    const categories = searchParams.getAll('categories');
+    const category = searchParams.get('category');
     const colors = searchParams.getAll('colors');
     const search = searchParams.get('search');
 
@@ -24,7 +24,7 @@ export async function GET(request) {
       sortBy,
       minPrice,
       maxPrice,
-      categories,
+      category,
       colors,
       search
     });
@@ -33,7 +33,7 @@ export async function GET(request) {
     const totalProducts = await getCatalogProductsCount({
       minPrice,
       maxPrice,
-      categories,
+      category,
       search
     });
 

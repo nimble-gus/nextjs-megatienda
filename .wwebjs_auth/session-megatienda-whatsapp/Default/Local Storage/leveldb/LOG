@@ -1,3 +1,9 @@
 2025/10/03-14:09:26.423 2e5c Reusing MANIFEST C:\Users\GustavoOrtiz\OneDrive - Prime IQ\Escritorio\megatienda NextJS\nextjs-megatienda\.wwebjs_auth\session-megatienda-whatsapp\Default\Local Storage\leveldb/MANIFEST-000001
 2025/10/03-14:09:26.423 2e5c Recovering log #3
 2025/10/03-14:09:26.424 2e5c Reusing old log C:\Users\GustavoOrtiz\OneDrive - Prime IQ\Escritorio\megatienda NextJS\nextjs-megatienda\.wwebjs_auth\session-megatienda-whatsapp\Default\Local Storage\leveldb/000003.log 
+2025/10/03-16:36:27.160 a208 Level-0 table #5: started
+2025/10/03-16:36:27.165 a208 Level-0 table #5: 21840 bytes OK
+2025/10/03-16:36:27.167 a208 Delete type=0 #3
+2025/10/03-21:58:47.364 2628 Level-0 table #7: started
+2025/10/03-21:58:47.375 2628 Level-0 table #7: 21923 bytes OK
+2025/10/03-21:58:47.376 2628 Delete type=0 #4
