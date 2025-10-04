@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { executeQuery } from '@/lib/mysql-direct';
 import { notifyOrderProcessed } from '../../notifications/route';
 import { CacheManager } from '@/lib/cache-manager';
+import { sendOrderStatusUpdateEmail } from '@/lib/email';
 
 export async function PUT(request, { params }) {
   try {
@@ -194,6 +195,28 @@ export async function PUT(request, { params }) {
       } catch (notificationError) {
         console.error('⚠️ Error enviando notificación de orden procesada:', notificationError);
         // No fallar la actualización por error de notificación
+      }
+
+      // Enviar email de notificación al cliente si hay email válido
+      if (updatedOrder.email_cliente) {
+        try {
+          const emailResult = await sendOrderStatusUpdateEmail({
+            orderId: updatedOrder.codigo_orden,
+            customerEmail: updatedOrder.email_cliente,
+            customerName: updatedOrder.nombre_cliente
+          }, updatedOrder.estado);
+
+          if (emailResult.success) {
+            console.log('📧 Email de actualización de estado enviado exitosamente');
+          } else {
+            console.error('⚠️ Error enviando email de actualización:', emailResult.error);
+          }
+        } catch (emailError) {
+          console.error('⚠️ Error enviando email de actualización de estado:', emailError);
+          // No fallar la actualización por error de email
+        }
+      } else {
+        console.log('⚠️ No se envió email de actualización: cliente sin email registrado');
       }
       
       // Limpiar caché relacionado con órdenes cuando se actualiza el estado

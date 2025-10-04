@@ -8,7 +8,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 // Configuración de email
 const EMAIL_CONFIG = {
   from: process.env.FROM_EMAIL || 'noreply@lamegatiendagt.com',
-  fromName: process.env.FROM_NAME || 'MegaTienda',
+  fromName: process.env.FROM_NAME || 'LaMegaTiendaGT',
   replyTo: process.env.REPLY_TO_EMAIL || 'soporte@lamegatiendagt.com'
 };
 
@@ -40,7 +40,7 @@ export async function sendOrderConfirmationEmail(orderData) {
     const result = await resend.emails.send({
       from: `${EMAIL_CONFIG.fromName} <${EMAIL_CONFIG.from}>`,
       to: [customerEmail],
-      subject: `Confirmación de Orden #${orderId} - MegaTienda`,
+      subject: `Confirmación de Orden #${orderId} - LaMegaTiendaGT`,
       html: emailHtml,
       replyTo: EMAIL_CONFIG.replyTo
     });
@@ -86,7 +86,7 @@ function generateOrderConfirmationHTML({ orderId, customerName, items, total, sh
         <!-- Header -->
         <div style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); padding: 32px; text-align: center;">
           <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 700;">¡Orden Confirmada!</h1>
-          <p style="color: #e0e7ff; margin: 8px 0 0 0; font-size: 16px;">Gracias por tu compra en MegaTienda</p>
+          <p style="color: #e0e7ff; margin: 8px 0 0 0; font-size: 16px;">Gracias por tu compra en LaMegaTiendaGT</p>
         </div>
 
         <!-- Content -->
@@ -156,7 +156,7 @@ function generateOrderConfirmationHTML({ orderId, customerName, items, total, sh
         <!-- Footer -->
         <div style="background-color: #f8fafc; padding: 24px; text-align: center; border-top: 1px solid #e5e7eb;">
           <p style="color: #6b7280; margin: 0; font-size: 14px;">
-            © 2024 MegaTienda. Todos los derechos reservados.
+            © 2025 LaMegaTiendaGT. Todos los derechos reservados.
           </p>
         </div>
       </div>
@@ -173,10 +173,13 @@ export async function sendOrderStatusUpdateEmail(orderData, newStatus) {
     const { orderId, customerEmail, customerName } = orderData;
 
     const statusMessages = {
-      'processing': 'Tu orden está siendo procesada',
-      'shipped': 'Tu orden ha sido enviada',
-      'delivered': 'Tu orden ha sido entregada',
-      'cancelled': 'Tu orden ha sido cancelada'
+      'pendiente': 'Tu orden está pendiente de pago',
+      'pagado': 'Tu orden ha sido pagada',
+      'validado': 'Tu orden ha sido validada',
+      'en_preparacion': 'Tu orden está siendo preparada',
+      'enviado': 'Tu orden ha sido enviada',
+      'entregado': 'Tu orden ha sido entregada',
+      'cancelado': 'Tu orden ha sido cancelada'
     };
 
     const emailHtml = generateStatusUpdateHTML({
@@ -207,10 +210,13 @@ export async function sendOrderStatusUpdateEmail(orderData, newStatus) {
  */
 function generateStatusUpdateHTML({ orderId, customerName, status, message }) {
   const statusColors = {
-    'processing': '#f59e0b',
-    'shipped': '#3b82f6',
-    'delivered': '#10b981',
-    'cancelled': '#ef4444'
+    'pendiente': '#f59e0b',
+    'pagado': '#3b82f6',
+    'validado': '#8b5cf6',
+    'en_preparacion': '#06b6d4',
+    'enviado': '#8b5cf6',
+    'entregado': '#10b981',
+    'cancelado': '#ef4444'
   };
 
   const color = statusColors[status] || '#6b7280';
@@ -249,7 +255,7 @@ function generateStatusUpdateHTML({ orderId, customerName, status, message }) {
         <!-- Footer -->
         <div style="background-color: #f8fafc; padding: 24px; text-align: center; border-top: 1px solid #e5e7eb;">
           <p style="color: #6b7280; margin: 0; font-size: 14px;">
-            © 2024 MegaTienda. Todos los derechos reservados.
+            © 2025 LaMegaTiendaGT. Todos los derechos reservados.
           </p>
         </div>
       </div>
