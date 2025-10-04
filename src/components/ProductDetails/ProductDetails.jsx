@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { X } from 'lucide-react';
 import ProductGallery from './ProductGallery';
 import ProductInfo from './ProductInfo';
 import ProductDescription from './ProductDescription';
@@ -23,6 +24,7 @@ const ProductDetails = ({ product }) => {
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [showZoomModal, setShowZoomModal] = useState(false);
 
   // Limpiar estado de loading cuando el componente se desmonte
   useEffect(() => {
@@ -158,6 +160,7 @@ const ProductDetails = ({ product }) => {
                 images={product.images}
                 selectedImage={selectedImage}
                 onImageSelect={setSelectedImage}
+                onZoomImage={() => setShowZoomModal(true)}
               />
             </div>
 
@@ -206,6 +209,34 @@ const ProductDetails = ({ product }) => {
               message="Agregando al carrito..." 
               showMessage={true}
             />
+          </div>
+        </div>
+      )}
+
+      {/* Modal de zoom de imagen */}
+      {showZoomModal && product.images && product.images.length > 0 && (
+        <div 
+          className="image-zoom-modal"
+          onClick={() => setShowZoomModal(false)}
+        >
+          <div className="zoom-modal-content" onClick={(e) => e.stopPropagation()}>
+            <button 
+              className="zoom-modal-close"
+              onClick={() => setShowZoomModal(false)}
+            >
+              <X size={20} />
+            </button>
+            <Image 
+              src={product.images[selectedImage]} 
+              alt="Producto en vista ampliada"
+              width={800}
+              height={800}
+              className="zoom-modal-image"
+              priority
+            />
+            <div className="zoom-modal-info">
+              Imagen {selectedImage + 1} de {product.images.length}
+            </div>
           </div>
         </div>
       )}

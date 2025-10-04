@@ -5,15 +5,14 @@ import Image from 'next/image';
 import { X, ZoomIn } from 'lucide-react';
 import '@/styles/ProductGallery.css';
 
-const ProductGallery = ({ images, selectedImage, onImageSelect }) => {
-  const [showZoomModal, setShowZoomModal] = useState(false);
+const ProductGallery = ({ images, selectedImage, onImageSelect, onZoomImage }) => {
   return (
     <div className="product-gallery-modern">
       {/* Imagen principal moderna */}
       <div className="gallery-main-modern">
         <div 
           className="main-image-modern"
-          onClick={() => setShowZoomModal(true)}
+          onClick={() => onZoomImage && onZoomImage(selectedImage)}
         >
           {images && images.length > 0 ? (
             <>
@@ -70,34 +69,6 @@ const ProductGallery = ({ images, selectedImage, onImageSelect }) => {
               onClick={() => onImageSelect(index)}
             />
           ))}
-        </div>
-      )}
-
-      {/* Modal de zoom */}
-      {showZoomModal && images && images.length > 0 && (
-        <div 
-          className="image-zoom-modal"
-          onClick={() => setShowZoomModal(false)}
-        >
-          <div className="zoom-modal-content" onClick={(e) => e.stopPropagation()}>
-            <button 
-              className="zoom-modal-close"
-              onClick={() => setShowZoomModal(false)}
-            >
-              <X size={20} />
-            </button>
-            <Image 
-              src={images[selectedImage]} 
-              alt="Producto en vista ampliada"
-              width={800}
-              height={800}
-              className="zoom-modal-image"
-              priority
-            />
-            <div className="zoom-modal-info">
-              Imagen {selectedImage + 1} de {images.length}
-            </div>
-          </div>
         </div>
       )}
     </div>
