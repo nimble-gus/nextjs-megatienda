@@ -1,0 +1,245 @@
+.maintenance-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 2rem;
+  overflow: hidden;
+}
+
+.maintenance-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.bg-circle {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  animation: float 20s infinite ease-in-out;
+}
+
+.bg-circle-1 {
+  width: 300px;
+  height: 300px;
+  top: -150px;
+  left: -150px;
+  animation-delay: 0s;
+}
+
+.bg-circle-2 {
+  width: 200px;
+  height: 200px;
+  bottom: -100px;
+  right: -100px;
+  animation-delay: 5s;
+}
+
+.bg-circle-3 {
+  width: 150px;
+  height: 150px;
+  top: 50%;
+  right: 10%;
+  animation-delay: 10s;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.1;
+  }
+  33% {
+    transform: translate(30px, -30px) scale(1.1);
+    opacity: 0.15;
+  }
+  66% {
+    transform: translate(-30px, 30px) scale(0.9);
+    opacity: 0.12;
+  }
+}
+
+.maintenance-content {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  max-width: 600px;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 24px;
+  padding: 3rem 2rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.maintenance-icon {
+  margin-bottom: 2rem;
+  color: var(--primary-orange, #ff6a00);
+  animation: pulse 2s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.9;
+  }
+}
+
+.maintenance-title {
+  font-family: var(--font-heading, 'Poppins', sans-serif);
+  font-size: var(--text-5xl, 3rem);
+  font-weight: var(--font-bold, 700);
+  color: var(--text-dark, #2d3748);
+  margin-bottom: 1rem;
+  line-height: 1.2;
+}
+
+.maintenance-description {
+  font-family: var(--font-primary, 'Inter', sans-serif);
+  font-size: var(--text-lg, 1.125rem);
+  color: var(--text-light, #718096);
+  line-height: var(--leading-relaxed, 1.625);
+  margin-bottom: 2rem;
+}
+
+.maintenance-time {
+  margin: 2rem 0;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  border-radius: 16px;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.time-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.time-label {
+  font-family: var(--font-primary, 'Inter', sans-serif);
+  font-size: var(--text-sm, 0.875rem);
+  color: var(--text-light, #718096);
+  font-weight: var(--font-medium, 500);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide, 0.025em);
+}
+
+.time-value {
+  font-family: var(--font-mono, 'Space Grotesk', monospace);
+  font-size: var(--text-3xl, 1.875rem);
+  font-weight: var(--font-bold, 700);
+  color: var(--primary-orange, #ff6a00);
+  letter-spacing: 0.05em;
+}
+
+.date-display {
+  font-family: var(--font-primary, 'Inter', sans-serif);
+  font-size: var(--text-base, 1rem);
+  color: var(--text-dark, #2d3748);
+  font-weight: var(--font-medium, 500);
+  text-transform: capitalize;
+}
+
+.maintenance-divider {
+  width: 60px;
+  height: 4px;
+  background: linear-gradient(90deg, transparent, var(--primary-orange, #ff6a00), transparent);
+  margin: 2rem auto;
+  border-radius: 2px;
+}
+
+.maintenance-info {
+  margin: 2rem 0;
+}
+
+.maintenance-info p {
+  font-family: var(--font-primary, 'Inter', sans-serif);
+  font-size: var(--text-base, 1rem);
+  color: var(--text-light, #718096);
+  line-height: var(--leading-relaxed, 1.625);
+}
+
+.maintenance-footer {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.footer-text {
+  font-family: var(--font-primary, 'Inter', sans-serif);
+  font-size: var(--text-sm, 0.875rem);
+  color: var(--text-light, #718096);
+  font-style: italic;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .maintenance-container {
+    padding: 1rem;
+  }
+
+  .maintenance-content {
+    padding: 2rem 1.5rem;
+    border-radius: 16px;
+  }
+
+  .maintenance-title {
+    font-size: var(--text-4xl, 2.25rem);
+  }
+
+  .maintenance-description {
+    font-size: var(--text-base, 1rem);
+  }
+
+  .time-value {
+    font-size: var(--text-2xl, 1.5rem);
+  }
+
+  .bg-circle-1 {
+    width: 200px;
+    height: 200px;
+    top: -100px;
+    left: -100px;
+  }
+
+  .bg-circle-2 {
+    width: 150px;
+    height: 150px;
+    bottom: -75px;
+    right: -75px;
+  }
+
+  .bg-circle-3 {
+    width: 100px;
+    height: 100px;
+  }
+}
+
+@media (max-width: 480px) {
+  .maintenance-content {
+    padding: 1.5rem 1rem;
+  }
+
+  .maintenance-title {
+    font-size: var(--text-3xl, 1.875rem);
+  }
+
+  .maintenance-icon {
+    width: 80px;
+    height: 80px;
+  }
+}
+
